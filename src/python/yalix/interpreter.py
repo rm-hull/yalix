@@ -10,7 +10,7 @@ from yalix.exceptions import EvaluationError
 from yalix.environment import Env
 
 
-class Primitive:
+class Primitive(object):
     __metaclass__ = ABCMeta
 
     def __repr__(self):

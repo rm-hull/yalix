@@ -3,7 +3,7 @@
 
 from yalix.exceptions import EnvironmentError
 
-class Env:
+class Env(object):
 
     def __init__(self, stack=None, globals=None):
         self.stack = stack
@@ -11,7 +11,9 @@ class Env:
 
 
     def extend(self, name, value):
-        """ Extend the stack: Note that globals are shared across extended environments """
+        """
+        Extend the stack: Note that globals are shared across extended environments
+        """
         return Env(stack=((name, value), self.stack), globals=self.globals)
 
     def __setitem__(self, name, value):
