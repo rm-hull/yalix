@@ -26,16 +26,13 @@ class Var(Primitive):
         # TODO: validate name is a string and meets a-zA-Z etc
         self.name = name
 
-    def _lookup(self, env, name):
+    def eval(self, env=()):
         if env == ():
             raise EvaluationError('\'{0}\' is unbound in environment', self.name)
-        elif env[0][0] == name:
+        elif env[0][0] == self.name:
             return env[0][1]
         else:
-            return self._lookup(env[1], name)
-
-    def eval(self, env=()):
-        return self._lookup(env, self.name)
+            return self.eval(env[1])
 
 
 class Atom(Primitive):
@@ -48,14 +45,18 @@ class Atom(Primitive):
         return self.value
 
 
-class IsAtom(Primitive):
+class Atom_QUESTION(Primitive):
     """ Checks if the supplied value is an atom """
 
     def __init__(self, expr):
         self.expr = expr
 
     def eval(self, env=()):
-        return isinstance(self.expr.eval(env), Atom)
+        value = self.expr.eval(env)
+        if value is None:
+            return False
+        else:
+            return not isinstance(value, tuple)
 
 
 class Nil(Primitive):
@@ -65,7 +66,7 @@ class Nil(Primitive):
         return None
 
 
-class IsNil(Primitive):
+class Nil_QUESTION(Primitive):
     """ Checks if the supplied value is nil """
 
     def __init__(self, expr):
@@ -226,12 +227,7 @@ class Call(Primitive):
             bind_variable = closure.func.formal
             extended_env = ((bind_variable, arg), closure.env)
             if fn_name:
-                print 'Extending environment...'
                 extended_env = ((fn_name, closure), extended_env)
-
-            print 'fn_name:', fn_name
-            print 'bind_variable:', bind_variable
-            print 'arg:', arg
 
             return closure.func.body.eval(extended_env)
         else:
@@ -249,6 +245,13 @@ Eq(lst2, lst1)
 Eq(Atom(True),
    Not(Atom(False)))
 
+Nil_QUESTION(Nil())
+Nil_QUESTION(Atom('Freddy'))
+
+Atom_QUESTION(Atom('Freddy'))
+Atom_QUESTION(Nil())
+
+Eq(Nil(),Atom(None))
 
 Car(Cdr(lst1))
 
