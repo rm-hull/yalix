@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """
 Takes an AST (abstract syntax tree) and an environment in order to evaluate the AST
 """
 
 from abc import ABCMeta, abstractmethod
 from yalix.exceptions import EvaluationError
+from yalix.environment import Env
 
 
 class Primitive:
     __metaclass__ = ABCMeta
 
     def __repr__(self):
-        return str(self.eval(()))
+        return str(self.eval(Env()))
 
     @abstractmethod
-    def eval(self, env=()):
+    def eval(self, env):
         raise NotImplementedError()
 
 
@@ -26,13 +28,8 @@ class Var(Primitive):
         # TODO: validate name is a string and meets a-zA-Z etc
         self.name = name
 
-    def eval(self, env=()):
-        if env == ():
-            raise EvaluationError('\'{0}\' is unbound in environment', self.name)
-        elif env[0][0] == self.name:
-            return env[0][1]
-        else:
-            return self.eval(env[1])
+    def eval(self, env):
+        return env[self.name]
 
 
 class Atom(Primitive):
@@ -41,7 +38,7 @@ class Atom(Primitive):
     def __init__(self, value):
         self.value = value
 
-    def eval(self, env=()):
+    def eval(self, env):
         return self.value
 
 
@@ -51,7 +48,7 @@ class Atom_QUESTION(Primitive):
     def __init__(self, expr):
         self.expr = expr
 
-    def eval(self, env=()):
+    def eval(self, env):
         value = self.expr.eval(env)
         if value is None:
             return False
@@ -62,7 +59,7 @@ class Atom_QUESTION(Primitive):
 class Nil(Primitive):
     """ Nil representation """
 
-    def eval(self, env=()):
+    def eval(self, env):
         return None
 
 
@@ -72,7 +69,7 @@ class Nil_QUESTION(Primitive):
     def __init__(self, expr):
         self.expr = expr
 
-    def eval(self, env=()):
+    def eval(self, env):
         return self.expr.eval(env) is None
 
 
@@ -83,7 +80,7 @@ class Cons(Primitive):
         self.expr1 = expr1
         self.expr2 = expr2
 
-    def eval(self, env=()):
+    def eval(self, env):
         return self.expr1.eval(env), self.expr2.eval(env)
 
 
@@ -93,9 +90,9 @@ class List(Primitive):
     def __init__(self, *args):
         self.args = args
 
-    def eval(self, env=()):
+    def eval(self, env):
         if not self.args:
-            return Nil().eval(env)
+            return None
         else:
             car = self.args[0]
             cdr = List(*self.args[1:])
@@ -108,7 +105,7 @@ class Car(Primitive):
     def __init__(self, expr):
         self.expr = expr
 
-    def eval(self, env=()):
+    def eval(self, env):
         value = self.expr.eval(env)
         if value is None:
             return None
@@ -124,7 +121,7 @@ class Cdr(Primitive):
     def __init__(self, expr):
         self.expr = expr
 
-    def eval(self, env=()):
+    def eval(self, env):
         value = self.expr.eval(env)
         if value is None:
             return Nil().eval(env)
@@ -142,10 +139,10 @@ class Let(Primitive):
         self.expr = expr
         self.body = body
 
-    def eval(self, env=()):
+    def eval(self, env):
         name = self.var
         value = self.expr.eval(env)
-        extended_env = ((name, value), env)
+        extended_env = env.extend(name, value)
         return self.body.eval(extended_env)
 
 
@@ -156,14 +153,14 @@ class Let_STAR(Primitive):
         self.bindings = bindings
         self.body = body
 
-    def eval(self, env=()):
+    def eval(self, env):
         if self.bindings == []:
             return self.body.eval(env)
         else:
             name = self.bindings[0][0]
             expr = self.bindings[0][1]
             value = expr.eval(env)
-            extended_env = ((name, value), env)
+            extended_env = env.extend(name, value)
             return Let_STAR(self.bindings[1:], self.body).eval(extended_env)
 
 
@@ -172,7 +169,7 @@ class Not(Primitive):
     def __init__(self, expr):
         self.expr = expr
 
-    def eval(self, env=()):
+    def eval(self, env):
         return not self.expr.eval(env)
 
 
@@ -183,7 +180,7 @@ class Eq(Primitive):
         self.expr1 = expr1
         self.expr2 = expr2
 
-    def eval(self, env=()):
+    def eval(self, env):
         value1 = self.expr1.eval(env)
         value2 = self.expr2.eval(env)
         return value1 == value2
@@ -196,7 +193,7 @@ class Closure(Primitive):
         self.env = env
         self.func = func
 
-    def eval(self, env=()):
+    def eval(self, env):
         return self
 
 
@@ -208,7 +205,7 @@ class Function(Primitive):
         self.formal = formal
         self.body = body
 
-    def eval(self, env=()):
+    def eval(self, env):
         return Closure(env, self)
 
 
@@ -225,16 +222,20 @@ class Call(Primitive):
             arg = self.actual.eval(env)
             fn_name = closure.func.nameopt
             bind_variable = closure.func.formal
-            extended_env = ((bind_variable, arg), closure.env)
+            extended_env = closure.env.extend(bind_variable, arg)
             if fn_name:
-                extended_env = ((fn_name, closure), extended_env)
+                extended_env = extended_env.extend(fn_name, closure)
 
             return closure.func.body.eval(extended_env)
         else:
             raise EvaluationError('Call applied with non-closure: \'{0}\'', closure)
 
+# TODO - implement:
+#  class Call_STAR(Primitive):
+#  class Interop(Primitive):
+#  class Define(Primitive):
 
-env = (('y', Atom(7).eval()),())
+env = Env().extend('y', Atom(7))
 Var("y").eval(env)
 
 lst1 = Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil())))
