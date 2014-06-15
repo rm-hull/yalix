@@ -12,17 +12,21 @@ class Env(object):
 
     def extend(self, name, value):
         """
-        Extend the stack: Note that globals are shared across extended environments
+        Extend the stack with the given name/value.
+        Note: globals are shared across extended environments.
         """
         return Env(stack=((name, value), self.stack), globals=self.globals)
 
     def __setitem__(self, name, value):
-        """ Adds a new global definition """
-        self.globals[name] = value
+        """
+        Adds a new global definition, and evaluates it according to self
+        """
+        self.globals[name] = value.eval(self)
 
     def __getitem__(self, name):
-        """ Look in the stack first for the named item, then try the globals """
-
+        """
+        Look in the stack first for the named item, then try the globals
+        """
         env = self.stack
         while env:
             if env[0][0] == name:
@@ -34,22 +38,3 @@ class Env(object):
             raise EnvironmentError('\'{0}\' is unbound in environment', name)
 
         return self.globals[name]
-
-
-e = Env()
-e['fred'] = 'bob'
-e['fred']
-
-
-e1 = e.extend('jim', 'jeff')
-e2 = e1.extend('tom', 'smith')
-e1 == e
-
-e1['jim']
-e2['jim']
-e2['fred']
-
-e2['elaine'] = 'carter'
-
-e['elaine']
-#e['f']

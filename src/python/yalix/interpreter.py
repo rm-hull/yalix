@@ -243,11 +243,11 @@ class Define(Primitive):
 
     def __init__(self, name, body):
         self.name = name
-	self.body = body
+        self.body = body
 
     def eval(self, env):
-	env[self.name] = self.body.eval(env)
-	return None
+        env[self.name] = self.body
+        return None
 
 
 
