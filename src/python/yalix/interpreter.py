@@ -8,24 +8,27 @@ Takes an AST (abstract syntax tree) and an environment in order to evaluate the 
 from abc import ABCMeta, abstractmethod
 from yalix.exceptions import EvaluationError
 from yalix.environment import Env
-
+import operator
 
 class Primitive(object):
     __metaclass__ = ABCMeta
 
-    def __repr__(self):
-        return str(self.eval(Env()))
+#    def __repr__(self):
+#        return str(self.eval(Env()))
 
     @abstractmethod
     def eval(self, env):
         raise NotImplementedError()
 
 
-class Var(Primitive):
-    """ A variable reference """
+class Symbol(Primitive):
+    """
+    A symbolic reference, resolved in the environment firstly against lexical
+    closures in local symbol stack, then against a global symbol table.
+    """
 
     def __init__(self, name):
-        # TODO: validate name is a string and meets a-zA-Z etc
+        # TODO: validate symbol name is a string and meets a-zA-Z etc
         self.name = name
 
     def eval(self, env):
@@ -197,12 +200,11 @@ class Closure(Primitive):
         return self
 
 
-class Function(Primitive):
-    """ A recursive 1-argument function """
+class Lambda(Primitive):
+    """ A recursive n-argument anonymous function """
 
-    def __init__(self, nameopt, formal, body):
-        self.nameopt = nameopt
-        self.formal = formal
+    def __init__(self, formals, body):
+        self.formals = [] if formals is None else formals
         self.body = body
 
     def eval(self, env):
@@ -212,64 +214,154 @@ class Function(Primitive):
 class Call(Primitive):
     """ A function call """
 
-    def __init__(self, funexp, actual):
+    def __init__(self, funexp, *args):
         self.funexp = funexp
-        self.actual = actual
+        self.args = args
 
-    def eval(self, env=()):
+    def eval(self, env):
         closure = self.funexp.eval(env)
-        if isinstance(closure, Closure):
-            arg = self.actual.eval(env)
-            fn_name = closure.func.nameopt
-            bind_variable = closure.func.formal
-            extended_env = closure.env.extend(bind_variable, arg)
-            if fn_name:
-                extended_env = extended_env.extend(fn_name, closure)
-
-            return closure.func.body.eval(extended_env)
-        else:
+        if not isinstance(closure, Closure):
             raise EvaluationError('Call applied with non-closure: \'{0}\'', closure)
 
-# TODO - implement:
-#  class Call_STAR(Primitive):
-#  class Interop(Primitive):
-#  class Define(Primitive):
+        extended_env = closure.env
+        for bind_variable, arg in zip(closure.func.formals, self.args):
+            extended_env = extended_env.extend(bind_variable, arg.eval(env))
 
-env = Env().extend('y', Atom(7))
-Var("y").eval(env)
+        return closure.func.body.eval(extended_env)
+
+
+class Cond(Primitive):
+    """ Conditional """
+
+    def __init__(self, *cond_clauses):
+        self.cond_clauses = cond_clauses
+
+    def eval(self, env):
+        for test_expr, then_body in self.cond_clauses:
+            if test_expr.eval(env):
+                return then_body.eval(env)
+
+        return None
+
+
+class InterOp(Primitive):
+    """ Helper class for wrapping Python functions """
+    def __init__(self, func, *args):
+        self.func = func
+        self.args = args
+
+    def eval(self, env):
+        values = (a.eval(env) for a in self.args)
+        return self.func(*values)
+
+
+class Define(Primitive):
+    """ Updates entries in the Global Symbol Table """
+
+    def __init__(self, name, body):
+        self.name = name
+        self.body = body
+
+    def eval(self, env):
+        env[self.name] = self.body.eval(env)
+        return None
+
+
+
+env = Env()
 
 lst1 = Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil())))
 lst2 = List(Atom(4), Atom(2), Atom(3))
-Eq(Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil()))), lst1)
-Eq(lst2, lst1)
+
+Eq(Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil()))), lst1).eval(env)
+Eq(lst2, lst1).eval(env)
 
 Eq(Atom(True),
-   Not(Atom(False)))
+   Not(Atom(False))).eval(env)
 
-Nil_QUESTION(Nil())
-Nil_QUESTION(Atom('Freddy'))
+Nil_QUESTION(Nil()).eval(env)
+Nil_QUESTION(Atom('Freddy')).eval(env)
 
-Atom_QUESTION(Atom('Freddy'))
-Atom_QUESTION(Nil())
+Atom_QUESTION(Atom('Freddy')).eval(env)
+Atom_QUESTION(Nil()).eval(env)
 
-Eq(Nil(),Atom(None))
+Eq(Nil(), Atom(None)).eval(env)
 
-Car(Cdr(lst1))
+Car(Cdr(lst1)).eval(env)
 
-(Cdr(Nil()))
+(Cdr(Nil())).eval(env)
 
 Let("f",
     Atom("Hello"),
-    Cons(Var("f"),
-         Var("f")))
+    Cons(Symbol("f"),
+         Symbol("f"))).eval(env)
 
 Let_STAR([('a', Atom('Hello')),
-          ('b', List(Atom(1),Atom(2),Atom(3))),
+          ('b', List(Atom(1), Atom(2), Atom(3))),
           ('c', Atom('World')),
-          ('c', List(Atom('Big'),Var('c')))],  # <-- re-def shadowing
-         List(Var('a'), Var('c'), Var('b')))
+          ('c', List(Atom('Big'), Symbol('c')))],  # <-- re-def shadowing
+         List(Symbol('a'), Symbol('c'), Symbol('b'))).eval(env)
 
 Let('identity',
-    Function(None, 'x', Var('x')), # <-- anonymous fn
-    Call(Var('identity'), Atom(99)))
+    Lambda(['x'], Symbol('x')), # <-- anonymous fn
+    Call(Symbol('identity'), Atom(99))).eval(env)
+
+# InterOp, i.e. using Python functions
+InterOp(operator.add, Atom(41), Atom(23)).eval(env)
+
+# check unicode, pi & golden ratio
+Define('π', Atom(3.14159265358979323846264338327950288419716939937510)).eval(env)
+Define('ϕ', Atom(1.618033988749894848204586834)).eval(env)
+env['π']
+env['ϕ']
+
+Symbol('π').eval(env)
+Symbol('ϕ').eval(env)
+
+import random
+Define('+', Lambda(['x','y'], InterOp(operator.add, Symbol('x'), Symbol('y')))).eval(env)
+Define('-', Lambda(['x','y'], InterOp(operator.sub, Symbol('x'), Symbol('y')))).eval(env)
+Define('*', Lambda(['x','y'], InterOp(operator.mul, Symbol('x'), Symbol('y')))).eval(env)
+Define('random', Lambda(None, InterOp(random.random))).eval(env)
+Define('<', Lambda(['x','y'], InterOp(operator.lt, Symbol('x'), Symbol('y')))).eval(env)
+
+#from __future__ import print_function
+#Define('print', Lambda(['text'], InterOp(print_function, Symbol('text')))).eval(env)
+
+Call(Symbol('+'), Atom(99), Atom(55)).eval(env)
+env['+']
+
+Call(Symbol('random')).eval(env)
+
+# (let (rnd (random))
+#   (cond
+#     (< rnd 0.5)  "Unlucky"
+#     (< rnd 0.75) "Close, but no cigar"
+#     #t           "Lucky"))
+#
+Let('rnd', Call(Symbol('random')),
+    Cond(
+      [Call(Symbol('<'), Symbol('rnd'), Atom(0.5)), Atom("Unlucky")],
+      [Call(Symbol('<'), Symbol('rnd'), Atom(0.75)), Atom("Close, but no cigar")],
+      [Atom(True), Atom("Lucky")])).eval(env)
+
+
+# (define factorial
+#   (lambda (x)
+#     (cond
+#       (zerop x) 1
+#       #t        (* x (factorial (- x 1))))))
+#
+Define('zero?', Lambda(['n'], Eq(Symbol('n'), Atom(0)))).eval(env)
+Define('factorial', Lambda(['x'],
+                           Cond((Call(Symbol('zero?'), Symbol('x')), Atom(1)),
+                                (Atom(True), Call(Symbol('*'),
+                                                  Symbol('x'),
+                                                  Call(Symbol('factorial'),
+                                                       Call(Symbol('-'),
+                                                            Symbol('x'),
+                                                            Atom(1)))))))).eval(env)
+
+# (factorial 10)
+Call(Symbol('factorial'), Atom(10)).eval(env)
 
