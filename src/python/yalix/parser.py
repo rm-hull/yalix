@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" Takes a stream of characters and produces an Abstract Syntax Tree """
+"""
+Takes a stream of characters and produces an Abstract Syntax Tree
+"""
 
 from yalix.interpreter import Atom
 from pyparsing import *
@@ -58,7 +60,7 @@ def scheme_parser(debug=False):
 
     dblQuotedString.setParseAction(lambda s,l,t: ('Atom', removeQuotes(s,l,t)))
 
-    sexp = Forward() #.setParseAction(lambda tokens: ('Sexp', tokens[0]))
+    sexp = Forward()
 
     LPAREN = Suppress("(")
     RPAREN = Suppress(")")
