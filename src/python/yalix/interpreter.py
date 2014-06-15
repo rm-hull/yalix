@@ -201,6 +201,11 @@ class Call(Primitive):
         if not isinstance(closure, Closure):
             raise EvaluationError('Call applied with non-closure: \'{0}\'', closure)
 
+        if len(closure.func.formals) != len(self.args):
+            raise EvaluationError('Call applied with invalid arity: {0} args expected, {1} supplied',
+                                  len(closure.func.formals),
+                                  len(self.args))
+
         extended_env = closure.env
         for bind_variable, arg in zip(closure.func.formals, self.args):
             extended_env = extended_env.extend(bind_variable, arg.eval(env))
