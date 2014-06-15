@@ -167,28 +167,6 @@ class Let_STAR(Primitive):
             return Let_STAR(self.bindings[1:], self.body).eval(extended_env)
 
 
-class Not(Primitive):
-    """ Negate """
-    def __init__(self, expr):
-        self.expr = expr
-
-    def eval(self, env):
-        return not self.expr.eval(env)
-
-
-class Eq(Primitive):
-    """ Equality check """
-
-    def __init__(self, expr1, expr2):
-        self.expr1 = expr1
-        self.expr2 = expr2
-
-    def eval(self, env):
-        value1 = self.expr1.eval(env)
-        value2 = self.expr2.eval(env)
-        return value1 == value2
-
-
 class Closure(Primitive):
     """ A closure is not in 'source' programs; it is what functions evaluate to """
 
@@ -260,11 +238,11 @@ class Define(Primitive):
 
     def __init__(self, name, body):
         self.name = name
-        self.body = body
+	self.body = body
 
     def eval(self, env):
-        env[self.name] = self.body.eval(env)
-        return None
+	env[self.name] = self.body.eval(env)
+	return None
 
 
 
@@ -273,11 +251,11 @@ env = Env()
 lst1 = Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil())))
 lst2 = List(Atom(4), Atom(2), Atom(3))
 
-Eq(Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil()))), lst1).eval(env)
-Eq(lst2, lst1).eval(env)
-
-Eq(Atom(True),
-   Not(Atom(False))).eval(env)
+#Eq(Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil()))), lst1).eval(env)
+#Eq(lst2, lst1).eval(env)
+#
+#Eq(Atom(True),
+#   Not(Atom(False))).eval(env)
 
 Nil_QUESTION(Nil()).eval(env)
 Nil_QUESTION(Atom('Freddy')).eval(env)
@@ -285,7 +263,7 @@ Nil_QUESTION(Atom('Freddy')).eval(env)
 Atom_QUESTION(Atom('Freddy')).eval(env)
 Atom_QUESTION(Nil()).eval(env)
 
-Eq(Nil(), Atom(None)).eval(env)
+#Eq(Nil(), Atom(None)).eval(env)
 
 Car(Cdr(lst1)).eval(env)
 
@@ -322,7 +300,8 @@ import random
 Define('+', Lambda(['x','y'], InterOp(operator.add, Symbol('x'), Symbol('y')))).eval(env)
 Define('-', Lambda(['x','y'], InterOp(operator.sub, Symbol('x'), Symbol('y')))).eval(env)
 Define('*', Lambda(['x','y'], InterOp(operator.mul, Symbol('x'), Symbol('y')))).eval(env)
-Define('random', Lambda(None, InterOp(random.random))).eval(env)
+Define('random', Lambda((), InterOp(random.random))).eval(env)
+Define('==', Lambda(['x','y'], InterOp(operator.eq, Symbol('x'), Symbol('y')))).eval(env)
 Define('<', Lambda(['x','y'], InterOp(operator.lt, Symbol('x'), Symbol('y')))).eval(env)
 
 #from __future__ import print_function
@@ -341,18 +320,18 @@ Call(Symbol('random')).eval(env)
 #
 Let('rnd', Call(Symbol('random')),
     Cond(
-      [Call(Symbol('<'), Symbol('rnd'), Atom(0.5)), Atom("Unlucky")],
-      [Call(Symbol('<'), Symbol('rnd'), Atom(0.75)), Atom("Close, but no cigar")],
-      [Atom(True), Atom("Lucky")])).eval(env)
+      (Call(Symbol('<'), Symbol('rnd'), Atom(0.5)), Atom("Unlucky")),
+      (Call(Symbol('<'), Symbol('rnd'), Atom(0.75)), Atom("Close, but no cigar")),
+      (Atom(True), Atom("Lucky")))).eval(env)
 
 
 # (define factorial
 #   (lambda (x)
 #     (cond
-#       (zerop x) 1
-#       #t        (* x (factorial (- x 1))))))
+#       ((zero? x) 1)
+#       (#t        (* x (factorial (- x 1)))))))
 #
-Define('zero?', Lambda(['n'], Eq(Symbol('n'), Atom(0)))).eval(env)
+Define('zero?', Lambda(['n'], Call(Symbol('=='), Symbol('n'), Atom(0)))).eval(env)
 Define('factorial', Lambda(['x'],
                            Cond((Call(Symbol('zero?'), Symbol('x')), Atom(1)),
                                 (Atom(True), Call(Symbol('*'),
