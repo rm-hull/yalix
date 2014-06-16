@@ -3,6 +3,7 @@
 
 from yalix.interpreter.primitives import *
 from yalix.interpreter.builtins import *
+from yalix.parser import parse
 from yalix.globals import create_initial_env
 
 env = create_initial_env()
@@ -120,3 +121,34 @@ Call(Symbol('format'),
 g = Call(Symbol('gensym')).eval(env)
 g
 g.name
+
+
+
+# =============================================================================================
+
+test1 = "(define *hello* (list \"world\" -1 #t 3.14159 (list 1 2 3)))"
+
+test2 = """
+(let (rnd (random))
+  (cond
+    ((< rnd 0.5)  "Unlucky")
+    ((< rnd 0.75) "Close, but no cigar")
+    (#t           "Lucky")))
+"""
+
+test3 = """
+(define factorial
+  (lambda (x)
+    (cond
+      ((zero? x) 1)
+      (#t        (* x (factorial (- x 1)))))))
+
+(factorial 10)
+"""
+
+parse(test1).next()
+
+list(parse(test3))
+
+for sexp in parse(test1):
+    print sexp.eval(env)
