@@ -8,6 +8,7 @@ Takes an AST (abstract syntax tree) and an environment in order to evaluate the 
 from abc import ABCMeta, abstractmethod
 from yalix.exceptions import EvaluationError
 from yalix.environment import Env
+from yalix.converter import array_to_linked_list, linked_list_to_array
 import operator
 
 class Primitive(object):
@@ -33,6 +34,17 @@ class Symbol(Primitive):
 
     def eval(self, env):
         return env[self.name]
+
+class Quote(Primitive):
+    """
+    Makes no effort to call the supplied expression when evaluated
+    """
+
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self, env):
+        return array_to_linked_list(self.expr)
 
 
 class Atom(Primitive):
@@ -193,8 +205,16 @@ class Call(Primitive):
     """ A function call """
 
     def __init__(self, funexp, *args):
-        self.funexp = funexp
-        self.args = args
+        if isinstance(funexp, tuple):
+            arr = linked_list_to_array(funexp)
+            self.funexp = arr[0]
+            self.args = arr[1:]
+        elif isinstance(funexp, list):
+            self.funexp = funexp[0]
+            self.args = funexp[1:]
+        else:
+            self.funexp = funexp
+            self.args = args
 
     def eval(self, env):
         closure = self.funexp.eval(env)
@@ -313,9 +333,21 @@ Define('<', Lambda(['x','y'], InterOp(operator.lt, Symbol('x'), Symbol('y')))).e
 #Define('print', Lambda(['text'], InterOp(print_function, Symbol('text')))).eval(env)
 
 Call(Symbol('+'), Atom(99), Atom(55)).eval(env)
+Call([Symbol('+'), Atom(99), Atom(55)]).eval(env)
+Call(array_to_linked_list([Symbol('+'), Atom(99), Atom(55)])).eval(env)
+array_to_linked_list([Symbol('+'), Atom(99), Atom(55)])
+
+
 env['+']
 
 Call(Symbol('random')).eval(env)
+
+q = Quote([Symbol('+'), Atom(2), Atom(3)]).eval(env)
+q
+
+Call(q).eval(env)
+
+#Call(Quote([Symbol('+'), Atom(2), Atom(3)])).eval(env)
 
 # (let (rnd (random))
 #   (cond
