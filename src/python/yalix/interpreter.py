@@ -351,9 +351,9 @@ Call(q).eval(env)
 
 # (let (rnd (random))
 #   (cond
-#     (< rnd 0.5)  "Unlucky"
-#     (< rnd 0.75) "Close, but no cigar"
-#     #t           "Lucky"))
+#     ((< rnd 0.5)  "Unlucky")
+#     ((< rnd 0.75) "Close, but no cigar")
+#     (#t           "Lucky")))
 #
 Let('rnd', Call(Symbol('random')),
     Cond(

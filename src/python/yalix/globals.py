@@ -20,8 +20,9 @@ def gensym(prefix='G__'):
     global gensym_nextID
     global gensym_lock
     with gensym_lock:
-        gensym_nextID = gensym_nextID + 1
-        return Symbol(prefix + str(gensym_nextID))
+        old = gensym_nextID
+        gensym_nextID += 1
+    return Symbol(prefix + str(old))
 
 def interop(fun, arity):
     """ Helper to create a lisp function from a python function """
