@@ -51,11 +51,11 @@ class Sexp(Primitive):
         self.args = args
 
     def eval(self, env):
-        if isinstance(funexp, BuiltIn):
-            return funexp.eval(env)(args)
+        if isinstance(self.funexp, BuiltIn):
+            c = self.funexp.eval(env)
+            return c(*self.args).eval(env)
         else:
-            return Call(funexp, args)
-
+            return Call(self.funexp, self.args).eval(env)
 
 
 class Atom(Primitive):
@@ -96,6 +96,7 @@ class Call(Primitive):
 
     def eval(self, env):
         closure = self.funexp.eval(env)
+        print type(closure)
         if not isinstance(closure, Closure):
             raise EvaluationError('Call applied with non-closure: \'{0}\'', closure)
 
