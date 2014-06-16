@@ -208,6 +208,7 @@ BuiltIn.classes = {
     'cdr': Cdr,
     'list': List,
     'cond': Cond,
+    'lambda': Lambda,
     'let': Let,
     'let*': Let_STAR,
     'define': Define
