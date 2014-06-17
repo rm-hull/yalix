@@ -26,8 +26,8 @@ class BuiltIn(Primitive):
     def __init__(self, name):
         self.name = name
 
-    def eval(env):
-        if name not in BuiltIn.classes:
+    def eval(self, env):
+        if self.name not in BuiltIn.classes:
             raise EvaluationError("No such special-form: {0}", self.name)
 
         return BuiltIn.classes[self.name]
