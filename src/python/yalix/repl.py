@@ -150,5 +150,5 @@ parse(test1).next()
 
 list(parse(test3))
 
-for sexp in parse(test1):
+for sexp in parse(test3):
     print sexp.eval(env)
