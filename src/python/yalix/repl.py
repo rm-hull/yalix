@@ -11,10 +11,10 @@ env = create_initial_env()
 lst1 = Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil())))
 lst2 = List(Atom(4), Atom(2), Atom(3))
 
-#Eq(Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil()))), lst1).eval(env)
-#Eq(lst2, lst1).eval(env)
+# Eq(Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil()))), lst1).eval(env)
+# Eq(lst2, lst1).eval(env)
 #
-#Eq(Atom(True),
+# Eq(Atom(True),
 #   Not(Atom(False))).eval(env)
 
 Nil_QUESTION(Nil()).eval(env)
@@ -23,9 +23,9 @@ Nil_QUESTION(Atom('Freddy')).eval(env)
 Atom_QUESTION(Atom('Freddy')).eval(env)
 Atom_QUESTION(Nil()).eval(env)
 
-#Eq(Nil(), Atom(None)).eval(env)
+# Eq(Nil(), Atom(None)).eval(env)
 
-#Car(Cdr(lst1)).eval(env)
+# Car(Cdr(lst1)).eval(env)
 
 (Cdr(Nil())).eval(env)
 
@@ -41,7 +41,7 @@ Let_STAR([('a', Atom('Hello')),
          List(Symbol('a'), Symbol('c'), Symbol('b'))).eval(env)
 
 Let('identity',
-    Lambda(['x'], Symbol('x')), # <-- anonymous fn
+    Lambda(['x'], Symbol('x')),  # <-- anonymous fn
     Call(Symbol('identity'), Atom(99))).eval(env)
 
 # InterOp, i.e. using Python functions
@@ -58,8 +58,8 @@ Symbol('π').eval(env)
 Symbol('ϕ').eval(env)
 
 
-#from __future__ import print_function
-#Define('print', Lambda(['text'], InterOp(print_function, Symbol('text')))).eval(env)
+# from __future__ import print_function
+# Define('print', Lambda(['text'], InterOp(print_function, Symbol('text')))).eval(env)
 
 Call(Symbol('+'), Atom(99), Atom(55)).eval(env)
 Call([Symbol('+'), Atom(99), Atom(55)]).eval(env)
@@ -75,36 +75,40 @@ q = Quote([Symbol('+'), Atom(2), Atom(3)]).eval(env)
 q
 Call(q).eval(env)
 
-#Call(Quote([Symbol('+'), Atom(2), Atom(3)])).eval(env)
+# Call(Quote([Symbol('+'), Atom(2), Atom(3)])).eval(env)
 
 # (let (rnd (random))
-#   (cond
-#     ((< rnd 0.5)  "Unlucky")
-#     ((< rnd 0.75) "Close, but no cigar")
-#     (#t           "Lucky")))
+#   (if (< rnd 0.5)
+#     "Unlucky"
+#     (if (< rnd 0.75)
+#       "Close, but no cigar"
+#       "Lucky")))
 #
-Let('rnd', Call(Symbol('random')),
-    Cond(
-      (Call(Symbol('<'), Symbol('rnd'), Atom(0.5)), Atom("Unlucky")),
-      (Call(Symbol('<'), Symbol('rnd'), Atom(0.75)), Atom("Close, but no cigar")),
-      (Atom(True), Atom("Lucky")))).eval(env)
+Let('rnd',
+    Call(Symbol('random')),
+    If(Call(Symbol('<'), Symbol('rnd'), Atom(0.5)),
+       Atom("Unlucky"),
+       If(Call(Symbol('<'), Symbol('rnd'), Atom(0.75)),
+          Atom("Close, but no cigar"),
+          Atom("Lucky")))).eval(env)
 
 
 # (define factorial
 #   (lambda (x)
-#     (cond
-#       ((zero? x) 1)
-#       (#t        (* x (factorial (- x 1)))))))
+#     (if (zero? x)
+#       1
+#       (* x (factorial (- x 1))))))
 #
 Define('zero?', Lambda(['n'], Call(Symbol('=='), Symbol('n'), Atom(0)))).eval(env)
 Define('factorial', Lambda(['x'],
-                           Cond((Call(Symbol('zero?'), Symbol('x')), Atom(1)),
-                                (Atom(True), Call(Symbol('*'),
-                                                  Symbol('x'),
-                                                  Call(Symbol('factorial'),
-                                                       Call(Symbol('-'),
-                                                            Symbol('x'),
-                                                            Atom(1)))))))).eval(env)
+                           If(Call(Symbol('zero?'), Symbol('x')),
+                              Atom(1),
+                              Call(Symbol('*'),
+                                   Symbol('x'),
+                                   Call(Symbol('factorial'),
+                                        Call(Symbol('-'),
+                                             Symbol('x'),
+                                             Atom(1))))))).eval(env)
 
 # (factorial 10)
 Call(Symbol('factorial'), Atom(10)).eval(env)
@@ -122,33 +126,37 @@ g = Call(Symbol('gensym')).eval(env)
 g
 g.name
 
-
-
 # =============================================================================================
 
-test1 = "(define *hello* (list \"world\" -1 #t 3.14159 (list 1 2 3)))"
 
 test2 = """
-(let (rnd (random))
-  (cond
-    ((< rnd 0.5)  "Unlucky")
-    ((< rnd 0.75) "Close, but no cigar")
-    (#t           "Lucky")))
-"""
+(define *hello* ["world" -1 #t 3.14159 [1 2 3]])
 
-test3 = """
+(let (rnd (random))
+  (if (< rnd 0.5)
+    "Unlucky"
+    (if (< rnd 0.75)
+      "Close, but no cigar"
+      "Lucky")))
+
 (define factorial
   (lambda (x)
-    (cond
-      ((zero? x) 1)
-      (#t        (* x (factorial (- x 1)))))))
+    (if (zero? x)
+      1
+      (* x (factorial (- x 1))))))
 
 (factorial 10)
+
+*hello*
+
 """
 
-parse(test1).next()
+# No yet fully supported
+# (let* ((x 5)
+#        (y (+ x 7))
+#        (z (+ y x 2)))
+#    (* x y z))
 
-list(parse(test3))
+for ptree in parse(test2):
+    print ptree.eval(env)
 
-for sexp in parse(test3):
-    print sexp.eval(env)
