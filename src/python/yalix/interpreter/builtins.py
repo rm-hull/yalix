@@ -3,7 +3,10 @@
 
 from yalix.exceptions import EvaluationError
 from yalix.converter import array_to_linked_list
-from yalix.interpreter.primitives import BuiltIn, Closure
+from yalix.interpreter.primitives import Closure, Primitive
+
+class BuiltIn(Primitive):
+    pass
 
 
 class Symbol(BuiltIn):
@@ -192,21 +195,3 @@ class Define(BuiltIn):
     def eval(self, env):
         env[self.name] = self.body
         return None
-
-
-BuiltIn.classes = {
-    'symbol': Symbol,
-    'quote': Quote,
-    'atom?': Atom_QUESTION,
-    'nil': Nil,
-    'nil?': Nil_QUESTION,
-    'cons': Cons,
-    'car': Car,
-    'cdr': Cdr,
-    'list': List,
-    'if': If,
-    'lambda': Lambda,
-    'let': Let,
-    'let*': Let_STAR,
-    'define': Define
-}

@@ -7,7 +7,7 @@ Some predefined functions injected into an environment
 
 from yalix.environment import Env
 from yalix.converter import linked_list_to_array
-from yalix.interpreter.primitives import Atom, BuiltIn, InterOp
+from yalix.interpreter.primitives import Atom, InterOp
 from yalix.interpreter.builtins import Lambda, Symbol
 import operator
 import random
@@ -30,10 +30,6 @@ def interop(fun, arity):
     symbols = [gensym() for _ in xrange(arity)]
     bind_variables = [s.name for s in symbols]
     return Lambda(bind_variables, InterOp(fun, *symbols))
-
-def builtIn(name):
-    """ Helper to create a lisp function from a built-in special form """
-    return BuiltIn(name)
 
 def create_initial_env():
     env = Env()
