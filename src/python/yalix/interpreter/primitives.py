@@ -7,7 +7,7 @@ Takes an AST (abstract syntax tree) and an environment in order to evaluate the 
 
 from abc import ABCMeta, abstractmethod
 from yalix.exceptions import EvaluationError
-from yalix.converter import array_to_linked_list, linked_list_to_array
+from yalix.converter import linked_list_to_array
 
 
 class Primitive(object):
@@ -21,18 +21,6 @@ class Primitive(object):
         raise NotImplementedError()
 
 
-class BuiltIn(Primitive):
-
-    def __init__(self, name):
-        self.name = name
-
-    def eval(self, env):
-        if self.name not in BuiltIn.classes:
-            raise EvaluationError("No such special-form: {0}", self.name)
-
-        return BuiltIn.classes[self.name]
-
-
 class InterOp(Primitive):
     """ Helper class for wrapping Python functions """
     def __init__(self, func, *args):
@@ -42,20 +30,6 @@ class InterOp(Primitive):
     def eval(self, env):
         values = (a.eval(env) for a in self.args)
         return self.func(*values)
-
-
-class Sexp(Primitive):
-
-    def __init__(self, funexp, *args):
-        self.funexp = funexp
-        self.args = args
-
-    def eval(self, env):
-        if isinstance(self.funexp, BuiltIn):
-            c = self.funexp.eval(env)
-            return c(*self.args).eval(env)
-        else:
-            return Call(self.funexp, self.args).eval(env)
 
 
 class Atom(Primitive):
@@ -96,7 +70,6 @@ class Call(Primitive):
 
     def eval(self, env):
         closure = self.funexp.eval(env)
-        print type(closure)
         if not isinstance(closure, Closure):
             raise EvaluationError('Call applied with non-closure: \'{0}\'', closure)
 
