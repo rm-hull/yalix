@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-from abc import ABCMeta, abstractmethod
 from yalix.exceptions import EvaluationError
-from yalix.converter import array_to_linked_list, linked_list_to_array
+from yalix.converter import array_to_linked_list
 from yalix.interpreter.primitives import BuiltIn, Closure
 
 
@@ -20,6 +18,7 @@ class Symbol(BuiltIn):
 
     def eval(self, env):
         return env[self.name]
+
 
 class Quote(BuiltIn):
     """
@@ -128,15 +127,14 @@ class Cdr(BuiltIn):
 class Let(BuiltIn):
     """ A local binding """
 
-    def __init__(self, var, expr, body):
-        self.var = var
+    def __init__(self, binding_form, expr, body):
+        self.binding_form = binding_form
         self.expr = expr
         self.body = body
 
     def eval(self, env):
-        name = self.var
         value = self.expr.eval(env)
-        extended_env = env.extend(name, value)
+        extended_env = env.extend(self.binding_form, value)
         return self.body.eval(extended_env)
 
 
@@ -158,7 +156,6 @@ class Let_STAR(BuiltIn):
             return Let_STAR(self.bindings[1:], self.body).eval(extended_env)
 
 
-
 class Lambda(BuiltIn):
     """ A recursive n-argument anonymous function """
 
@@ -170,18 +167,19 @@ class Lambda(BuiltIn):
         return Closure(env, self)
 
 
-class Cond(BuiltIn):
-    """ Conditional """
+class If(BuiltIn):
+    """ If """
 
-    def __init__(self, *cond_clauses):
-        self.cond_clauses = cond_clauses
+    def __init__(self, test_expr, then_expr, else_expr=Nil()):
+        self.test_expr = test_expr
+        self.then_expr = then_expr
+        self.else_expr = else_expr
 
     def eval(self, env):
-        for test_expr, then_body in self.cond_clauses:
-            if test_expr.eval(env):
-                return then_body.eval(env)
-
-        return None
+        if self.test_expr.eval(env):
+            return self.then_expr.eval(env)
+        else:
+            return self.else_expr.eval(env)
 
 
 class Define(BuiltIn):
@@ -196,7 +194,6 @@ class Define(BuiltIn):
         return None
 
 
-
 BuiltIn.classes = {
     'symbol': Symbol,
     'quote': Quote,
@@ -207,10 +204,9 @@ BuiltIn.classes = {
     'car': Car,
     'cdr': Cdr,
     'list': List,
-    'cond': Cond,
+    'if': If,
     'lambda': Lambda,
     'let': Let,
     'let*': Let_STAR,
     'define': Define
 }
-
