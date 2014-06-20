@@ -23,7 +23,7 @@ def scheme_parser(debug=False):
     LBRACKET = Suppress('[')
     RBRACKET = Suppress(']')
 
-    comment = Suppress(Regex(r";.*"))  # TODO
+    comment = Suppress(Regex(r";.*"))
 
     # Atoms
     integer = Regex(r"[+-]?\d+")
