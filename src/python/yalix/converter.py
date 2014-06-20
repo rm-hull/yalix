@@ -3,17 +3,26 @@
 
 def linked_list_to_array(t):
     arr = []
-    while t:
-        arr.append(t[0])
-        t = t[1]
+    if isinstance(t, tuple):
+        while t:
+            arr.append(t[0])
+            t = t[1]
     return arr
 
+def linked_list_to_generator(t):
+    arr = []
+    if isinstance(t, tuple):
+        while t:
+            yield t[0]
+            t = t[1]
+
 def array_to_linked_list(arr):
-    t = None
-    while arr:
-        t = (arr[-1], t)
-        arr = arr[:-1]
-    return t
+    if isinstance(arr, list):
+        t = None
+        while arr:
+            t = (arr[-1], t)
+            arr = arr[:-1]
+        return t
 
 
 # x = (1, (2, (3, (4, (5, None)))))
