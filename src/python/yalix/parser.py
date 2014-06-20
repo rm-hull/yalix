@@ -32,9 +32,6 @@ def scheme_parser(debug=False):
 
     atom = real | integer | boolean | dblQuotedString
 
-    # Symbols
-    symbol = Word(alphanums + "-./_:*+=!?<>")
-
     expr = Forward()
 
     body = ZeroOrMore(expr)
@@ -53,9 +50,13 @@ def scheme_parser(debug=False):
     # Built-ins
     built_in = let_STAR ^ let ^ if_ ^ defun ^ define ^ quote ^ lambda_ ^ list_
 
+    # Symbols
+    symbol = Word(alphanums + "-./_:*+=!?<>")
+
+    # Expressions
     sexp = (LPAREN + symbol + ZeroOrMore(expr) + RPAREN)
     expr << (atom | built_in | symbol | sexp)
-    expr.setDebug(debug)
+    expr.ignore(comment).setDebug(debug)
 
     # Parse actions
     integer.setParseAction(lambda tokens: Atom(int(tokens[0]))).setName('integer')
