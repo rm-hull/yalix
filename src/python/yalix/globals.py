@@ -9,14 +9,17 @@ import random
 import math
 import threading
 
-from yalix.utils import log_progress
+from yalix.parser import parse
 from yalix.environment import Env
+from yalix.exceptions import EvaluationError
 from yalix.converter import linked_list_to_array
 from yalix.interpreter.primitives import Atom, InterOp
 from yalix.interpreter.builtins import Lambda, Symbol
+from yalix.utils import log_progress
 
 gensym_nextID = 0
 gensym_lock = threading.Lock()
+
 
 def gensym(prefix='G__'):
     global gensym_nextID
@@ -26,29 +29,71 @@ def gensym(prefix='G__'):
         gensym_nextID += 1
     return Symbol(prefix + str(old))
 
+
 def interop(fun, arity):
     """ Helper to create a lisp function from a python function """
     symbols = [gensym() for _ in xrange(arity)]
     bind_variables = [s.name for s in symbols]
     return Lambda(bind_variables, InterOp(fun, *symbols))
 
+
 def create_initial_env():
     with log_progress("Creating initial environment"):
         env = Env()
         bootstrap_python_functions(env)
-        bootstrap_functions(env, "lib/core.ylx")
+        bootstrap_lisp_functions(env, "lib/core.ylx")
         return env
+
 
 def format_(value, format_spec):
     return value.format(*linked_list_to_array(format_spec))
 
-def bootstrap_functions(env, from_file):
-    # TODO
-    return None
+
+def car(value):
+    """ Contents of the Address part of Register number """
+    if value is None:
+        return None
+    elif isinstance(value, tuple):
+        return value[0]
+    else:
+        raise EvaluationError('{0} is not a cons-cell', value)
+
+
+def cdr(value):
+    """ Contents of the Decrement part of Register number """
+    if value is None:
+        return None
+    elif isinstance(value, tuple):
+        return value[1]
+    else:
+        raise EvaluationError('{0} is not a cons-cell', value)
+
+
+def atom_QUESTION(value):
+    """ Checks if the supplied value is an atom """
+    if value is None:
+        return False
+    else:
+        return not isinstance(value, tuple)
+
+
+def bootstrap_lisp_functions(env, from_file):
+    pass
+
 
 def bootstrap_python_functions(env):
+    env['nil'] = Atom(None)
+    env['nil?'] = interop(lambda x: x is None, 1)
     env['gensym'] = interop(gensym, 0)
     env['interop'] = interop(interop, 2)
+    env['cons'] = interop(lambda x, y: (x, y), 2)
+    env['car'] = interop(car, 1)
+    env['cdr'] = interop(cdr, 1)
+    env['first'] = interop(car, 1)
+    env['next'] = interop(cdr, 1)
+    env['atom?'] = interop(atom_QUESTION, 1)
+    env['read-string'] = interop(lambda x: parse(x).next(), 1) # Read just one symbol
+    env['eval'] = interop(lambda x: x.eval(env), 1)
 
     # Basic Arithmetic Functions
     env['+'] = interop(operator.add, 2)
