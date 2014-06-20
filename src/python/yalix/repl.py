@@ -127,7 +127,7 @@ def read(count, primary_prompt):
         entry += raw_input(prompt) + '\n'
         if balance(entry) == 0:
             return entry
-        prompt = secondary_prompt
+        prompt = secondary_prompt + '  ' * balance(entry)
 
 
 def prn(input, result, count, prompt):
@@ -265,7 +265,7 @@ Let('rnd',
 #       1
 #       (* x (factorial (- x 1))))))
 #
-Define('zero?', Lambda(['n'], Call(Symbol('=='), Symbol('n'), Atom(0)))).eval(env)
+Define('zero?', Lambda(['n'], Call(Symbol('='), Symbol('n'), Atom(0)))).eval(env)
 Define('factorial', Lambda(['x'],
                            If(Call(Symbol('zero?'), Symbol('x')),
                               Atom(1),
