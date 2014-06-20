@@ -23,6 +23,8 @@ def scheme_parser(debug=False):
     LBRACKET = Suppress('[')
     RBRACKET = Suppress(']')
 
+    comment = Suppress(Regex(r";.*"))  # TODO
+
     # Atoms
     integer = Regex(r"[+-]?\d+")
     real = Regex(r"[+-]?\d+\.\d*([eE][+-]?\d+)?")
@@ -44,9 +46,9 @@ def scheme_parser(debug=False):
     if_ = (LPAREN + Suppress('if') + expr + expr + Optional(expr) + RPAREN)
     define = (LPAREN + Suppress('define') + binding_form + expr + RPAREN)
     defun = (LPAREN + Suppress('define') + LPAREN + binding_form + formals + RPAREN + body + RPAREN)
-    quote = (LPAREN + Suppress('quote') + expr + RPAREN)
+    quote = (LPAREN + Suppress('quote') + expr + RPAREN) | Suppress('\'') + expr
     list_ = (LBRACKET + ZeroOrMore(expr) + RBRACKET) | (LPAREN + Suppress('list') + ZeroOrMore(expr) + RPAREN)
-    lambda_ = (LPAREN + Suppress('lambda') + LPAREN + formals + RPAREN + body + RPAREN)
+    lambda_ = (LPAREN + (Suppress('lambda') | Suppress('λ')) + LPAREN + formals + RPAREN + body + RPAREN)
 
     # Built-ins
     built_in = let_STAR ^ let ^ if_ ^ defun ^ define ^ quote ^ lambda_ ^ list_
@@ -56,24 +58,24 @@ def scheme_parser(debug=False):
     expr.setDebug(debug)
 
     # Parse actions
-    integer.setParseAction(lambda tokens: Atom(int(tokens[0])))
-    real.setParseAction(lambda tokens: Atom(float(tokens[0])))
-    boolean.setParseAction(lambda tokens: Atom(tokens[0] == '#t'))
-    dblQuotedString.setParseAction(lambda s, l, t: Atom(removeQuotes(s, l, t)))
-    symbol.setParseAction(specialForm(Symbol))
-    let.setParseAction(specialForm(Let))
-    let_STAR.setParseAction(specialForm(Let_STAR))
-    if_.setParseAction(specialForm(If))
-    define.setParseAction(specialForm(Define))
-    defun.setParseAction(specialForm(DefineFunction))
-    quote.setParseAction(specialForm(Quote))
-    list_.setParseAction(specialForm(List))
-    lambda_.setParseAction(specialForm(Lambda))
-    sexp.setParseAction(specialForm(Call))
+    integer.setParseAction(lambda tokens: Atom(int(tokens[0]))).setName('integer')
+    real.setParseAction(lambda tokens: Atom(float(tokens[0]))).setName('real number')
+    boolean.setParseAction(lambda tokens: Atom(tokens[0] == '#t')).setName('boolean')
+    dblQuotedString.setParseAction(lambda s, l, t: Atom(removeQuotes(s, l, t))).setName('string')
+    symbol.setParseAction(specialForm(Symbol)).setName('symbol')
+    let.setParseAction(specialForm(Let)).setName('let binding')
+    let_STAR.setParseAction(specialForm(Let_STAR)).setName('let* binding')
+    if_.setParseAction(specialForm(If)).setName('conditional')
+    define.setParseAction(specialForm(Define)).setName('definition')
+    defun.setParseAction(specialForm(DefineFunction)).setName('function definition')
+    quote.setParseAction(specialForm(Quote)).setName('quote')
+    list_.setParseAction(specialForm(List)).setName('list')
+    lambda_.setParseAction(specialForm(Lambda)).setName('lambda')
+    sexp.setParseAction(specialForm(Call)).setName('S-expression')
     return ZeroOrMore(expr)
 
 
 def parse(text):
     result = scheme_parser().parseString(text, parseAll=True)
-    for sexp in result.asList():
-        yield sexp
+    for ast in result.asList():
+        yield ast
