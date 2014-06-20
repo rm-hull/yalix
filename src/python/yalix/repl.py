@@ -101,6 +101,19 @@ def init_readline(env):
                 pass
             atexit.register(readline.write_history_file, histfile)
 
+def input_with_prefill(prompt, text):
+    try:
+        import readline
+        def hook():
+            readline.insert_text(text)
+            readline.redisplay()
+        readline.set_pre_input_hook(hook)
+        return raw_input(prompt)
+    except ImportError:
+        return raw_input(prompt)
+    finally:
+        readline.set_pre_input_hook()
+
 
 def balance(text, bal=0):
     """
@@ -123,12 +136,17 @@ def read(count, primary_prompt):
     prompt = primary_prompt.format(count)
     secondary_prompt = ' ' * len(str(count)) + green('  ...: ')
 
+    prefill = ''
     entry = ''
+
     while True:
-        entry += raw_input(prompt) + '\n'
-        if balance(entry) == 0:
+        entry += input_with_prefill(prompt, prefill) + '\n'
+        prompt = secondary_prompt
+        parens_count = balance(entry)
+        if parens_count == 0:
             return entry
-        prompt = secondary_prompt + '  ' * balance(entry)
+        elif parens_count > 0:
+            prefill = '  ' * parens_count
 
 
 def prn(input, result, count, prompt):
