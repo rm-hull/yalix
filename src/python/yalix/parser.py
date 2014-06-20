@@ -6,7 +6,6 @@
 from pyparsing import *
 from yalix.interpreter.primitives import *
 from yalix.interpreter.builtins import *
-import yalix.exceptions
 
 
 def specialForm(builtinClass):
@@ -59,9 +58,6 @@ def scheme_parser(debug=False):
 
 
 def parse(text):
-    try:
-        result = scheme_parser().parseString(text, parseAll=True)
-        for sexp in result.asList():
-            yield sexp
-    except ParseException as pe:
-        raise yalix.exceptions.ParseException(pe)
+    result = scheme_parser().parseString(text, parseAll=True)
+    for sexp in result.asList():
+        yield sexp

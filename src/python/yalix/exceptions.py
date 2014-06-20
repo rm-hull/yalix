@@ -12,7 +12,7 @@ class YalixError(StandardError):
         self.value = message.format(*args)
 
      def __str__(self):
-        return repr(self.value)
+        return self.value
 
 class EvaluationError(YalixError):
     """ Evaluation specific error handling """
@@ -21,11 +21,3 @@ class EvaluationError(YalixError):
 class EnvironmentError(YalixError):
     """ Enironment specific error handling """
 
-class ParseError(YalixError):
-    """ Parse specific error handling """
-
-    def __init__(self, root_cause):
-        self.root_cause = root_cause
-
-    def __str__(self):
-        return str(self.root_cause)

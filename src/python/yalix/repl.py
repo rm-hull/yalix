@@ -6,6 +6,7 @@ import os
 import sys
 from datetime import datetime
 
+from pyparsing import ParseException
 from yalix.exceptions import YalixError
 from yalix.completer import Completer
 from yalix.interpreter.primitives import *
@@ -167,8 +168,8 @@ def repl(print_callback=prn):
         except KeyboardInterrupt:
             log(bold(red('\nKeyboardInterrupt')))
 
-        except YalixError as ex:
-            log("{0}: {1}", bold(red(repr(type(ex)))), ex)
+        except (YalixError, ParseException) as ex:
+            log("{0}: {1}", bold(red(type(ex).__name__)), ex)
         count += 1
 
 
