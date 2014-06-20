@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from yalix.exceptions import EvaluationError
 from yalix.converter import array_to_linked_list
-from yalix.interpreter.primitives import Closure, Primitive
+from yalix.interpreter.primitives import Atom, Closure, Primitive
 
 __special_forms__ = ['symbol',
-                    'quote',
-                    'list',
-                    'lambda',
-                    'define',
-                    'if',
-                    'let',
-                    'let*']
+                     'quote',
+                     'list',
+                     'lambda',
+                     'define',
+                     'if',
+                     'let',
+                     'let*']
+
 
 class BuiltIn(Primitive):
     pass
@@ -41,52 +41,7 @@ class Quote(BuiltIn):
         self.expr = expr
 
     def eval(self, env):
-        return array_to_linked_list(self.expr)
-
-
-class Atom_QUESTION(BuiltIn):
-    """ Checks if the supplied value is an atom """
-
-    def __init__(self, expr):
-        self.expr = expr
-
-    def eval(self, env):
-        value = self.expr.eval(env)
-        if value is None:
-            return False
-        else:
-            return not isinstance(value, tuple)
-
-
-class Nil(BuiltIn):
-    """ Nil representation """
-
-    def __init__(self):
-        pass
-
-    def eval(self, env):
-        return None
-
-
-class Nil_QUESTION(BuiltIn):
-    """ Checks if the supplied value is nil """
-
-    def __init__(self, expr):
-        self.expr = expr
-
-    def eval(self, env):
-        return self.expr.eval(env) is None
-
-
-class Cons(BuiltIn):
-    """ Constructs memory objects """
-
-    def __init__(self, expr1, expr2):
-        self.expr1 = expr1
-        self.expr2 = expr2
-
-    def eval(self, env):
-        return self.expr1.eval(env), self.expr2.eval(env)
+        return self.expr
 
 
 class List(BuiltIn):
@@ -96,44 +51,7 @@ class List(BuiltIn):
         self.args = args
 
     def eval(self, env):
-        if not self.args:
-            return None
-        else:
-            car = self.args[0]
-            cdr = List(*self.args[1:])
-            return Cons(car, cdr).eval(env)
-
-
-class Car(BuiltIn):
-    """ Contents of the Address part of Register number """
-
-    def __init__(self, expr):
-        self.expr = expr
-
-    def eval(self, env):
-        value = self.expr.eval(env)
-        if value is None:
-            return None
-        elif isinstance(value, tuple):
-            return value[0]
-        else:
-            raise EvaluationError('{0} is not a cons-cell', value)
-
-
-class Cdr(BuiltIn):
-    """ Contents of the Decrement part of Register number """
-
-    def __init__(self, expr):
-        self.expr = expr
-
-    def eval(self, env):
-        value = self.expr.eval(env)
-        if value is None:
-            return Nil().eval(env)
-        elif isinstance(value, tuple):
-            return value[1]
-        else:
-            raise EvaluationError('{0} is not a cons-cell', value)
+        return array_to_linked_list([value.eval(env) for value in self.args])
 
 
 class Let(BuiltIn):
@@ -184,7 +102,7 @@ class Lambda(BuiltIn):
 class If(BuiltIn):
     """ If """
 
-    def __init__(self, test_expr, then_expr, else_expr=Nil()):
+    def __init__(self, test_expr, then_expr, else_expr=Atom(None)):
         self.test_expr = test_expr
         self.then_expr = then_expr
         self.else_expr = else_expr
@@ -206,6 +124,7 @@ class Define(BuiltIn):
     def eval(self, env):
         env[self.name] = self.body
         return self.body
+
 
 class DefineFunction(BuiltIn):
     """ Syntactic sugar for define/lambda """
