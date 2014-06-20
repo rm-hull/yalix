@@ -76,7 +76,7 @@ def bootstrap_python_functions(env):
     env['not='] = interop(operator.ne, 2)
     env['<'] = interop(operator.lt, 2)
     env['<='] = interop(operator.le, 2)
-    env['=='] = interop(operator.eq, 2)
+    env['='] = interop(operator.eq, 2)
     env['>='] = interop(operator.ge, 2)
     env['>'] = interop(operator.gt, 2)
 
