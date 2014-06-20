@@ -11,7 +11,7 @@ from yalix.exceptions import YalixError
 from yalix.completer import Completer
 from yalix.interpreter.primitives import *
 from yalix.interpreter.builtins import *
-from yalix.parser import parse
+from yalix.parser import scheme_parser
 from yalix.utils import log_progress, log
 from yalix.utils.color import red, green, blue, bold
 from yalix.globals import create_initial_env
@@ -177,11 +177,12 @@ def repl(print_callback=prn):
     in_prompt = green('In [') + green(bold('{0}')) + green(']: ')
     out_prompt = red('Out[') + red(bold('{0}')) + red(']: ') + '{1}\n'
 
+    parser = scheme_parser()
     count = 1
     while True:
         try:
             text = read(count, in_prompt)
-            for ast in parse(text):
+            for ast in parser.parseString(text, parseAll=True).asList():
                 result = ast.eval(env)
                 print_callback(text, result, count, out_prompt)
 
@@ -199,4 +200,3 @@ def repl(print_callback=prn):
 if __name__ == '__main__':
     repl()
     sys.exit()
-

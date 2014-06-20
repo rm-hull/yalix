@@ -9,7 +9,7 @@ import random
 import math
 import threading
 
-from yalix.parser import parse
+from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
 from yalix.converter import linked_list_to_array
@@ -78,21 +78,26 @@ def atom_QUESTION(value):
 
 
 def bootstrap_lisp_functions(env, from_file):
-    pass
+    for ast in scheme_parser().parseFile(from_file, parseAll=True).asList():
+        ast.eval(env)
 
 
 def bootstrap_python_functions(env):
+
+    parser = scheme_parser()
+
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
     env['gensym'] = interop(gensym, 0)
     env['interop'] = interop(interop, 2)
     env['cons'] = interop(lambda x, y: (x, y), 2)
     env['car'] = interop(car, 1)
-    env['cdr'] = interop(cdr, 1)
     env['first'] = interop(car, 1)
+    env['cdr'] = interop(cdr, 1)
     env['next'] = interop(cdr, 1)
+    env['rest'] = interop(cdr, 1)
     env['atom?'] = interop(atom_QUESTION, 1)
-    env['read-string'] = interop(lambda x: parse(x).next(), 1) # Read just one symbol
+    env['read-string'] = interop(lambda x: parser.parseString(x, parseAll=True).asList()[0], 1) # Read just one symbol
     env['eval'] = interop(lambda x: x.eval(env), 1)
 
     # Basic Arithmetic Functions
