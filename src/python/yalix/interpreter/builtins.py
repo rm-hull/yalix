@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import yalix.utils as utils
 from yalix.converter import array_to_linked_list
 from yalix.interpreter.primitives import Atom, Closure, Primitive
 
@@ -75,14 +76,26 @@ class Let_STAR(BuiltIn):
         self.bindings = bindings
         self.body = body
 
-    def chunks(self, l, n):
-        """ Yield successive n-sized chunks from l. """
-        for i in xrange(0, len(l), n):
-            yield l[i:i+n]
-
     def eval(self, env):
         extended_env = env
-        for name, expr in self.chunks(self.bindings, 2):
+        for name, expr in utils.chunks(self.bindings, 2):
+            value = expr.eval(extended_env)
+            extended_env = extended_env.extend(name, value)
+        return self.body.eval(extended_env)
+
+
+class LetRec(BuiltIn):
+    """ Multiple recursive local bindings, which must not be shadowed """
+
+    def __init__(self, bindings, body):
+        self.bindings = bindings
+        self.body = body
+
+    def eval(self, env):
+        raise NotImplementedError()
+        extended_env = env
+        # TODO shadow check
+        for name, expr in utils.chunks(self.bindings, 2):
             value = expr.eval(extended_env)
             extended_env = extended_env.extend(name, value)
         return self.body.eval(extended_env)

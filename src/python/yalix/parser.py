@@ -40,6 +40,7 @@ def scheme_parser(debug=False):
 
     let = (LPAREN + Suppress('let') + LPAREN + binding_form + expr + RPAREN + body + RPAREN)
     let_STAR = (LPAREN + Suppress('let*') + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
+    letrec = (LPAREN + Suppress('letrec') + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
     if_ = (LPAREN + Suppress('if') + expr + expr + Optional(expr) + RPAREN)
     define = (LPAREN + Suppress('define') + binding_form + expr + RPAREN)
     defun = (LPAREN + Suppress('define') + LPAREN + binding_form + formals + RPAREN + body + RPAREN)
@@ -48,7 +49,7 @@ def scheme_parser(debug=False):
     lambda_ = (LPAREN + (Suppress('lambda') | Suppress('λ')) + LPAREN + formals + RPAREN + body + RPAREN)
 
     # Built-ins
-    built_in = let_STAR ^ let ^ if_ ^ defun ^ define ^ quote ^ lambda_ ^ list_
+    built_in = let_STAR | letrec | let | if_ | defun | define | quote | lambda_ | list_
 
     # Symbols
     symbol = Word(alphanums + "-./_:*+=!?<>")
@@ -66,6 +67,7 @@ def scheme_parser(debug=False):
     symbol.setParseAction(specialForm(Symbol)).setName('symbol')
     let.setParseAction(specialForm(Let)).setName('let binding')
     let_STAR.setParseAction(specialForm(Let_STAR)).setName('let* binding')
+    letrec.setParseAction(specialForm(LetRec)).setName('letrec binding')
     if_.setParseAction(specialForm(If)).setName('conditional')
     define.setParseAction(specialForm(Define)).setName('definition')
     defun.setParseAction(specialForm(DefineFunction)).setName('function definition')
@@ -74,9 +76,3 @@ def scheme_parser(debug=False):
     lambda_.setParseAction(specialForm(Lambda)).setName('lambda')
     sexp.setParseAction(specialForm(Call)).setName('S-expression')
     return ZeroOrMore(expr)
-
-
-def parse(text):
-    result = scheme_parser().parseString(text, parseAll=True)
-    for ast in result.asList():
-        yield ast

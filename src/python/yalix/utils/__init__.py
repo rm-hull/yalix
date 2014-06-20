@@ -6,12 +6,18 @@ import sys
 from yalix.utils.color import red, green, bold, faint
 
 
+def chunks(l, n):
+    """ Yield successive n-sized chunks from l. """
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
 class log_progress(object):
     def __init__(self, message):
         self.message = message
 
     def __enter__(self):
         sys.stdout.write(faint(self.message + ' ... '))
+        sys.stdout.flush()
 
     def __exit__(self, *exc_info):
         if exc_info:
