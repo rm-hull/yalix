@@ -6,12 +6,14 @@
 from pyparsing import *
 from yalix.interpreter.primitives import *
 from yalix.interpreter.builtins import *
-from yalix.environment import Env
-import operator
+import yalix.exceptions
 
 
 def specialForm(builtinClass):
-    return lambda tokens: builtinClass(*tokens)
+    def invoke(tokens):
+        return builtinClass(*tokens)
+    return invoke
+
 
 def scheme_parser(debug=False):
     # Simple BNF representation of S-Expressions
@@ -56,9 +58,10 @@ def scheme_parser(debug=False):
     return ZeroOrMore(expr)
 
 
-
 def parse(text):
-    result = scheme_parser().parseString(text, parseAll=True)
-    for sexp in result.asList():
-        yield sexp
-
+    try:
+        result = scheme_parser().parseString(text, parseAll=True)
+        for sexp in result.asList():
+            yield sexp
+    except ParseException as pe:
+        raise yalix.exceptions.ParseException(pe)

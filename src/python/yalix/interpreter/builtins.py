@@ -5,6 +5,15 @@ from yalix.exceptions import EvaluationError
 from yalix.converter import array_to_linked_list
 from yalix.interpreter.primitives import Closure, Primitive
 
+__special_forms__ = ['symbol',
+                    'quote',
+                    'list',
+                    'lambda',
+                    'define',
+                    'if',
+                    'let',
+                    'let*']
+
 class BuiltIn(Primitive):
     pass
 

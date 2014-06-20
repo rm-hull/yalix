@@ -4,15 +4,16 @@
 """
 Some predefined functions injected into an environment
 """
-
-from yalix.environment import Env
-from yalix.converter import linked_list_to_array
-from yalix.interpreter.primitives import Atom, InterOp
-from yalix.interpreter.builtins import Lambda, Symbol
 import operator
 import random
 import math
 import threading
+
+from yalix.utils import log_progress
+from yalix.environment import Env
+from yalix.converter import linked_list_to_array
+from yalix.interpreter.primitives import Atom, InterOp
+from yalix.interpreter.builtins import Lambda, Symbol
 
 gensym_nextID = 0
 gensym_lock = threading.Lock()
@@ -32,10 +33,11 @@ def interop(fun, arity):
     return Lambda(bind_variables, InterOp(fun, *symbols))
 
 def create_initial_env():
-    env = Env()
-    bootstrap_python_functions(env)
-    bootstrap_functions(env, "lib/core.ylx")
-    return env
+    with log_progress("Creating initial environment"):
+        env = Env()
+        bootstrap_python_functions(env)
+        bootstrap_functions(env, "lib/core.ylx")
+        return env
 
 def format_(value, format_spec):
     return value.format(*linked_list_to_array(format_spec))

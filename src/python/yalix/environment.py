@@ -38,3 +38,6 @@ class Env(object):
             raise EnvironmentError('\'{0}\' is unbound in environment', name)
 
         return self.globals[name]
+
+    def iteritems(self):
+        return self.globals.iteritems()
