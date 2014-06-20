@@ -1,0 +1,24 @@
+; Core yalix functions
+
+(define (factorial x)
+  (if (= x 0)
+    1
+    (* x (factorial (- x 1)))))
+
+(define (dec n)
+  (- n 1))
+
+(define (inc n)
+  (+ n 1))
+
+(define (range n)
+  (letrec ((accum (λ (x) 
+                (if (< x n)
+                  (cons x (accum (inc x)))))))
+    (accum 0)))
+
+(define (map f xs)
+  (if (first xs)
+    (cons 
+      (f (first xs))
+      (map f (rest xs)))))
