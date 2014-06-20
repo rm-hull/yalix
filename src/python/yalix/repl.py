@@ -20,10 +20,12 @@ from yalix.globals import create_initial_env
 def version():
     return '0.0.1'
 
+
 def copyright():
     return Atom("""
 Copyright (c) {0} Richard Hull.
 All Rights Reserved.""".format(datetime.now().year))
+
 
 def license():
     return Atom("""
@@ -48,6 +50,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.""".format(datetime.now().year))
+
 
 def help():
     return Atom("""
@@ -101,9 +104,11 @@ def init_readline(env):
                 pass
             atexit.register(readline.write_history_file, histfile)
 
+
 def input_with_prefill(prompt, text):
     try:
         import readline
+
         def hook():
             readline.insert_text(text)
             readline.redisplay()
@@ -158,6 +163,7 @@ def ready():
     log(bold('Yalix [{0}]') + ' on Python {1} {2}', version(), sys.version, sys.platform)
     log('Type "help", "copyright", "credits" or "license" for more information.')
 
+
 def repl(print_callback=prn):
     env = create_initial_env()
     env['copyright'] = copyright()
@@ -190,6 +196,9 @@ def repl(print_callback=prn):
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)
         count += 1
 
+if __name__ == '__main__':
+    repl()
+    exit()
 
 env = create_initial_env()
 
@@ -219,10 +228,10 @@ Let("f",
     Cons(Symbol("f"),
          Symbol("f"))).eval(env)
 
-Let_STAR([('a', Atom('Hello')),
-          ('b', List(Atom(1), Atom(2), Atom(3))),
-          ('c', Atom('World')),
-          ('c', List(Atom('Big'), Symbol('c')))],  # <-- re-def shadowing
+Let_STAR(['a', Atom('Hello'),
+          'b', List(Atom(1), Atom(2), Atom(3)),
+          'c', Atom('World'),
+          'c', List(Atom('Big'), Symbol('c'))],  # <-- re-def shadowing
          List(Symbol('a'), Symbol('c'), Symbol('b'))).eval(env)
 
 Let('identity',

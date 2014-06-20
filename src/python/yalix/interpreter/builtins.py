@@ -157,15 +157,17 @@ class Let_STAR(BuiltIn):
         self.bindings = bindings
         self.body = body
 
+    def chunks(self, l, n):
+        """ Yield successive n-sized chunks from l. """
+        for i in xrange(0, len(l), n):
+            yield l[i:i+n]
+
     def eval(self, env):
-        if self.bindings == []:
-            return self.body.eval(env)
-        else:
-            name = self.bindings[0][0]
-            expr = self.bindings[0][1]
-            value = expr.eval(env)
-            extended_env = env.extend(name, value)
-            return Let_STAR(self.bindings[1:], self.body).eval(extended_env)
+        extended_env = env
+        for name, expr in self.chunks(self.bindings, 2):
+            value = expr.eval(extended_env)
+            extended_env = extended_env.extend(name, value)
+        return self.body.eval(extended_env)
 
 
 class Lambda(BuiltIn):
@@ -203,4 +205,15 @@ class Define(BuiltIn):
 
     def eval(self, env):
         env[self.name] = self.body
-        return None
+        return self.body
+
+class DefineFunction(BuiltIn):
+    """ Syntactic sugar for define/lambda """
+
+    def __init__(self, name, formals, body):
+        self.name = name
+        self.lambda_ = Lambda(formals, body)
+
+    def eval(self, env):
+        env[self.name] = self.lambda_
+        return self.lambda_

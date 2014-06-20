@@ -24,36 +24,52 @@ def scheme_parser(debug=False):
     RBRACKET = Suppress(']')
 
     # Atoms
-    integer = Regex(r"[+-]?\d+").setParseAction(lambda tokens: Atom(int(tokens[0])))
-    real = Regex(r"[+-]?\d+\.\d*([eE][+-]?\d+)?").setParseAction(lambda tokens: Atom(float(tokens[0])))
-    boolean = (Keyword("#t") | Keyword("#f")).setParseAction(lambda tokens: Atom(tokens[0] == '#t'))
-    dblQuotedString.setParseAction(lambda s, l, t: Atom(removeQuotes(s, l, t)))
+    integer = Regex(r"[+-]?\d+")
+    real = Regex(r"[+-]?\d+\.\d*([eE][+-]?\d+)?")
+    boolean = (Keyword("#t") | Keyword("#f"))
 
     atom = real | integer | boolean | dblQuotedString
 
     # Symbols
-    symbol = Word(alphanums + "-./_:*+=!?<>").setParseAction(specialForm(Symbol))
+    symbol = Word(alphanums + "-./_:*+=!?<>")
 
     expr = Forward()
 
     body = ZeroOrMore(expr)
     binding_form = Word(alphanums + "-./_:*+=!?<>")
-    let = (LPAREN + Suppress('let') + LPAREN + binding_form + expr + RPAREN + body + RPAREN).setParseAction(specialForm(Let))
-    let_STAR = (LPAREN + Suppress('let*') + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN).setParseAction(specialForm(Let_STAR))
-    if_ = (LPAREN + Suppress('if') + expr + expr + Optional(expr) + RPAREN).setParseAction(specialForm(If))
-    define = (LPAREN + Suppress('define') + binding_form + expr + RPAREN).setParseAction(specialForm(Define))
-    quote = (LPAREN + Suppress('quote') + expr + RPAREN).setParseAction(specialForm(Quote))
-    list_ = (LBRACKET + ZeroOrMore(expr) + RBRACKET).setParseAction(specialForm(List))
+    formals = Group(ZeroOrMore(binding_form))
 
-    formals = (LPAREN + Group(ZeroOrMore(binding_form)) + RPAREN)
-    lambda_ = (LPAREN + Suppress('lambda') + formals + body + RPAREN).setParseAction(specialForm(Lambda))
+    let = (LPAREN + Suppress('let') + LPAREN + binding_form + expr + RPAREN + body + RPAREN)
+    let_STAR = (LPAREN + Suppress('let*') + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
+    if_ = (LPAREN + Suppress('if') + expr + expr + Optional(expr) + RPAREN)
+    define = (LPAREN + Suppress('define') + binding_form + expr + RPAREN)
+    defun = (LPAREN + Suppress('define') + LPAREN + binding_form + formals + RPAREN + body + RPAREN)
+    quote = (LPAREN + Suppress('quote') + expr + RPAREN)
+    list_ = (LBRACKET + ZeroOrMore(expr) + RBRACKET) | (LPAREN + Suppress('list') + ZeroOrMore(expr) + RPAREN)
+    lambda_ = (LPAREN + Suppress('lambda') + LPAREN + formals + RPAREN + body + RPAREN)
 
     # Built-ins
-    built_in = let ^ if_ ^ define ^ quote ^ lambda_ ^ list_
+    built_in = let_STAR ^ let ^ if_ ^ defun ^ define ^ quote ^ lambda_ ^ list_
 
-    sexp = (LPAREN + symbol + ZeroOrMore(expr) + RPAREN).setParseAction(specialForm(Call))
+    sexp = (LPAREN + symbol + ZeroOrMore(expr) + RPAREN)
     expr << (atom | built_in | symbol | sexp)
     expr.setDebug(debug)
+
+    # Parse actions
+    integer.setParseAction(lambda tokens: Atom(int(tokens[0])))
+    real.setParseAction(lambda tokens: Atom(float(tokens[0])))
+    boolean.setParseAction(lambda tokens: Atom(tokens[0] == '#t'))
+    dblQuotedString.setParseAction(lambda s, l, t: Atom(removeQuotes(s, l, t)))
+    symbol.setParseAction(specialForm(Symbol))
+    let.setParseAction(specialForm(Let))
+    let_STAR.setParseAction(specialForm(Let_STAR))
+    if_.setParseAction(specialForm(If))
+    define.setParseAction(specialForm(Define))
+    defun.setParseAction(specialForm(DefineFunction))
+    quote.setParseAction(specialForm(Quote))
+    list_.setParseAction(specialForm(List))
+    lambda_.setParseAction(specialForm(Lambda))
+    sexp.setParseAction(specialForm(Call))
     return ZeroOrMore(expr)
 
 
