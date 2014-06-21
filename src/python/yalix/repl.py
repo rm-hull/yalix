@@ -175,7 +175,7 @@ def repl(print_callback=prn):
     ready()
 
     in_prompt = green('In [') + green(bold('{0}')) + green(']: ')
-    out_prompt = red('Out[') + red(bold('{0}')) + red(']: ') + '{1}\n'
+    out_prompt = red('Out[') + red(bold('{0}')) + red(']: ') + '{1}'
 
     parser = scheme_parser()
     count = 1
@@ -195,7 +195,10 @@ def repl(print_callback=prn):
 
         except (YalixError, ParseException) as ex:
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)
+
         count += 1
+        if text.strip() != '':
+            print
 
 if __name__ == '__main__':
     repl()
