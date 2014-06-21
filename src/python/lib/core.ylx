@@ -1,9 +1,11 @@
 ; Core yalix functions
 
-(define (factorial x)
-  (if (= x 0)
-    1
-    (* x (factorial (- x 1)))))
+(define (identity x)
+  x)
+
+(define (comp f g)
+  (λ (x) 
+    (f (g x))))
 
 (define (dec n)
   (- n 1))
@@ -18,7 +20,12 @@
     (accum 0)))
 
 (define (map f xs)
-  (if (first xs)
+  (if (not (nil? (first xs)))
     (cons 
       (f (first xs))
       (map f (rest xs)))))
+
+(define (factorial x)
+  (if (= x 0)
+    1
+    (* x (factorial (- x 1)))))
