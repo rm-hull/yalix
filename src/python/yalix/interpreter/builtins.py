@@ -27,9 +27,7 @@ class Symbol(BuiltIn):
 
 
 class Quote(BuiltIn):
-    """
-    Makes no effort to call the supplied expression when evaluated
-    """
+    """ Makes no effort to call the supplied expression when evaluated """
 
     def __init__(self, expr):
         self.expr = expr
