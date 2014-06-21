@@ -106,7 +106,8 @@ class Call(Primitive):
                 extended_env = extended_env.extend(bind_variable, value)
 
         if len(closure.func.formals) != len(self.args):
-            raise EvaluationError('Call applied with incorrect arity: {0} args expected, {1} supplied',
+            raise EvaluationError('Call to \'{0}\' applied with incorrect arity: {1} args expected, {2} supplied',
+                                  self.funexp.name, # FIXME: probably ought rely on __repr__ of symbol here....
                                   len(closure.func.formals),
                                   len(self.args))
         return closure.func.body.eval(extended_env)
