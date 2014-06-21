@@ -7,6 +7,8 @@
   (λ (x) 
     (f (g x))))
 
+(define empty? nil?)
+
 (define (dec n)
   (- n 1))
 
@@ -20,10 +22,22 @@
     (accum 0)))
 
 (define (map f xs)
-  (if (not (nil? (first xs)))
+  (if (empty? xs)
+    nil
     (cons 
       (f (first xs))
       (map f (rest xs)))))
+
+(define (fold f val xs)
+  (if (empty? xs)
+    val
+    (fold
+      f
+      (f val (first xs))
+      (rest xs))))
+
+(define  (str . xs)
+  (fold + "" xs))
 
 (define (factorial x)
   (if (= x 0)
