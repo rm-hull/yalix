@@ -3,16 +3,10 @@
 
 import yalix.utils as utils
 from yalix.converter import array_to_linked_list
-from yalix.interpreter.primitives import Atom, Closure, Primitive
+from yalix.interpreter.primitives import Atom, Closure, ForwardRef, Primitive
 
-__special_forms__ = ['symbol',
-                     'quote',
-                     'list',
-                     'lambda',
-                     'define',
-                     'if',
-                     'let',
-                     'let*']
+__special_forms__ = ['symbol', 'quote', 'list', 'lambda', 'define', 'if',
+                     'let', 'let*', 'letrec']
 
 
 class BuiltIn(Primitive):
@@ -26,7 +20,6 @@ class Symbol(BuiltIn):
     """
 
     def __init__(self, name):
-        # TODO: validate symbol name is a string and meets a-zA-Z etc
         self.name = name
 
     def eval(self, env):
@@ -92,12 +85,23 @@ class LetRec(BuiltIn):
         self.body = body
 
     def eval(self, env):
-        raise NotImplementedError()
         extended_env = env
-        # TODO shadow check
+
+        # All names are created first and filled with forward
+        # references and bound to the environment
+        forward_refs = {}
+        for name in self.bindings:
+            if name in forward_refs:
+                raise EnvironmentError("'{0}' is not distinct in letrec", name)
+
+            ref = ForwardRef()
+            forward_refs[name] = ref
+            extended_env = extended_env.extend(name, ref)
+
+        # Then the binding expressions are evaluated and set in the fwd-refs
         for name, expr in utils.chunks(self.bindings, 2):
-            value = expr.eval(extended_env)
-            extended_env = extended_env.extend(name, value)
+            forward_refs[name].reference = expr.eval(extended_env)
+
         return self.body.eval(extended_env)
 
 
@@ -136,7 +140,7 @@ class Define(BuiltIn):
 
     def eval(self, env):
         env[self.name] = self.body
-        return self.body
+        return Symbol(self.name)
 
 
 class DefineFunction(BuiltIn):
@@ -148,4 +152,4 @@ class DefineFunction(BuiltIn):
 
     def eval(self, env):
         env[self.name] = self.lambda_
-        return self.lambda_
+        return Symbol(self.name)

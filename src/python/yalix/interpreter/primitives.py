@@ -53,6 +53,21 @@ class Closure(Primitive):
         return self
 
 
+class ForwardRef(Primitive):
+    """
+    A forward reference is a placeholder that can be set at a later point
+    when the value is available. Evaluating before the reference is set will
+    yield None. Evaluating after the reference is set will yield the
+    referenced value.
+    """
+
+    def __init__(self):
+        self.reference = None
+
+    def eval(self, env):
+        return self.reference
+
+
 class Call(Primitive):
     """ A function call """
 
@@ -70,6 +85,9 @@ class Call(Primitive):
 
     def eval(self, env):
         closure = self.funexp.eval(env)
+        if isinstance(closure, ForwardRef):
+            closure = closure.reference
+
         if not isinstance(closure, Closure):
             raise EvaluationError('Call applied with non-closure: \'{0}\'', closure)
 
