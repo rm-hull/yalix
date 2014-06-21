@@ -7,7 +7,7 @@ Takes an AST (abstract syntax tree) and an environment in order to evaluate the 
 
 from abc import ABCMeta, abstractmethod
 from yalix.exceptions import EvaluationError
-from yalix.converter import linked_list_to_array
+from yalix.converter import linked_list_to_array, array_to_linked_list
 
 
 class Primitive(object):
@@ -69,7 +69,7 @@ class ForwardRef(Primitive):
 
 
 class Call(Primitive):
-    """ A function call """
+    """ A function call (call-by-value) """
 
     def __init__(self, funexp, *args):
         if isinstance(funexp, tuple):
@@ -91,13 +91,22 @@ class Call(Primitive):
         if not isinstance(closure, Closure):
             raise EvaluationError('Call applied with non-closure: \'{0}\'', closure)
 
+        extended_env = closure.env
+        for i, bind_variable in enumerate(closure.func.formals):
+            if bind_variable == '.':  # variadic arg indicator
+                # Use the next formal as the /actual/ bind variable,
+                # evaluate the remaining arguments into a list (NOTE offset from i)
+                # and dont process any more arguments
+                bind_variable = closure.func.formals[i + 1]
+                value = array_to_linked_list([arg.eval(env) for arg in self.args[i:]])
+                extended_env = extended_env.extend(bind_variable, value)
+                return closure.func.body.eval(extended_env)
+            else:
+                value = self.args[i].eval(env)
+                extended_env = extended_env.extend(bind_variable, value)
+
         if len(closure.func.formals) != len(self.args):
-            raise EvaluationError('Call applied with invalid arity: {0} args expected, {1} supplied',
+            raise EvaluationError('Call applied with incorrect arity: {0} args expected, {1} supplied',
                                   len(closure.func.formals),
                                   len(self.args))
-
-        extended_env = closure.env
-        for bind_variable, arg in zip(closure.func.formals, self.args):
-            extended_env = extended_env.extend(bind_variable, arg.eval(env))
-
         return closure.func.body.eval(extended_env)

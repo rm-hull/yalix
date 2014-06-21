@@ -35,8 +35,8 @@ def scheme_parser(debug=False):
     expr = Forward()
 
     body = ZeroOrMore(expr)
-    binding_form = Word(alphanums + "-./_:*+=!?<>")
-    formals = Group(ZeroOrMore(binding_form))
+    binding_form = Word(alphanums + "-/_:*+=!?<>")
+    formals = Group(ZeroOrMore(binding_form) + Optional(Keyword('.') + binding_form))
 
     let = (LPAREN + Suppress('let') + LPAREN + binding_form + expr + RPAREN + body + RPAREN)
     let_STAR = (LPAREN + Suppress('let*') + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
@@ -52,7 +52,7 @@ def scheme_parser(debug=False):
     built_in = let_STAR | letrec | let | if_ | defun | define | quote | lambda_ | list_
 
     # Symbols
-    symbol = Word(alphanums + "-./_:*+=!?<>")
+    symbol = Word(alphanums + "-/_:*+=!?<>")
 
     # Expressions
     sexp = (LPAREN + symbol + ZeroOrMore(expr) + RPAREN)
