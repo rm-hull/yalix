@@ -8,11 +8,15 @@ from yalix.interpreter.primitives import *
 from yalix.interpreter.builtins import *
 
 
-def specialForm(builtinClass):
-    def invoke(tokens):
+def _specialForm(builtinClass):
+    def invoke(src, loc, tokens):
         return builtinClass(*tokens)
     return invoke
 
+def _atom(converter):
+    def invoke(src, loc, tokens):
+        return Atom(converter(tokens[0]))
+    return invoke
 
 def scheme_parser(debug=False):
     # Simple BNF representation of S-Expressions
@@ -60,19 +64,23 @@ def scheme_parser(debug=False):
     expr.ignore(comment).setDebug(debug)
 
     # Parse actions
-    integer.setParseAction(lambda tokens: Atom(int(tokens[0]))).setName('integer')
-    real.setParseAction(lambda tokens: Atom(float(tokens[0]))).setName('real number')
-    boolean.setParseAction(lambda tokens: Atom(tokens[0] == '#t')).setName('boolean')
-    dblQuotedString.setParseAction(lambda s, l, t: Atom(removeQuotes(s, l, t))).setName('string')
-    symbol.setParseAction(specialForm(Symbol)).setName('symbol')
-    let.setParseAction(specialForm(Let)).setName('let binding')
-    let_STAR.setParseAction(specialForm(Let_STAR)).setName('let* binding')
-    letrec.setParseAction(specialForm(LetRec)).setName('letrec binding')
-    if_.setParseAction(specialForm(If)).setName('conditional')
-    define.setParseAction(specialForm(Define)).setName('definition')
-    defun.setParseAction(specialForm(DefineFunction)).setName('function definition')
-    quote.setParseAction(specialForm(Quote)).setName('quote')
-    list_.setParseAction(specialForm(List)).setName('list')
-    lambda_.setParseAction(specialForm(Lambda)).setName('lambda')
-    sexp.setParseAction(specialForm(Call)).setName('S-expression')
+    for name, var, fn in [
+            ('integer',             integer,            _atom(int)),
+            ('real number',         real,               _atom(float)),
+            ('boolean',             boolean,            _atom(lambda x: x == '#t')),
+            ('string',              dblQuotedString,    _atom(lambda x: x[1:-1])),
+            ('symbol',              symbol,             _specialForm(Symbol)),
+            ('let',                 let,                _specialForm(Let)),
+            ('let* binding',        let_STAR,           _specialForm(Let_STAR)),
+            ('letrec binding',      letrec,             _specialForm(LetRec)),
+            ('conditional',         if_,                _specialForm(If)),
+            ('definition',          define,             _specialForm(Define)),
+            ('function definition', defun,              _specialForm(DefineFunction)),
+            ('quote',               quote,              _specialForm(Quote)),
+            ('list',                list_,              _specialForm(List)),
+            ('lambda',              lambda_,            _specialForm(Lambda)),
+            ('S-expression',        sexp,               _specialForm(Call))]:
+        var.setParseAction(fn)
+        var.setName(name)
+
     return ZeroOrMore(expr)
