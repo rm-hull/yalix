@@ -55,7 +55,7 @@ def scheme_parser(debug=False):
     symbol = Word(alphanums + "-/_:*+=!?<>")
 
     # Expressions
-    sexp = (LPAREN + symbol + ZeroOrMore(expr) + RPAREN)
+    sexp = (LPAREN + expr + ZeroOrMore(expr) + RPAREN)
     expr << (atom | built_in | symbol | sexp)
     expr.ignore(comment).setDebug(debug)
 
