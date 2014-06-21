@@ -5,9 +5,9 @@
 Takes an AST (abstract syntax tree) and an environment in order to evaluate the AST
 """
 
+import yalix.utils as utils
 from abc import ABCMeta, abstractmethod
 from yalix.exceptions import EvaluationError
-from yalix.converter import linked_list_to_array, array_to_linked_list
 
 
 class Primitive(object):
@@ -73,7 +73,7 @@ class Call(Primitive):
 
     def __init__(self, funexp, *args):
         if isinstance(funexp, tuple):
-            arr = linked_list_to_array(funexp)
+            arr = utils.linked_list_to_array(funexp)
             self.funexp = arr[0]
             self.args = arr[1:]
         elif isinstance(funexp, list):
@@ -89,7 +89,14 @@ class Call(Primitive):
             closure = closure.reference
 
         if not isinstance(closure, Closure):
-            raise EvaluationError('Call applied with non-closure: \'{0}\'', closure)
+            raise EvaluationError(self, 'Call applied with non-closure: \'{0}\'', closure)
+
+        if len(closure.func.formals) > len(self.args):
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
+                                  self.funexp.name, # FIXME: probably ought rely on __repr__ of symbol here....
+                                  len(closure.func.formals),
+                                  len(self.args))
 
         extended_env = closure.env
         for i, bind_variable in enumerate(closure.func.formals):
@@ -98,7 +105,7 @@ class Call(Primitive):
                 # evaluate the remaining arguments into a list (NOTE offset from i)
                 # and dont process any more arguments
                 bind_variable = closure.func.formals[i + 1]
-                value = array_to_linked_list([arg.eval(env) for arg in self.args[i:]])
+                value = utils.array_to_linked_list([arg.eval(env) for arg in self.args[i:]])
                 extended_env = extended_env.extend(bind_variable, value)
                 return closure.func.body.eval(extended_env)
             else:
@@ -106,8 +113,10 @@ class Call(Primitive):
                 extended_env = extended_env.extend(bind_variable, value)
 
         if len(closure.func.formals) != len(self.args):
-            raise EvaluationError('Call to \'{0}\' applied with incorrect arity: {1} args expected, {2} supplied',
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
                                   self.funexp.name, # FIXME: probably ought rely on __repr__ of symbol here....
                                   len(closure.func.formals),
                                   len(self.args))
+
         return closure.func.body.eval(extended_env)

@@ -9,10 +9,11 @@ import random
 import math
 import threading
 
+import yalix.utils as utils
+
 from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
-from yalix.converter import linked_list_to_array
 from yalix.interpreter.primitives import Atom, InterOp
 from yalix.interpreter.builtins import Lambda, Symbol
 from yalix.utils import log_progress
@@ -46,7 +47,7 @@ def create_initial_env():
 
 
 def format_(value, format_spec):
-    return value.format(*linked_list_to_array(format_spec))
+    return value.format(*utils.linked_list_to_array(format_spec))
 
 
 def car(value):
@@ -56,7 +57,7 @@ def car(value):
     elif isinstance(value, tuple):
         return value[0]
     else:
-        raise EvaluationError('{0} is not a cons-cell', value)
+        raise EvaluationError(None, '{0} is not a cons-cell', value)
 
 
 def cdr(value):
@@ -66,7 +67,7 @@ def cdr(value):
     elif isinstance(value, tuple):
         return value[1]
     else:
-        raise EvaluationError('{0} is not a cons-cell', value)
+        raise EvaluationError(None, '{0} is not a cons-cell', value)
 
 
 def atom_QUESTION(value):

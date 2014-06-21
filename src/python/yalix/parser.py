@@ -7,15 +7,20 @@ from pyparsing import *
 from yalix.interpreter.primitives import *
 from yalix.interpreter.builtins import *
 
+def _brand(obj, src, loc):
+    """ As the object was derived from some source, brand it so """
+    setattr(obj, '__source__', src)
+    setattr(obj, '__location__', loc)
+    return obj
 
 def _specialForm(builtinClass):
     def invoke(src, loc, tokens):
-        return builtinClass(*tokens)
+        return _brand(builtinClass(*tokens), src, loc)
     return invoke
 
 def _atom(converter):
     def invoke(src, loc, tokens):
-        return Atom(converter(tokens[0]))
+        return _brand(Atom(converter(tokens[0])), src, loc)
     return invoke
 
 def scheme_parser(debug=False):

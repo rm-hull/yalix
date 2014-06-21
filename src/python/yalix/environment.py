@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from yalix.exceptions import EnvironmentError
-
 class Env(object):
 
     def __init__(self, stack=None, globals=None):
@@ -35,7 +33,7 @@ class Env(object):
                 env = env[1]
 
         if name not in self.globals:
-            raise EnvironmentError('\'{0}\' is unbound in environment', name)
+            raise KeyError('\'{0}\' is unbound in environment'.format(name))
 
         return self.globals[name]
 

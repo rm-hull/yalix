@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import yalix.utils as utils
-from yalix.converter import array_to_linked_list
+from yalix.exceptions import EvaluationError
 from yalix.interpreter.primitives import Atom, Closure, ForwardRef, Primitive
 
 __special_forms__ = ['symbol', 'quote', 'list', 'lambda', 'define', 'if',
@@ -23,7 +23,10 @@ class Symbol(BuiltIn):
         self.name = name
 
     def eval(self, env):
-        return env[self.name]
+        try:
+            return env[self.name]
+        except KeyError as ex:
+            raise EvaluationError(self, ex.message)
 
 
 class Quote(BuiltIn):
@@ -43,7 +46,7 @@ class List(BuiltIn):
         self.args = args
 
     def eval(self, env):
-        return array_to_linked_list([value.eval(env) for value in self.args])
+        return utils.array_to_linked_list([value.eval(env) for value in self.args])
 
 
 class Let(BuiltIn):
@@ -90,7 +93,7 @@ class LetRec(BuiltIn):
         forward_refs = {}
         for name in self.bindings:
             if name in forward_refs:
-                raise EnvironmentError("'{0}' is not distinct in letrec", name)
+                raise EvaluationError(self, "'{0}' is not distinct in letrec", name)
 
             ref = ForwardRef()
             forward_refs[name] = ref

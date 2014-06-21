@@ -7,7 +7,7 @@ import sys
 from datetime import datetime
 
 from pyparsing import ParseException
-from yalix.exceptions import YalixError
+from yalix.exceptions import EvaluationError
 from yalix.completer import Completer
 from yalix.interpreter.primitives import *
 from yalix.interpreter.builtins import *
@@ -185,6 +185,8 @@ def repl(print_callback=prn):
             for ast in parser.parseString(text, parseAll=True).asList():
                 result = ast.eval(env)
                 print_callback(text, result, count, out_prompt)
+            if text.strip() != '':
+                print
 
         except EOFError:
             log(bold(blue('\nBye!')))
@@ -193,12 +195,18 @@ def repl(print_callback=prn):
         except KeyboardInterrupt:
             log(bold(red('\nKeyboardInterrupt')))
 
-        except (YalixError, ParseException) as ex:
+        except EvaluationError as ex:
+            log("{0}: {1}", bold(red(type(ex).__name__)), ex)
+
+            # TODO: Format error logging better
+            log("Source: {0}", ex.source())
+            log("Location: {0}", ex.location())
+
+        except ParseException as ex:
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)
 
         count += 1
-        if text.strip() != '':
-            print
+
 
 if __name__ == '__main__':
     repl()
