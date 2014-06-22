@@ -90,6 +90,8 @@ def bootstrap_python_functions(env):
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
     env['gensym'] = interop(gensym, 0)
+    env['symbol'] = interop(lambda x: Symbol(x), 1)
+    env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
     env['interop'] = interop(interop, 2)
     env['cons'] = interop(lambda x, y: (x, y), 2)
     env['car'] = interop(car, 1)

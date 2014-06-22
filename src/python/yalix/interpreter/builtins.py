@@ -22,6 +22,9 @@ class Symbol(BuiltIn):
     def __init__(self, name):
         self.name = name
 
+    def __repr__(self):
+        return str(self.name)
+
     def eval(self, env):
         try:
             return env[self.name]
