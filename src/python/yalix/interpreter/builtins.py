@@ -52,13 +52,29 @@ class List(BuiltIn):
         return utils.array_to_linked_list([value.eval(env) for value in self.args])
 
 
+class Body(BuiltIn):
+    """
+    Evaluates a sequence of expressions, presumably for side effects, returning
+    the result of the last evaluated expression.
+    """
+
+    def __init__(self, *body):
+        self.body = body
+
+    def eval(self, env):
+        result = None
+        for expr in self.body:
+            result = expr.eval(env)
+        return result
+
+
 class Let(BuiltIn):
     """ A local binding """
 
-    def __init__(self, binding_form, expr, body):
+    def __init__(self, binding_form, expr, *body):
         self.binding_form = binding_form
         self.expr = expr
-        self.body = body
+        self.body = Body(*body)
 
     def eval(self, env):
         value = self.expr.eval(env)
@@ -69,24 +85,25 @@ class Let(BuiltIn):
 class Let_STAR(BuiltIn):
     """ Multiple local bindings """
 
-    def __init__(self, bindings, body):
+    def __init__(self, bindings, *body):
         self.bindings = bindings
-        self.body = body
+        self.body = Body(*body)
 
     def eval(self, env):
         extended_env = env
         for name, expr in utils.chunks(self.bindings, 2):
             value = expr.eval(extended_env)
             extended_env = extended_env.extend(name, value)
+
         return self.body.eval(extended_env)
 
 
 class LetRec(BuiltIn):
     """ Multiple recursive local bindings, which must not be shadowed """
 
-    def __init__(self, bindings, body):
+    def __init__(self, bindings, *body):
         self.bindings = bindings
-        self.body = body
+        self.body = Body(*body)
 
     def eval(self, env):
         extended_env = env
@@ -112,9 +129,9 @@ class LetRec(BuiltIn):
 class Lambda(BuiltIn):
     """ A recursive n-argument anonymous function """
 
-    def __init__(self, formals, body):
+    def __init__(self, formals, *body):
         self.formals = [] if formals is None else formals
-        self.body = body
+        self.body = Body(*body)
 
     def eval(self, env):
         return Closure(env, self)
@@ -138,22 +155,38 @@ class If(BuiltIn):
 class Define(BuiltIn):
     """ Updates entries in the Global Symbol Table """
 
-    def __init__(self, name, body):
+    def __init__(self, name, expr):
         self.name = name
-        self.body = body
+        self.expr = expr
 
     def eval(self, env):
-        env[self.name] = self.body
+        env[self.name] = self.expr
         return Symbol(self.name)
 
 
 class DefineFunction(BuiltIn):
     """ Syntactic sugar for define/lambda """
 
-    def __init__(self, name, formals, body):
+    def __init__(self, name, formals, *body):
         self.name = name
-        self.lambda_ = Lambda(formals, body)
+        self.lambda_ = Lambda(formals, *body)
 
     def eval(self, env):
         env[self.name] = self.lambda_
         return Symbol(self.name)
+
+
+class Set_PLING(BuiltIn):
+    """ Updates a local binding """
+
+    def __init__(self, binding_form, expr):
+        self.binding_form = binding_form
+        self.expr = expr
+
+    def eval(self, env):
+        try:
+            value = self.expr.eval(env)
+            env.set_local(self.binding_form, value)
+            return None
+        except KeyError as ex:
+            raise EvaluationError(self, ex.message)

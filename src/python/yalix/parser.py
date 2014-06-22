@@ -56,9 +56,11 @@ def scheme_parser(debug=False):
     quote = (LPAREN + Suppress('quote') + expr + RPAREN) | Suppress('\'') + expr
     list_ = (LBRACKET + ZeroOrMore(expr) + RBRACKET) | (LPAREN + Suppress('list') + ZeroOrMore(expr) + RPAREN)
     lambda_ = (LPAREN + (Suppress('lambda') | Suppress('λ')) + LPAREN + formals + RPAREN + body + RPAREN)
+    begin = (LPAREN + Suppress('begin') + body + RPAREN)
+    set_PLING = (LPAREN + Suppress('set!') + binding_form + expr + RPAREN)
 
     # Built-ins
-    built_in = let_STAR | letrec | let | if_ | defun | define | quote | lambda_ | list_
+    built_in = let_STAR | letrec | let | if_ | defun | define | quote | lambda_ | list_ | set_PLING | begin
 
     # Symbols
     symbol = Word(alphanums + "-/_:*+=!?<>")
@@ -84,6 +86,8 @@ def scheme_parser(debug=False):
             ('quote',               quote,              _specialForm(Quote)),
             ('list',                list_,              _specialForm(List)),
             ('lambda',              lambda_,            _specialForm(Lambda)),
+            ('begin',               begin,              _specialForm(Body)),
+            ('set!',                set_PLING,          _specialForm(Set_PLING)),
             ('S-expression',        sexp,               _specialForm(Call))]:
         var.setParseAction(fn)
         var.setName(name)
