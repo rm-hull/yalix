@@ -32,15 +32,15 @@ class GlobalFrameTests(unittest.TestCase):
         env['a'] = TestAtom('c')
         self.assertEqual(env['a'], 'c')
 
-    def test_iteritems(self):
+    def test_items(self):
         env = Env()
-        self.assertListEqual(list(env.iteritems()), [])
+        self.assertListEqual(list(env.items()), [])
         for i in range(10):
             env[i] = TestAtom(i)
-        self.assertItemsEqual([k for k, _ in env.iteritems()],
+        self.assertItemsEqual([k for k, _ in env.items()],
                               range(10))
 
-        self.assertItemsEqual([v for _, v in env.iteritems()],
+        self.assertItemsEqual([v for _, v in env.items()],
                               range(10))
 
 class LocalStackTests(unittest.TestCase):
