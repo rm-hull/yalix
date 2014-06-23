@@ -155,10 +155,10 @@ The third variant, _letrec_, allows forward references like:
 ```scheme
 (letrec ((is-even? (lambda (n)
                        (or (zero? n)
-                           (is-odd? (sub1 n)))))
+                           (is-odd? (dec n)))))
          (is-odd? (lambda (n)
                       (and (not (zero? n))
-                           (is-even? (sub1 n))))))
+                           (is-even? (dec n))))))
     (is-odd? 11))
 ```
 Although this example wont work because _or_ & _and_ haven't been implemented yet!
@@ -292,7 +292,8 @@ Python code:
   There are some primitive types (such as Atoms, Closures, Forward references,
   Python InterOp, etc) which evaluate into simple terms, and some language
   features like Symbols, Quotes, Lambdas, List representations, Let bindings,
-  Conditionals and definitions which combine to implement 
+  Conditionals and definitions which combine to allow complex computation to 
+  be realized.
 
 * **REPL** - a simple read/evaluate/print loop, which features a simplified
   formatter and rudimentary exception reporting.
@@ -320,7 +321,7 @@ Python code:
 
 #### Interpreter
 * Lazy evaluation with `force`, `delay`, `memoize` 
-  (see [lazy-lists](https://github.com/rm-hull/yalix/tree/feature/lazy-lists) branch.
+  (see [lazy-lists](https://github.com/rm-hull/yalix/tree/feature/lazy-lists) branch).
 * Implement `defmacro`, `macro-expand`, splicing, backticks, etc.
 * Implement `apply` as a method or special form
 * Destructuring-bind
