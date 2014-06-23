@@ -5,9 +5,9 @@
 Takes an AST (abstract syntax tree) and an environment in order to evaluate the AST
 """
 
+import yalix.utils as utils
 from abc import ABCMeta, abstractmethod
 from yalix.exceptions import EvaluationError
-from yalix.converter import linked_list_to_array
 
 
 class Primitive(object):
@@ -53,12 +53,27 @@ class Closure(Primitive):
         return self
 
 
+class ForwardRef(Primitive):
+    """
+    A forward reference is a placeholder that can be set at a later point
+    when the value is available. Evaluating before the reference is set will
+    yield None. Evaluating after the reference is set will yield the
+    referenced value.
+    """
+
+    def __init__(self):
+        self.reference = None
+
+    def eval(self, env):
+        return self.reference
+
+
 class Call(Primitive):
-    """ A function call """
+    """ A function call (call-by-value) """
 
     def __init__(self, funexp, *args):
         if isinstance(funexp, tuple):
-            arr = linked_list_to_array(funexp)
+            arr = utils.linked_list_to_array(funexp)
             self.funexp = arr[0]
             self.args = arr[1:]
         elif isinstance(funexp, list):
@@ -70,16 +85,38 @@ class Call(Primitive):
 
     def eval(self, env):
         closure = self.funexp.eval(env)
-        if not isinstance(closure, Closure):
-            raise EvaluationError('Call applied with non-closure: \'{0}\'', closure)
+        if isinstance(closure, ForwardRef):
+            closure = closure.reference
 
-        if len(closure.func.formals) != len(self.args):
-            raise EvaluationError('Call applied with invalid arity: {0} args expected, {1} supplied',
+        if not isinstance(closure, Closure):
+            raise EvaluationError(self, 'Call applied with non-closure: \'{0}\'', closure)
+
+        if len(closure.func.formals) > len(self.args):
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
+                                  self.funexp.name, # FIXME: probably ought rely on __repr__ of symbol here....
                                   len(closure.func.formals),
                                   len(self.args))
 
         extended_env = closure.env
-        for bind_variable, arg in zip(closure.func.formals, self.args):
-            extended_env = extended_env.extend(bind_variable, arg.eval(env))
+        for i, bind_variable in enumerate(closure.func.formals):
+            if bind_variable == '.':  # variadic arg indicator
+                # Use the next formal as the /actual/ bind variable,
+                # evaluate the remaining arguments into a list (NOTE offset from i)
+                # and dont process any more arguments
+                bind_variable = closure.func.formals[i + 1]
+                value = utils.array_to_linked_list([arg.eval(env) for arg in self.args[i:]])
+                extended_env = extended_env.extend(bind_variable, value)
+                return closure.func.body.eval(extended_env)
+            else:
+                value = self.args[i].eval(env)
+                extended_env = extended_env.extend(bind_variable, value)
+
+        if len(closure.func.formals) != len(self.args):
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
+                                  self.funexp.name, # FIXME: probably ought rely on __repr__ of symbol here....
+                                  len(closure.func.formals),
+                                  len(self.args))
 
         return closure.func.body.eval(extended_env)

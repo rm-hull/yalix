@@ -1,0 +1,45 @@
+; Core yalix functions
+
+(define (identity x)
+  x)
+
+(define (comp f g)
+  (λ (x) 
+    (f (g x))))
+
+(define empty? nil?)
+
+(define (dec n)
+  (- n 1))
+
+(define (inc n)
+  (+ n 1))
+
+(define (range n)
+  (letrec ((accum (λ (x) 
+                (if (< x n)
+                  (cons x (accum (inc x)))))))
+    (accum 0)))
+
+(define (map f xs)
+  (if (empty? xs)
+    nil
+    (cons 
+      (f (first xs))
+      (map f (rest xs)))))
+
+(define (fold f val xs)
+  (if (empty? xs)
+    val
+    (fold
+      f
+      (f val (first xs))
+      (rest xs))))
+
+(define  (str . xs)
+  (fold + "" xs))
+
+(define (factorial x)
+  (if (= x 0)
+    1
+    (* x (factorial (- x 1)))))

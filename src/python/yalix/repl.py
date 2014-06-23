@@ -7,11 +7,11 @@ import sys
 from datetime import datetime
 
 from pyparsing import ParseException
-from yalix.exceptions import YalixError
+from yalix.exceptions import EvaluationError
 from yalix.completer import Completer
 from yalix.interpreter.primitives import *
 from yalix.interpreter.builtins import *
-from yalix.parser import parse
+from yalix.parser import scheme_parser
 from yalix.utils import log_progress, log
 from yalix.utils.color import red, green, blue, bold
 from yalix.globals import create_initial_env
@@ -20,10 +20,12 @@ from yalix.globals import create_initial_env
 def version():
     return '0.0.1'
 
+
 def copyright():
     return Atom("""
 Copyright (c) {0} Richard Hull.
 All Rights Reserved.""".format(datetime.now().year))
+
 
 def license():
     return Atom("""
@@ -48,6 +50,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.""".format(datetime.now().year))
+
 
 def help():
     return Atom("""
@@ -102,6 +105,21 @@ def init_readline(env):
             atexit.register(readline.write_history_file, histfile)
 
 
+def input_with_prefill(prompt, text):
+    try:
+        import readline
+
+        def hook():
+            readline.insert_text(text)
+            readline.redisplay()
+        readline.set_pre_input_hook(hook)
+        return raw_input(prompt)
+    except ImportError:
+        return raw_input(prompt)
+    finally:
+        readline.set_pre_input_hook()
+
+
 def balance(text, bal=0):
     """
     Checks whether the parens in the text are balanced:
@@ -123,12 +141,17 @@ def read(count, primary_prompt):
     prompt = primary_prompt.format(count)
     secondary_prompt = ' ' * len(str(count)) + green('  ...: ')
 
+    prefill = ''
     entry = ''
+
     while True:
-        entry += raw_input(prompt) + '\n'
-        if balance(entry) == 0:
+        entry += input_with_prefill(prompt, prefill) + '\n'
+        prompt = secondary_prompt
+        parens_count = balance(entry)
+        if parens_count == 0:
             return entry
-        prompt = secondary_prompt + '  ' * balance(entry)
+        elif parens_count > 0:
+            prefill = '  ' * parens_count
 
 
 def prn(input, result, count, prompt):
@@ -139,6 +162,7 @@ def ready():
     log()
     log(bold('Yalix [{0}]') + ' on Python {1} {2}', version(), sys.version, sys.platform)
     log('Type "help", "copyright", "credits" or "license" for more information.')
+
 
 def repl(print_callback=prn):
     env = create_initial_env()
@@ -151,15 +175,18 @@ def repl(print_callback=prn):
     ready()
 
     in_prompt = green('In [') + green(bold('{0}')) + green(']: ')
-    out_prompt = red('Out[') + red(bold('{0}')) + red(']: ') + '{1}\n'
+    out_prompt = red('Out[') + red(bold('{0}')) + red(']: ') + '{1}'
 
+    parser = scheme_parser()
     count = 1
     while True:
         try:
             text = read(count, in_prompt)
-            for ast in parse(text):
+            for ast in parser.parseString(text, parseAll=True).asList():
                 result = ast.eval(env)
                 print_callback(text, result, count, out_prompt)
+            if text.strip() != '':
+                print
 
         except EOFError:
             log(bold(blue('\nBye!')))
@@ -168,161 +195,19 @@ def repl(print_callback=prn):
         except KeyboardInterrupt:
             log(bold(red('\nKeyboardInterrupt')))
 
-        except (YalixError, ParseException) as ex:
+        except EvaluationError as ex:
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)
+
+            # TODO: Format error logging better
+            log("Source: {0}", ex.source())
+            log("Location: {0}", ex.location())
+
+        except ParseException as ex:
+            log("{0}: {1}", bold(red(type(ex).__name__)), ex)
+
         count += 1
 
 
-env = create_initial_env()
-
-lst1 = Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil())))
-lst2 = List(Atom(4), Atom(2), Atom(3))
-
-# Eq(Cons(Atom(4), Cons(Atom(2), Cons(Atom(3), Nil()))), lst1).eval(env)
-# Eq(lst2, lst1).eval(env)
-#
-# Eq(Atom(True),
-#   Not(Atom(False))).eval(env)
-
-Nil_QUESTION(Nil()).eval(env)
-Nil_QUESTION(Atom('Freddy')).eval(env)
-
-Atom_QUESTION(Atom('Freddy')).eval(env)
-Atom_QUESTION(Nil()).eval(env)
-
-# Eq(Nil(), Atom(None)).eval(env)
-
-# Car(Cdr(lst1)).eval(env)
-
-(Cdr(Nil())).eval(env)
-
-Let("f",
-    Atom("Hello"),
-    Cons(Symbol("f"),
-         Symbol("f"))).eval(env)
-
-Let_STAR([('a', Atom('Hello')),
-          ('b', List(Atom(1), Atom(2), Atom(3))),
-          ('c', Atom('World')),
-          ('c', List(Atom('Big'), Symbol('c')))],  # <-- re-def shadowing
-         List(Symbol('a'), Symbol('c'), Symbol('b'))).eval(env)
-
-Let('identity',
-    Lambda(['x'], Symbol('x')),  # <-- anonymous fn
-    Call(Symbol('identity'), Atom(99))).eval(env)
-
-# InterOp, i.e. using Python functions
-import operator
-InterOp(operator.add, Atom(41), Atom(23)).eval(env)
-
-# check unicode, pi & golden ratio
-Define('π', Atom(3.14159265358979323846264338327950288419716939937510)).eval(env)
-Define('ϕ', Atom(1.618033988749894848204586834)).eval(env)
-env['π']
-env['ϕ']
-
-Symbol('π').eval(env)
-Symbol('ϕ').eval(env)
-
-
-# from __future__ import print_function
-# Define('print', Lambda(['text'], InterOp(print_function, Symbol('text')))).eval(env)
-
-Call(Symbol('+'), Atom(99), Atom(55)).eval(env)
-Call([Symbol('+'), Atom(99), Atom(55)]).eval(env)
-Call(array_to_linked_list([Symbol('+'), Atom(99), Atom(55)])).eval(env)
-array_to_linked_list([Symbol('+'), Atom(99), Atom(55)])
-
-
-env['+']
-
-Call(Symbol('random')).eval(env)
-
-q = Quote([Symbol('+'), Atom(2), Atom(3)]).eval(env)
-q
-Call(q).eval(env)
-
-# Call(Quote([Symbol('+'), Atom(2), Atom(3)])).eval(env)
-
-# (let (rnd (random))
-#   (if (< rnd 0.5)
-#     "Unlucky"
-#     (if (< rnd 0.75)
-#       "Close, but no cigar"
-#       "Lucky")))
-#
-Let('rnd',
-    Call(Symbol('random')),
-    If(Call(Symbol('<'), Symbol('rnd'), Atom(0.5)),
-       Atom("Unlucky"),
-       If(Call(Symbol('<'), Symbol('rnd'), Atom(0.75)),
-          Atom("Close, but no cigar"),
-          Atom("Lucky")))).eval(env)
-
-
-# (define factorial
-#   (lambda (x)
-#     (if (zero? x)
-#       1
-#       (* x (factorial (- x 1))))))
-#
-Define('zero?', Lambda(['n'], Call(Symbol('='), Symbol('n'), Atom(0)))).eval(env)
-Define('factorial', Lambda(['x'],
-                           If(Call(Symbol('zero?'), Symbol('x')),
-                              Atom(1),
-                              Call(Symbol('*'),
-                                   Symbol('x'),
-                                   Call(Symbol('factorial'),
-                                        Call(Symbol('-'),
-                                             Symbol('x'),
-                                             Atom(1))))))).eval(env)
-
-# (factorial 10)
-Call(Symbol('factorial'), Atom(10)).eval(env)
-
-# (format "{0} PI = {1}" (list 2 (* 2 math/pi)))
-Call(Symbol('format'),
-     Atom('{0} PI = {1}'),
-     List(Atom(2),
-          Call(Symbol('*'),
-               Atom(2),
-               Symbol('math/pi')))).eval(env)
-
-# (gensym)
-g = Call(Symbol('gensym')).eval(env)
-g
-g.name
-
-# =============================================================================================
-
-
-test2 = """
-(define *hello* ["world" -1 #t 3.14159 [1 2 3]])
-
-(let (rnd (random))
-  (if (< rnd 0.5)
-    "Unlucky"
-    (if (< rnd 0.75)
-      "Close, but no cigar"
-      "Lucky")))
-
-(define factorial
-  (lambda (x)
-    (if (zero? x)
-      1
-      (* x (factorial (- x 1))))))
-
-(factorial 10)
-
-*hello*
-
-"""
-
-# No yet fully supported
-# (let* ((x 5)
-#        (y (+ x 7))
-#        (z (+ y x 2)))
-#    (* x y z))
-
-for ptree in parse(test2):
-    print ptree.eval(env)
+if __name__ == '__main__':
+    repl()
+    sys.exit()

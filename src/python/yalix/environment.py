@@ -1,43 +1,56 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from yalix.exceptions import EnvironmentError
-
 class Env(object):
 
-    def __init__(self, stack=None, globals=None):
-        self.stack = stack
-        self.globals = globals if globals else {}
-
+    def __init__(self, local_stack=None, global_frame=None):
+        self.local_stack = local_stack if local_stack else []
+        self.global_frame = global_frame if global_frame else {}
 
     def extend(self, name, value):
         """
-        Extend the stack with the given name/value.
-        Note: globals are shared across extended environments.
+        Extend the local stack with the given name/value.
+        Note 2: global frame is shared across extended environments.
         """
-        return Env(stack=((name, value), self.stack), globals=self.globals)
+        new_stack = list(self.local_stack)
+        new_stack.append((name, value))
+        return Env(local_stack=new_stack, global_frame=self.global_frame)
+
+    def set_local(self, name, value):
+        """
+        Traverses the local stack and sets the first instance of name with value
+        """
+        stack = self.local_stack
+        for i in xrange(1, len(stack) + 1):
+            if self.local_stack[-i][0] == name:
+                self.local_stack[-i] = (name, value)
+                return
+
+        raise KeyError('Assignment disallowed: \'{0}\' is unbound in local environment'.format(name))
 
     def __setitem__(self, name, value):
         """
         Adds a new global definition, and evaluates it according to self
         """
-        self.globals[name] = value.eval(self)
+        # TODO: not sure this is the right place -> should be pushed out to callers
+        self.global_frame[name] = value.eval(self)
 
     def __getitem__(self, name):
         """
-        Look in the stack first for the named item, then try the globals
+        Look in the local stack first for the named item, then try the global frame
         """
-        env = self.stack
-        while env:
-            if env[0][0] == name:
-                return env[0][1]
+        stack = self.local_stack
+        while stack:
+            peek = stack[-1]
+            if peek[0] == name:
+                return peek[1]
             else:
-                env = env[1]
+                stack = stack[:-1]
 
-        if name not in self.globals:
-            raise EnvironmentError('\'{0}\' is unbound in environment', name)
+        if name not in self.global_frame:
+            raise KeyError('\'{0}\' is unbound in environment'.format(name))
 
-        return self.globals[name]
+        return self.global_frame[name]
 
     def iteritems(self):
-        return self.globals.iteritems()
+        return self.global_frame.iteritems()
