@@ -14,8 +14,8 @@ class BuiltinsTest(unittest.TestCase):
 
     def test_list(self):
         env = Env()
-        lst = List(Atom(4), Atom(2), Atom(3))
-        self.assertEqual((4, (2, (3, None))), lst.eval(env))
+        lst = List(Atom(4), Atom(2), Atom(3)).eval(env)
+        self.assertEqual((4, (2, (3, None))), lst)
 
     def let_binding_test(self):
         env = Env()
@@ -23,7 +23,7 @@ class BuiltinsTest(unittest.TestCase):
                   Atom("Hello"),
                   List(Symbol("f"),
                        Symbol("f"))).eval(env)
-        self.assertEqual(lst, ('Hello', ('Hello', None)))
+        self.assertEqual(('Hello', ('Hello', None)), lst)
 
     def let_STAR_shadow_binding_test(self):
         env = Env()
@@ -32,20 +32,20 @@ class BuiltinsTest(unittest.TestCase):
                         'c', Atom('World'),
                         'c', List(Atom('Big'), Symbol('c'))],  # <-- re-def shadowing
                 List(Symbol('a'), Symbol('c'), Symbol('b'))).eval(env)
-        self.assertEqual(lst, ('Hello', (('Big', ('World', None)), ((1, (2, (3, None))), None))))
+        self.assertEqual(('Hello', (('Big', ('World', None)), ((1, (2, (3, None))), None))), lst)
 
     def lambda_test(self):
         env = Env()
         value = Let('identity', Lambda(['x'], Symbol('x')),  # <-- anonymous fn
                   Call(Symbol('identity'), Atom(99))).eval(env)
-        self.assertEqual(value, 99)
+        self.assertEqual(99, value)
 
     def interop_test(self):
         # InterOp, i.e. using Python functions
         import operator
         env = Env()
         value = InterOp(operator.add, Atom(41), Atom(23)).eval(env)
-        self.assertEqual(value, 64)
+        self.assertEqual(64, value)
 
     def define_unicode_test(self):
         env = Env()
@@ -56,11 +56,11 @@ class BuiltinsTest(unittest.TestCase):
         Define('π', Atom(pi)).eval(env)
         Define('ϕ', Atom(rho)).eval(env)
 
-        self.assertAlmostEqual(env['π'], pi)
-        self.assertAlmostEqual(env['ϕ'], rho)
+        self.assertAlmostEqual(pi, env['π'])
+        self.assertAlmostEqual(rho, env['ϕ'])
 
-        self.assertAlmostEqual(Symbol('π').eval(env), pi)
-        self.assertAlmostEqual(Symbol('ϕ').eval(env), rho)
+        self.assertAlmostEqual(pi, Symbol('π').eval(env))
+        self.assertAlmostEqual(rho, Symbol('ϕ').eval(env))
 
     def call_test(self):
         env = Env()
@@ -70,9 +70,9 @@ class BuiltinsTest(unittest.TestCase):
                                    Symbol('y')))).eval(env)
 
         # Three ways to call
-        self.assertEqual(Call(Symbol('+'), Atom(99), Atom(55)).eval(env), 154)
-        self.assertEqual(Call([Symbol('+'), Atom(99), Atom(55)]).eval(env), 154)
-        self.assertEqual(Call(array_to_linked_list([Symbol('+'), Atom(99), Atom(55)])).eval(env), 154)
+        self.assertEqual(154, Call(Symbol('+'), Atom(99), Atom(55)).eval(env))
+        self.assertEqual(154, Call([Symbol('+'), Atom(99), Atom(55)]).eval(env))
+        self.assertEqual(154, Call(array_to_linked_list([Symbol('+'), Atom(99), Atom(55)])).eval(env))
 
     def quote_test(self):
         env = Env()
@@ -83,7 +83,7 @@ class BuiltinsTest(unittest.TestCase):
 
         q = Quote([Symbol('+'), Atom(2), Atom(3)]).eval(env)
         value = Call(q).eval(env)
-        self.assertEqual(value, 5)
+        self.assertEqual(5, value)
 
         # Call(Quote([Symbol('+'), Atom(2), Atom(3)])).eval(env)
 
@@ -130,7 +130,7 @@ class BuiltinsTest(unittest.TestCase):
 
         # (factorial 10)
         value = Call(Symbol('factorial'), Atom(10)).eval(env)
-        self.assertEquals(value, 3628800)
+        self.assertEquals(3628800, value)
 
 
 # Should be in globals

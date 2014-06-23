@@ -19,29 +19,27 @@ class GlobalFrameTests(unittest.TestCase):
     def test_define(self):
         env = Env()
         env['a'] = TestAtom('b')
-        self.assertEqual(env['a'], 'b')
+        self.assertEqual('b', env['a'])
 
     def test_lookup_fails(self):
         env = Env()
         with self.assertRaises(KeyError):
-            self.assertEqual(env['a'], 'b')
+            self.assertEqual('b', env['a'])
 
     def test_overwrite(self):
         env = Env()
         env['a'] = TestAtom('b')
         env['a'] = TestAtom('c')
-        self.assertEqual(env['a'], 'c')
+        self.assertEqual('c', env['a'])
 
     def test_items(self):
         env = Env()
         self.assertListEqual(list(env.items()), [])
         for i in range(10):
             env[i] = TestAtom(i)
-        self.assertItemsEqual([k for k, _ in env.items()],
-                              range(10))
+        self.assertEqual(range(10), sorted([k for k, _ in env.items()]))
+        self.assertEqual(range(10), sorted([v for _, v in env.items()]))
 
-        self.assertItemsEqual([v for _, v in env.items()],
-                              range(10))
 
 class LocalStackTests(unittest.TestCase):
     pass
