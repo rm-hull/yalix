@@ -110,8 +110,8 @@ Out[6]: False
 
 #### Lists
 
-Lists are represented by CONS-cells, but there is some syntactic sugar
-to make creation simple:
+Lists are represented by CONS-cells, can be arbitrarily nested, and there
+is some syntactic sugar to make creation simple:
 
 ```scheme
 In [7]: [1 2 3 4]
@@ -132,7 +132,7 @@ liable to change** so that it prints as a conventional list - to be done as
 part of implementing lazy lists.
 
 Access into and traversal of lists is via `car`/`cdr`, or `first`/`second`/`rest`/`next`.
-Expect that `take` and `drop` (and variants will be implemented shortly).
+Expect that `take` and `drop` (and variants) will be implemented shortly.
 
 #### Let bindings
 
@@ -253,7 +253,7 @@ In [28]: (gensym)
 Out[28]: G__87
 ```
 
-#### Metalingustic evaluation
+#### Metalinguistic evaluation
 
 The parser can be invoked directly by calling `read-string`:
 
@@ -271,6 +271,17 @@ Out[30]: 41
 ```
 
 `apply` has not yet been implemented, so the circle is not yet complete.
+
+#### Comments
+
+The semi-colon character is used to represent a comment to the end of the
+current line. Comments are stripped out by the parser and are not passed
+to the interpreter.
+
+```scheme
+In [31]: ; this is a comment, which is ignored 
+In [12]: 
+```
 
 ### Implementation Details
 
@@ -351,8 +362,10 @@ Python code:
 
 ## References
 
-* http://racket-lang.org/
+* http://www.ccs.neu.edu/home/matthias/BTLS/
+* http://groups.csail.mit.edu/mac/classes/6.001/abelson-sussman-lectures/
 * http://courses.cs.washington.edu/courses/cse341/11sp/
+* http://racket-lang.org/
 
 ## Contributing
 
