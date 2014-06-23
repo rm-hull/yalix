@@ -1,4 +1,4 @@
-# Yalix
+# Yalix [![Build Status](https://secure.travis-ci.org/rm-hull/yalix.png)](http://travis-ci.org/rm-hull/yalix)
 
 Yalix is a LISP interpreter written in Python. The dialect it mostly
 resembles is that of [Racket](http://racket-lang.org/) but is by far
@@ -29,7 +29,7 @@ developer under feature branches.
 * Evaluation of S-expressions
 * Named and anonymous functions (lambdas)
 * Variadic functions
-* Recursive (letrec) definitions
+* Recursive (letrec) bindings
 * Rudimentary support for symbolic computation
 * Atoms: ints, real numbers, strings, booleans
 * Immutable persistent data structures: linked lists
