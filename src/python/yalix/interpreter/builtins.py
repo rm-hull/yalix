@@ -3,10 +3,10 @@
 
 import yalix.utils as utils
 from yalix.exceptions import EvaluationError
-from yalix.interpreter.primitives import Atom, Closure, ForwardRef, Primitive
+from yalix.interpreter.primitives import Atom, Call, Closure, ForwardRef, Primitive
 
 __special_forms__ = ['symbol', 'quote', 'list', 'lambda', 'define', 'if',
-                     'let', 'let*', 'letrec']
+                     'let', 'let*', 'letrec', 'begin', 'set!', 'delay']
 
 
 class BuiltIn(Primitive):
@@ -49,7 +49,14 @@ class List(BuiltIn):
         self.args = args
 
     def eval(self, env):
-        return utils.array_to_linked_list([value.eval(env) for value in self.args])
+        if self.args:
+            first = self.args[0]
+            rest = List(*self.args[1:])
+            return Call(Symbol('cons'), first, rest).eval(env)
+        else:
+            return None
+
+    #    return utils.array_to_linked_list([value.eval(env) for value in self.args], env)
 
 
 class Body(BuiltIn):
@@ -137,6 +144,16 @@ class Lambda(BuiltIn):
         return Closure(env, self)
 
 
+class Delay(BuiltIn):
+
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self, env):
+        print "evaluating delay"
+        return Lambda([], Lambda([], self.expr).eval(env))
+
+
 class If(BuiltIn):
     """ If """
 
@@ -190,3 +207,4 @@ class Set_PLING(BuiltIn):
             return None
         except KeyError as ex:
             raise EvaluationError(self, ex.message)
+

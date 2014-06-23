@@ -4,8 +4,45 @@
   x)
 
 (define (comp f g)
-  (λ (x) 
+  (λ (x)
     (f (g x))))
+
+(define (memoize f)
+  (let* ((already-run? #f)
+         (result nil))
+    (λ ()
+       (if (not already-run?)
+         (begin
+           (set! result (f))
+           (set! already-run? #t)
+           result)
+         result))))
+
+(define (force delayed-object)
+  (delayed-object))
+
+(define (cons a b)
+  (tuple a (delay b)))
+
+(define (car xs)
+  (if (nil? xs)
+    nil
+    (get xs 0)))
+
+(define (cdr xs)
+  (if (nil? xs)
+    nil
+    (force (get xs 1))))
+
+(define first car)
+
+(define next cdr)
+
+(define rest cdr)
+
+(define second (comp first next))
+
+(define third (comp second next))
 
 (define empty? nil?)
 
@@ -16,15 +53,15 @@
   (+ n 1))
 
 (define (range n)
-  (letrec ((accum (λ (x) 
-                (if (< x n)
-                  (cons x (accum (inc x)))))))
+  (letrec ((accum (λ (x)
+                    (if (< x n)
+                      (cons x (accum (inc x)))))))
     (accum 0)))
 
 (define (map f xs)
   (if (empty? xs)
     nil
-    (cons 
+    (cons
       (f (first xs))
       (map f (rest xs)))))
 

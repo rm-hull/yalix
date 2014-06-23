@@ -14,7 +14,7 @@ import yalix.utils as utils
 from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
-from yalix.interpreter.primitives import Atom, InterOp
+from yalix.interpreter.primitives import Atom, InterOp, Call
 from yalix.interpreter.builtins import Lambda, Symbol
 from yalix.utils import log_progress
 
@@ -37,7 +37,6 @@ def interop(fun, arity):
     bind_variables = [s.name for s in symbols]
     return Lambda(bind_variables, InterOp(fun, *symbols))
 
-
 def create_initial_env():
     with log_progress("Creating initial environment"):
         env = Env()
@@ -45,29 +44,11 @@ def create_initial_env():
         bootstrap_lisp_functions(env, "lib/core.ylx")
         return env
 
-
 def format_(value, format_spec):
     return value.format(*utils.linked_list_to_array(format_spec))
 
-
-def car(value):
-    """ Contents of the Address part of Register number """
-    if value is None:
-        return None
-    elif isinstance(value, tuple):
-        return value[0]
-    else:
-        raise EvaluationError(None, '{0} is not a cons-cell', value)
-
-
-def cdr(value):
-    """ Contents of the Decrement part of Register number """
-    if value is None:
-        return None
-    elif isinstance(value, tuple):
-        return value[1]
-    else:
-        raise EvaluationError(None, '{0} is not a cons-cell', value)
+def error(msg):
+    raise EvaluationError(None, msg)
 
 
 def atom_QUESTION(value):
@@ -82,6 +63,10 @@ def bootstrap_lisp_functions(env, from_file):
     for ast in scheme_parser().parseFile(from_file, parseAll=True).asList():
         ast.eval(env)
 
+def cons(a, b):
+    print 'tuple: (a=' + str(a) + ', ' + str(b) + ')'
+    return (a, b)
+
 
 def bootstrap_python_functions(env):
 
@@ -93,15 +78,12 @@ def bootstrap_python_functions(env):
     env['symbol'] = interop(lambda x: Symbol(x), 1)
     env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
     env['interop'] = interop(interop, 2)
-    env['cons'] = interop(lambda x, y: (x, y), 2)
-    env['car'] = interop(car, 1)
-    env['first'] = interop(car, 1)
-    env['cdr'] = interop(cdr, 1)
-    env['next'] = interop(cdr, 1)
-    env['rest'] = interop(cdr, 1)
+    env['get'] = interop(lambda x, y: x[y], 2)
+    env['tuple'] = interop(cons, 2)
     env['atom?'] = interop(atom_QUESTION, 1)
     env['read-string'] = interop(lambda x: parser.parseString(x, parseAll=True).asList()[0], 1) # Read just one symbol
     env['eval'] = interop(lambda x: x.eval(env), 1)
+    env['error'] = interop(error, 1)
 
     # Basic Arithmetic Functions
     env['+'] = interop(operator.add, 2)
