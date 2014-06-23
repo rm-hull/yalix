@@ -161,7 +161,7 @@ The third variant, _letrec_, allows forward references like:
                            (is-even? (sub1 n))))))
     (is-odd? 11))
 ```
-Although this example wont work because _or_/_and_ havent been implemented yet!
+Although this example wont work because _or_ & _and_ haven't been implemented yet!
 
 #### Lambdas and function definitions
 
@@ -236,9 +236,7 @@ Out[22]: fred
 
 In [23]: (symbol? fred)
 EvaluationError: 'fred' is unbound in environment
-Source: (symbol? fred)
 
-Location: 9
 In [24]: (symbol? 'fred)
 Out[24]: True
 
@@ -314,7 +312,7 @@ Python code:
 ```scheme
 (define (factorial n)
   ;^ The factorial of a non-negative integer n, denoted by n!, is
-  :^ the product of all positive integers less than or equal to n.
+  ;^ the product of all positive integers less than or equal to n.
   (if (= n 0)
     1
     (* n (factorial (- n 1)))))
