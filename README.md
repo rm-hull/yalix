@@ -34,6 +34,7 @@ developer under feature branches.
 * Atoms: ints, real numbers, strings, booleans
 * Immutable persistent data structures: linked lists
 * Some core library higher-order functions (map, fold, etc.)
+* Semi-colon comments
 
 #### Features forthcoming
 
@@ -62,15 +63,292 @@ and the REPL should hopefully present:
     Type "help", "copyright", "credits" or "license" for more information. 
     In [1]: 
     
-To exit from the REPL, use _CTRL_-D, to abort the current input, use
-_CTRL_-C.
-
+To exit from the REPL, use _CTRL_-D, to abort the current input, use _CTRL_-C.
 If installed, GNU readline is used to allow history and simple editing.
 keyword completion is avaible by pressing _TAB_.
 
+If [ansicolors](https://pypi.python.org/pypi/ansicolors/1.0.2) is installed, 
+then the Yalix REPL will make use of color if supported by the terminal:
+
+![screenshot](https://raw.github.com/rm-hull/yalix/master/doc/screenshot.png)
+
+Install ansicolors with:
+
+    $ sudo pip install ansicolors
+
 ### Language Features
 
+Yalix is intended as a 'minimalist' LISP. As such it takes direction primarily
+from PLT-Scheme and Racket.
+
+#### Atoms
+
+Integers, Real numbers, Strings and Booleans are all supported:
+
+```scheme
+Yalix [0.0.1] on Python 2.7.6 (default, Mar 22 2014, 22:59:56) 
+[GCC 4.8.2] linux2
+Type "help", "copyright", "credits" or "license" for more information.
+In [1]: 5
+Out[1]: 5
+
+In [2]: (atom? 6.3)
+Out[2]: True
+
+In [3]: (* 11 (+ 2.9 4.5))
+Out[3]: 81.4
+
+In [4]: nil
+Out[4]: None
+
+In [5]: #t
+Out[5]: True
+
+In [6]: #f
+Out[6]: False
+```
+
+#### Lists
+
+Lists are represented by CONS-cells, but there is some syntactic sugar
+to make creation simple:
+
+```scheme
+In [7]: [1 2 3 4]
+Out[7]: (1, (2, (3, (4, None))))
+
+In [8]: (list "a" "b" (list "d" "e"))
+Out[8]: ('a', ('b', (('d', ('e', None)), None)))
+
+In [9]: (cons 1 2)
+Out[9]: (1, 2)
+
+In [10]: (cons 1 (cons 2 (cons 3 nil)))
+Out[10]: (1, (2, (3, None)))
+```
+
+The internal representation is currently a 2-element tuple, but **this is
+liable to change** so that it prints as a conventional list - to be done as
+part of implementing lazy lists.
+
+Access into and traversal of lists is via `car`/`cdr`, or `first`/`second`/`rest`/`next`.
+Expect that `take` and `drop` (and variants will be implemented shortly).
+
+#### Let bindings
+
+Let binding operate as per Racket, with three variations:
+
+```scheme
+In [11]: (let (a 5)
+    ...:   (+ a a))
+Out[11]: 10
+
+In [12]: (let* ((a 5)
+    ...:        (b 7)
+    ...:        (c (+ a b)))
+    ...:   (/ (+ b c) a))
+Out[12]: 3
+```
+
+The third variant, _letrec_, allows forward references like:
+
+```scheme
+(letrec ((is-even? (lambda (n)
+                       (or (zero? n)
+                           (is-odd? (sub1 n)))))
+         (is-odd? (lambda (n)
+                      (and (not (zero? n))
+                           (is-even? (sub1 n))))))
+    (is-odd? 11))
+```
+Although this example wont work because _or_/_and_ havent been implemented yet!
+
+#### Lambdas and function definitions
+
+An anonymous function can be defined in the global stack as follows:
+
+```scheme
+In [13]: (define sqr
+    ...:   (lambda (x) (* x x)))
+Out[13]: sqr
+
+In [14]: (sqr 3.75)
+Out[14]: 14.0625
+
+In [15]: sqr
+Out[15]: <yalix.interpreter.primitives.Closure object at 0x7fe12b3ab9d0>
+```
+
+Lambda's can be defined inside let bindings, and the unicode lambda symbol 'λ'
+may be used instead. Note the _alternate_ syntactic sugar form of `define` which
+combines a binding-form and formals, which incorporates the outer lambda.
+
+```scheme
+In [16]: (define (range n)
+    ...:   (letrec ((accum (λ (x) 
+    ...:              (if (< x n)
+    ...:                (cons x (accum (inc x)))))))
+    ...:     (accum 0)))
+Out[16]: range
+```
+Functions are first class objects and can be passed around into and out 
+of other functions:
+
+```scheme
+In [17]: (map sqr (range 10))
+Out[17]: (0, (1, (4, (9, (16, (25, (36, (49, (64, (81, None))))))))))
+
+In [18]: (define (comp f g)
+    ...:   (λ (x) 
+    ...:     (f (g x))))
+Out[18]: comp
+
+In [19]: (map (comp inc sqr) (range 10))
+Out[19]: (1, (2, (5, (10, (17, (26, (37, (50, (65, (82, None))))))))))
+```
+
+#### Variadic Functions
+
+Arguments in a variadic function are collected up into a list. Racket uses a 
+dot '.' to indicate collecting values - so do we. Clojure uses ampersand. 
+We may support that.
+
+```scheme
+In [20]: (define  (str . xs)
+    ...:     (fold + "" xs))
+Out[20]: str
+
+In [21]: (str "hello" "big" "bad" "world")
+Out[21]: hellobigbadworld
+```
+
+#### Symbolic computing
+
+Symbol references are looked-up in the environment, first in the local
+stack if appropriate, then in the global frame.
+
+Symbols can be created, and treated as first class objects, either in
+quoted form, or using `(quote ...)`:
+
+```scheme
+In [22]: (symbol "fred")
+Out[22]: fred
+
+In [23]: (symbol? fred)
+EvaluationError: 'fred' is unbound in environment
+Source: (symbol? fred)
+
+Location: 9
+In [24]: (symbol? 'fred)
+Out[24]: True
+
+In [25]: (gensym)
+Out[25]: G__84
+
+In [26]: (gensym)
+Out[26]: G__85
+
+In [27]: (symbol? (gensym))
+Out[27]: True
+
+In [28]: (gensym)
+Out[28]: G__87
+```
+
+#### Metalingustic evaluation
+
+The parser can be invoked directly by calling `read-string`:
+
+```scheme
+In [29]: (read-string "(+ 14 (factorial 12))")
+Out[29]: <yalix.interpreter.primitives.Call object at 0x7fe12b3ff090>
+```
+
+This returns an un-evaluated s-expression which may then be directly 
+evaluated under an environment (Note: 'Call' as an object name may change):
+
+```scheme
+In [30]: (eval (read-string "(+ 11 (* 5 6))") 
+Out[30]: 41
+```
+
+`apply` has not yet been implemented, so the circle is not yet complete.
+
+### Implementation Details
+
+There are five main parts, all implemented in a couple of hundred lines of
+Python code:
+
+* **Parser** - implemented using _pyparsing_ - this reads a stream of text 
+  characters from a string or file, converting to an abstract syntax tree
+  (AST) representation of the tokens. Each form has a specific parse action
+  which creates an action which can be evaluated under an environment.
+
+* **Environment** - comprising a _global frame_ and a _local stack_: the
+  global frame is used for storing definitions and is represented by a
+  dictionary, while the local stack is used to keep track of variables
+  bound under closures. Each call into a lambda extends the local stack
+  in order to preserve lexical scope properly.
+
+* **Interpreter** - recursively evaluates an AST under some environment.
+  There are some primitive types (such as Atoms, Closures, Forward references,
+  Python InterOp, etc) which evaluate into simple terms, and some language
+  features like Symbols, Quotes, Lambdas, List representations, Let bindings,
+  Conditionals and definitions which combine to implement 
+
+* **REPL** - a simple read/evaluate/print loop, which features a simplified
+  formatter and rudimentary exception reporting.
+
+* **Core Library** - Bootstraps some interop functions from Python to perform
+  arithmetic and other 'numeric-tower' type operations, cons-cell construction
+  & manipulation, and higher-order functions like map, filter & fold.
+
 ## TODO
+
+#### Parser
+* Support docstrings - no definition in Racket, per se. Suggest something like
+  below, which uses a deviation of the standard comment (;^) to scoop
+  documentation into meta-data on the function definition. Accessed via a `(doc
+  factorial)` from the REPL.
+
+```scheme
+(define (factorial n)
+  ;^ The factorial of a non-negative integer n, denoted by n!, is
+  :^ the product of all positive integers less than or equal to n.
+  (if (= n 0)
+    1
+    (* n (factorial (- n 1)))))
+```
+
+#### Interpreter
+* Lazy evaluation with `force`, `delay`, `memoize` 
+  (see [lazy-lists](https://github.com/rm-hull/yalix/tree/feature/lazy-lists) branch.
+* Implement `defmacro`, `macro-expand`, splicing, backticks, etc.
+* Implement `apply` as a method or special form
+* Destructuring-bind
+* Support namespaces with requires and use directives.
+
+#### Core Library
+* Macro implementations for `and`, `or`, `cond`, etc.
+* Convert list from built-in to something like:
+
+```scheme
+(define (list . xs)
+  (if (empty? xs)
+    nil
+    (cons
+      (car xs)
+      (list (cdr xs)))))
+```
+
+* Continue implementation of HOF's: `filter`, `remove`, `take`, `drop`, etc.
+* Implementation of common predicates: `odd?`, `even?`, `zero?`, `pos?`, `neg?`
+* File I/O interop
+
+#### Other
+* Make it work with PyPy
+* Unit testing
+* Travis CI integration
 
 ## References
 
