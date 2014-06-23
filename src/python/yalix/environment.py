@@ -21,7 +21,7 @@ class Env(object):
         Traverses the local stack and sets the first instance of name with value
         """
         stack = self.local_stack
-        for i in xrange(1, len(stack) + 1):
+        for i in range(1, len(stack) + 1):
             if self.local_stack[-i][0] == name:
                 self.local_stack[-i] = (name, value)
                 return
@@ -52,5 +52,5 @@ class Env(object):
 
         return self.global_frame[name]
 
-    def iteritems(self):
-        return self.global_frame.iteritems()
+    def items(self):
+        return self.global_frame.items()

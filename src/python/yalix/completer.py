@@ -1,6 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from yalix.environment import Env
 from yalix.interpreter.builtins import __special_forms__
+
 
 class Completer:
     def __init__(self, env):
@@ -28,10 +30,9 @@ class Completer:
         defined in self.namespace that match.
 
         """
-        import keyword
         matches = []
         n = len(text)
-        for word, _ in self.env.iteritems():
+        for word, _ in list(self.env.items()):
             if word[:n] == text:
                 matches.append(word)
 
@@ -40,4 +41,3 @@ class Completer:
                 matches.append(word)
 
         return matches
-

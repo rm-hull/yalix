@@ -8,8 +8,9 @@ from yalix.utils.color import red, green, bold, faint
 
 def chunks(l, n):
     """ Yield successive n-sized chunks from l. """
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i+n]
+
 
 def linked_list_to_array(t):
     arr = []
@@ -19,12 +20,13 @@ def linked_list_to_array(t):
             t = t[1]
     return arr
 
+
 def linked_list_to_generator(t):
-    arr = []
     if isinstance(t, tuple):
         while t:
             yield t[0]
             t = t[1]
+
 
 def array_to_linked_list(arr):
     if isinstance(arr, list):
@@ -58,8 +60,10 @@ class log_progress(object):
             sys.stdout.write(bold(red('FAILED')))
         sys.stdout.write('\n')
 
+
 def log(message='', *args):
     sys.stdout.write(message.format(*args) + '\n')
+
 
 class GeneratorContextManager(object):
 
@@ -68,14 +72,14 @@ class GeneratorContextManager(object):
 
     def __enter__(self):
         try:
-            return self.gen.next()
+            return next(self.gen)
         except StopIteration:
             raise RuntimeError("generator didn't yield")
 
     def __exit__(self, type, value, traceback):
         if type is None:
             try:
-                self.gen.next()
+                next(self.gen)
             except StopIteration:
                 return
             else:
