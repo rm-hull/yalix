@@ -37,8 +37,8 @@ class GlobalFrameTests(unittest.TestCase):
         self.assertListEqual(list(env.items()), [])
         for i in range(10):
             env[i] = TestAtom(i)
-        self.assertEqual(range(10), sorted([k for k, _ in env.items()]))
-        self.assertEqual(range(10), sorted([v for _, v in env.items()]))
+        self.assertEqual(list(range(10)), sorted([k for k, _ in env.items()]))
+        self.assertEqual(list(range(10)), sorted([v for _, v in env.items()]))
 
 
 class LocalStackTests(unittest.TestCase):
