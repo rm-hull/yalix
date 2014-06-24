@@ -78,14 +78,27 @@ def atom_QUESTION(value):
         return not isinstance(value, tuple)
 
 
+def read_string(value):
+    return scheme_parser().parseString(value, parseAll=True).asList()[0]
+
+
 def bootstrap_lisp_functions(env, from_file):
     for ast in scheme_parser().parseFile(from_file, parseAll=True).asList():
         ast.eval(env)
 
 
+class EvalWrapper(object):
+
+    def __init__(self, env):
+        self.env = env
+
+    def __setitem__(self, name, primitive):
+        self.env[name] = primitive.eval(self.env)
+
+
 def bootstrap_python_functions(env):
 
-    parser = scheme_parser()
+    env = EvalWrapper(env)
 
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
@@ -100,7 +113,7 @@ def bootstrap_python_functions(env):
     env['next'] = interop(cdr, 1)
     env['rest'] = interop(cdr, 1)
     env['atom?'] = interop(atom_QUESTION, 1)
-    env['read-string'] = interop(lambda x: parser.parseString(x, parseAll=True).asList()[0], 1) # Read just one symbol
+    env['read-string'] = interop(read_string, 1)  # Read just one symbol
     env['eval'] = interop(lambda x: x.eval(env), 1)
 
     # Basic Arithmetic Functions

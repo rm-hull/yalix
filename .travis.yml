@@ -4,8 +4,8 @@ python:
   - "3.2"
   - "3.3"
 # command to install dependencies
-#install:
+install:
 #  - "pip install ."
-#  - "pip install -r requirements.txt"
+  - "pip install -r src/python/requirements.txt"
 # command to run tests
-script: nosetests -w src/python
+script: nosetests --with-coverage -w src/python

@@ -22,13 +22,13 @@ def version():
 
 
 def copyright():
-    return Atom("""
+    return """
 Copyright (c) {0} Richard Hull.
-All Rights Reserved.""".format(datetime.now().year))
+All Rights Reserved.""".format(datetime.now().year)
 
 
 def license():
-    return Atom("""
+    return """
 The MIT License (MIT)
 
 Copyright (c) {0} Richard Hull
@@ -49,11 +49,11 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.""".format(datetime.now().year))
+THE SOFTWARE.""".format(datetime.now().year)
 
 
 def help():
-    return Atom("""
+    return """
 Yalix is a LISP interpreter: it's dialect most closely resembles that of Racket
 or PLT-Scheme. This particular implementation is written in Python, and serves
 as a reference implementation only. It is subject to on-going development, and
@@ -78,12 +78,12 @@ the following S-Exp at the prompt:
 
     (doc first)
 
-See https://github.com/rm-hull/yalex/ for further information.""")
+See https://github.com/rm-hull/yalex/ for further information."""
 
 
 def credits():
-    return Atom("""
-TBD""")
+    return """
+TBD"""
 
 
 def init_readline(env):

@@ -12,6 +12,7 @@ from yalix.exceptions import EvaluationError
 
 class Primitive(object):
     __metaclass__ = ABCMeta
+    VARIADIC_MARKER = '.'
 
 #    def __repr__(self):
 #        return str(self.eval(Env()))
@@ -71,6 +72,7 @@ class ForwardRef(Primitive):
 class Call(Primitive):
     """ A function call (call-by-value) """
 
+
     def __init__(self, funexp, *args):
         if isinstance(funexp, tuple):
             arr = utils.linked_list_to_array(funexp)
@@ -91,7 +93,7 @@ class Call(Primitive):
         if not isinstance(closure, Closure):
             raise EvaluationError(self, 'Call applied with non-closure: \'{0}\'', closure)
 
-        if len(closure.func.formals) > len(self.args):
+        if not closure.func.has_sufficient_arity(self.args):
             raise EvaluationError(self,
                                   'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
                                   self.funexp.name, # FIXME: probably ought rely on __repr__ of symbol here....
@@ -100,7 +102,7 @@ class Call(Primitive):
 
         extended_env = closure.env
         for i, bind_variable in enumerate(closure.func.formals):
-            if bind_variable == '.':  # variadic arg indicator
+            if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
                 # Use the next formal as the /actual/ bind variable,
                 # evaluate the remaining arguments into a list (NOTE offset from i)
                 # and dont process any more arguments
