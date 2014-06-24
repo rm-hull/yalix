@@ -33,7 +33,7 @@ def gensym(prefix='G__'):
 
 def interop(fun, arity):
     """ Helper to create a lisp function from a python function """
-    symbols = [gensym() for _ in xrange(arity)]
+    symbols = [gensym() for _ in range(arity)]
     bind_variables = [s.name for s in symbols]
     return Lambda(bind_variables, InterOp(fun, *symbols))
 
