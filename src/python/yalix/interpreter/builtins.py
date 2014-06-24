@@ -112,7 +112,9 @@ class LetRec(BuiltIn):
         # references and bound to the environment
         forward_refs = {}
         for name in self.bindings:
+
             if name in forward_refs:
+                # bindings are NOT shadowed in letrec
                 raise EvaluationError(self, "'{0}' is not distinct in letrec", name)
 
             ref = ForwardRef()
@@ -133,7 +135,18 @@ class Lambda(BuiltIn):
         self.formals = [] if formals is None else formals
         self.body = Body(*body)
 
+    def has_sufficient_arity(self, args):
+        if Primitive.VARIADIC_MARKER in self.formals:
+            # Must be at least n args (where n is the variadic marker position)
+            return len(args) >= self.formals.index(Primitive.VARIADIC_MARKER)
+        else:
+            # no. args must match exactly
+            return len(args) == len(self.formals)
+
     def eval(self, env):
+        if len(self.formals) != len(set(self.formals)):
+            raise EvaluationError(self, 'formals are not distinct: {0}', self.formals)
+
         return Closure(env, self)
 
 
@@ -160,7 +173,7 @@ class Define(BuiltIn):
         self.expr = expr
 
     def eval(self, env):
-        env[self.name] = self.expr
+        env[self.name] = self.expr.eval(env)
         return Symbol(self.name)
 
 
@@ -172,7 +185,7 @@ class DefineFunction(BuiltIn):
         self.lambda_ = Lambda(formals, *body)
 
     def eval(self, env):
-        env[self.name] = self.lambda_
+        env[self.name] = self.lambda_.eval(env)
         return Symbol(self.name)
 
 
