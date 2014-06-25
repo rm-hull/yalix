@@ -350,8 +350,8 @@ Python code:
 ```
 
 #### Interpreter
-* -Lazy evaluation with `force`, `delay`, `memoize` 
-  (see [lazy-lists](https://github.com/rm-hull/yalix/tree/feature/lazy-lists) branch).-
+* ~~Lazy evaluation with `force`, `delay`, `memoize` 
+  (see [lazy-lists](https://github.com/rm-hull/yalix/tree/feature/lazy-lists) branch).~~
 * Implement `defmacro`, `macro-expand`, splicing, backticks, etc.
 * Implement `apply` as a method or special form
 * Destructuring-bind
@@ -359,15 +359,15 @@ Python code:
 
 #### Core Library
 * Macro implementations for `and`, `or`, `cond`, etc.
-* -Convert list syntactic sugar from built-in to use variadic definition.-
+* ~~Convert list syntactic sugar from built-in to use variadic definition.~~
 * Continue implementation of HOF's: `filter`, `remove`, `take`, `drop`, etc.
 * Implementation of common predicates: `odd?`, `even?`, `zero?`, `pos?`, `neg?`
 * File I/O interop
 
 #### Other
 * Make it work with PyPy
-* -Unit testing-
-* -Travis CI integration-
+* ~~Unit testing~~
+* ~~Travis CI integration~~
 
 ## References
 
