@@ -32,7 +32,7 @@ class Env(object):
                     self.local_stack[-i] = (name, value)
                     return
 
-        raise KeyError('Assignment disallowed: \'{0}\' is unbound in local environment'.format(name))
+        raise ValueError('Assignment disallowed: \'{0}\' is unbound in local environment'.format(name))
 
     def __getitem__(self, name):
         """
@@ -48,7 +48,7 @@ class Env(object):
                     stack = stack[:-1]
 
         if name not in self.global_frame:
-            raise KeyError('\'{0}\' is unbound in environment'.format(name))
+            raise ValueError('\'{0}\' is unbound in environment'.format(name))
 
         return self.global_frame[name]
 

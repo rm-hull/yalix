@@ -28,8 +28,8 @@ class Symbol(BuiltIn):
     def eval(self, env):
         try:
             return env[self.name]
-        except KeyError as ex:
-            raise EvaluationError(self, ex.message)
+        except ValueError as ex:
+            raise EvaluationError(self, str(ex))
 
 
 class Quote(BuiltIn):
@@ -201,5 +201,5 @@ class Set_PLING(BuiltIn):
             value = self.expr.eval(env)
             env.set_local(self.binding_form, value)
             return None
-        except KeyError as ex:
-            raise EvaluationError(self, ex.message)
+        except ValueError as ex:
+            raise EvaluationError(self, str(ex))

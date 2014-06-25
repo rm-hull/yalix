@@ -14,7 +14,7 @@ class GlobalFrameTests(unittest.TestCase):
 
     def test_lookup_fails(self):
         env = Env()
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             env['a']
 
     def test_overwrite(self):
@@ -41,7 +41,7 @@ class LocalStackTests(unittest.TestCase):
 
         # Original environment should not change
         self.assertEqual(1, env['a'])
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             env['x']
 
         self.assertEqual(1, new_env['a'])
@@ -53,7 +53,7 @@ class LocalStackTests(unittest.TestCase):
         new_env_b = new_env_a.extend('x', 5)
 
         # Make sure new_env didnt change, but new_env_2 did
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             env['x']
 
         self.assertEqual(2, new_env_a['x'])
@@ -78,9 +78,9 @@ class LocalStackTests(unittest.TestCase):
 
     def test_non_existent_set_local(self):
         env = Env()
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             env['a']
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             env.set_local('a', 5)
 
     def test_set_local_doesnt_bleed(self):
