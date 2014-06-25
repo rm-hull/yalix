@@ -4,8 +4,8 @@
 """ Takes a stream of characters and produces an Abstract Syntax Tree"""
 
 from pyparsing import *
-from yalix.interpreter.primitives import *
-from yalix.interpreter.builtins import *
+from yalix.interpreter import *
+
 
 def _brand(obj, src, loc):
     """ As the object was derived from some source, brand it so """
@@ -13,24 +13,24 @@ def _brand(obj, src, loc):
     setattr(obj, '__location__', loc)
     return obj
 
+
 def _specialForm(builtinClass):
     def invoke(src, loc, tokens):
         return _brand(builtinClass(*tokens), src, loc)
     return invoke
+
 
 def _atom(converter):
     def invoke(src, loc, tokens):
         return _brand(Atom(converter(tokens[0])), src, loc)
     return invoke
 
+
 def scheme_parser(debug=False):
     # Simple BNF representation of S-Expressions
 
     LPAREN = Suppress('(')
     RPAREN = Suppress(')')
-
-    LBRACKET = Suppress('[')
-    RBRACKET = Suppress(']')
 
     comment = Suppress(Regex(r";.*"))
 
@@ -54,14 +54,13 @@ def scheme_parser(debug=False):
     define = (LPAREN + Suppress(Keyword('define')) + binding_form + expr + RPAREN)
     defun = (LPAREN + Suppress(Keyword('define')) + LPAREN + binding_form + formals + RPAREN + body + RPAREN)
     quote = (LPAREN + Suppress(Keyword('quote')) + expr + RPAREN) | Suppress('\'') + expr
-    list_ = (LBRACKET + ZeroOrMore(expr) + RBRACKET) | (LPAREN + Suppress(Keyword('list')) + ZeroOrMore(expr) + RPAREN)
     lambda_ = (LPAREN + (Suppress(Keyword('lambda')) | Suppress(Keyword('λ'))) + LPAREN + formals + RPAREN + body + RPAREN)
     begin = (LPAREN + Suppress(Keyword('begin')) + body + RPAREN)
     delay = (LPAREN + Suppress(Keyword('delay')) + expr + RPAREN)
     set_PLING = (LPAREN + Suppress(Keyword('set!')) + binding_form + expr + RPAREN)
 
     # Built-ins
-    built_in = let_STAR | letrec | let | if_ | defun | define | quote | lambda_ | list_ | begin | delay | set_PLING
+    built_in = let_STAR | letrec | let | if_ | defun | define | quote | lambda_ | begin | delay | set_PLING
 
     # Symbols
     symbol = Word(alphanums + "-/_:*+=!?<>")
@@ -85,7 +84,6 @@ def scheme_parser(debug=False):
             ('definition',          define,             _specialForm(Define)),
             ('function definition', defun,              _specialForm(DefineFunction)),
             ('quote',               quote,              _specialForm(Quote)),
-            ('list',                list_,              _specialForm(List)),
             ('lambda',              lambda_,            _specialForm(Lambda)),
             ('begin',               begin,              _specialForm(Body)),
             ('delay',               delay,              _specialForm(Delay)),

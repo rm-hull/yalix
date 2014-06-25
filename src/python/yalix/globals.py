@@ -14,8 +14,7 @@ import yalix.utils as utils
 from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
-from yalix.interpreter.primitives import Atom, InterOp, Call
-from yalix.interpreter.builtins import Lambda, Symbol
+from yalix.interpreter import Atom, InterOp, Call, Lambda, Symbol
 from yalix.utils import log_progress
 
 gensym_nextID = 0
@@ -33,9 +32,10 @@ def gensym(prefix='G__'):
 
 def interop(fun, arity):
     """ Helper to create a lisp function from a python function """
-    symbols = [gensym() for _ in xrange(arity)]
+    symbols = [gensym() for _ in range(arity)]
     bind_variables = [s.name for s in symbols]
     return Lambda(bind_variables, InterOp(fun, *symbols))
+
 
 def create_initial_env():
     with log_progress("Creating initial environment"):
@@ -44,8 +44,10 @@ def create_initial_env():
         bootstrap_lisp_functions(env, "lib/core.ylx")
         return env
 
+
 def format_(value, format_spec):
     return value.format(*utils.linked_list_to_array(format_spec))
+
 
 def error(msg):
     raise EvaluationError(None, msg)
@@ -53,24 +55,30 @@ def error(msg):
 
 def atom_QUESTION(value):
     """ Checks if the supplied value is an atom """
-    if value is None:
-        return False
-    else:
-        return not isinstance(value, tuple)
+    return value != None and type(value) in [str, int, float, bool]
+
+
+def read_string(value):
+    return scheme_parser().parseString(value, parseAll=True).asList()[0]
 
 
 def bootstrap_lisp_functions(env, from_file):
     for ast in scheme_parser().parseFile(from_file, parseAll=True).asList():
         ast.eval(env)
 
-def cons(a, b):
-    print 'tuple: (a=' + str(a) + ', ' + str(b) + ')'
-    return (a, b)
+
+class EvalWrapper(object):
+
+    def __init__(self, env):
+        self.env = env
+
+    def __setitem__(self, name, primitive):
+        self.env[name] = primitive.eval(self.env)
 
 
 def bootstrap_python_functions(env):
 
-    parser = scheme_parser()
+    env = EvalWrapper(env)
 
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
@@ -79,9 +87,8 @@ def bootstrap_python_functions(env):
     env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
     env['interop'] = interop(interop, 2)
     env['get'] = interop(lambda x, y: x[y], 2)
-    env['tuple'] = interop(cons, 2)
     env['atom?'] = interop(atom_QUESTION, 1)
-    env['read-string'] = interop(lambda x: parser.parseString(x, parseAll=True).asList()[0], 1) # Read just one symbol
+    env['read-string'] = interop(read_string, 1)  # Read just one symbol
     env['eval'] = interop(lambda x: x.eval(env), 1)
     env['error'] = interop(error, 1)
 
