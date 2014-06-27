@@ -34,11 +34,11 @@ class InterOp(Primitive):
     """ Helper class for wrapping Python functions """
     def __init__(self, func, *args):
         self.func = func
-        self.args = args
+	self.args = args
 
     def eval(self, env):
-        values = (a.eval(env) for a in self.args)
-        return self.func(*values)
+	values = (a.eval(env) for a in self.args)
+	return self.func(*values)
 
 
 class Atom(Primitive):
@@ -119,7 +119,7 @@ class Call(Primitive):
                     # evaluate the remaining arguments into a list (NOTE offset from i)
                     # and dont process any more arguments
                     bind_variable = closure.func.formals[i + 1]
-                    value = self.make_lazy_list(params[i:]).eval(extended_env)
+                    value = self.make_lazy_list(params[i:]).eval(env)
                     extended_env = extended_env.extend(bind_variable, value)
                     return closure.func.body.eval(extended_env)
                 else:
