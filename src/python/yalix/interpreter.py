@@ -37,8 +37,8 @@ class InterOp(Primitive):
 	self.args = args
 
     def eval(self, env):
-	values = (a.eval(env) for a in self.args)
-	return self.func(*values)
+        values = (a.eval(env) for a in self.args)
+        return self.func(*values)
 
 
 class Atom(Primitive):
