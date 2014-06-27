@@ -32,7 +32,8 @@ def scheme_parser(debug=False):
     LPAREN = Suppress('(')
     RPAREN = Suppress(')')
 
-    comment = Suppress(Regex(r";.*"))
+    comment = Suppress(Regex(r";[^^].*"))
+    docString = Regex(r";\^.*")
 
     # Atoms
     integer = Regex(r"[+-]?\d+")
@@ -51,8 +52,8 @@ def scheme_parser(debug=False):
     let_STAR = (LPAREN + Suppress(Keyword('let*')) + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
     letrec = (LPAREN + Suppress(Keyword('letrec')) + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
     if_ = (LPAREN + Suppress(Keyword('if')) + expr + expr + Optional(expr) + RPAREN)
-    define = (LPAREN + Suppress(Keyword('define')) + binding_form + expr + RPAREN)
-    defun = (LPAREN + Suppress(Keyword('define')) + LPAREN + binding_form + formals + RPAREN + body + RPAREN)
+    define = (LPAREN + Suppress(Keyword('define')) + binding_form + Group(ZeroOrMore(docString)) + expr + RPAREN)
+    defun = (LPAREN + Suppress(Keyword('define')) + LPAREN + binding_form + formals + RPAREN + Group(ZeroOrMore(docString)) + body + RPAREN)
     quote = (LPAREN + Suppress(Keyword('quote')) + expr + RPAREN) | Suppress('\'') + expr
     lambda_ = (LPAREN + (Suppress(Keyword('lambda')) | Suppress(Keyword('λ'))) + LPAREN + formals + RPAREN + body + RPAREN)
     begin = (LPAREN + Suppress(Keyword('begin')) + body + RPAREN)

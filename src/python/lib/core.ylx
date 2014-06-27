@@ -74,6 +74,7 @@
   (take n (iterate inc 0)))
 
 (define (map f xs)
+  ;^ Maps a function over a list
   (if (empty? xs)
     nil
     (cons
@@ -112,10 +113,16 @@
 (define  (str . xs)
   (fold + "" xs))
 
-(define (factorial x)
-  (if (= x 0)
+(define (factorial n)
+   ;^ The factorial of a non-negative integer n, denoted by n!, is
+   ;^ the product of all positive integers less than or equal to n.
+   (if (= n 0)
     1
-    (* x (factorial (- x 1)))))
+    (* n (factorial (- n 1)))))
+
+(define *print-item-limit* 
+  ; cant add doc to primitive int
+  55)
 
 (define (lazy-list xs)
   (if (not (empty? xs))
@@ -127,4 +134,6 @@
 
 (define (list . xs)
     (lazy-list xs))
+
+; This is a comment
 
