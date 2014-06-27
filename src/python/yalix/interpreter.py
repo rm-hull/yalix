@@ -26,6 +26,9 @@ class Primitive(object):
     def eval(self, env):
         raise NotImplementedError()
 
+    def quoted_form(self):
+        return self
+
 
 class InterOp(Primitive):
     """ Helper class for wrapping Python functions """
@@ -77,13 +80,8 @@ class ForwardRef(Primitive):
 class Call(Primitive):
     """ A function call (call-by-value) """
 
-    def __init__(self, funexp, *args):
-        if isinstance(funexp, list):
-            self.funexp = funexp[0]
-            self.args = funexp[1:]
-        else:
-            self.funexp = funexp
-            self.args = args
+    def __init__(self, *args):
+        self.args = args
 
     def make_lazy_list(self, arr):
         t = Atom(None)
@@ -92,44 +90,49 @@ class Call(Primitive):
             arr = arr[:-1]
         return t
 
+    def quoted_form(self):
+        return self.make_lazy_list(self.args)
+
     def eval(self, env):
-        closure = self.funexp.eval(env)
-        if isinstance(closure, ForwardRef):
-            closure = closure.reference
+        if self.args:
+            funexp = self.args[0]
+            params = self.args[1:]
+            closure = funexp.eval(env)
+            if isinstance(closure, ForwardRef):
+                closure = closure.reference
 
-        if not isinstance(closure, Closure):
-            raise EvaluationError(self, 'Call applied with non-closure: \'{0}\'', closure)
+            if not isinstance(closure, Closure):
+                raise EvaluationError(self, 'Call applied with non-closure: \'{0}\'', closure)
 
+            if not closure.func.has_sufficient_arity(params):
+                raise EvaluationError(self,
+                                    'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
+                                    funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                    len(closure.func.formals),
+                                    len(params))
 
-        if not closure.func.has_sufficient_arity(self.args):
-            raise EvaluationError(self,
-                                  'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
-                                  self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                  len(closure.func.formals),
-                                  len(self.args))
+            extended_env = closure.env
+            for i, bind_variable in enumerate(closure.func.formals):
+                if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
+                    # Use the next formal as the /actual/ bind variable,
+                    # evaluate the remaining arguments into a list (NOTE offset from i)
+                    # and dont process any more arguments
+                    bind_variable = closure.func.formals[i + 1]
+                    value = self.make_lazy_list(params[i:]).eval(extended_env)
+                    extended_env = extended_env.extend(bind_variable, value)
+                    return closure.func.body.eval(extended_env)
+                else:
+                    value = params[i].eval(env)
+                    extended_env = extended_env.extend(bind_variable, value)
 
-        extended_env = closure.env
-        for i, bind_variable in enumerate(closure.func.formals):
-            if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
-                # Use the next formal as the /actual/ bind variable,
-                # evaluate the remaining arguments into a list (NOTE offset from i)
-                # and dont process any more arguments
-                bind_variable = closure.func.formals[i + 1]
-                value = self.make_lazy_list(self.args[i:]).eval(extended_env)
-                extended_env = extended_env.extend(bind_variable, value)
-                return closure.func.body.eval(extended_env)
-            else:
-                value = self.args[i].eval(env)
-                extended_env = extended_env.extend(bind_variable, value)
+            if len(closure.func.formals) != len(params):
+                raise EvaluationError(self,
+                                    'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
+                                    funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                    len(closure.func.formals),
+                                    len(params))
 
-        if len(closure.func.formals) != len(self.args):
-            raise EvaluationError(self,
-                                  'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
-                                  self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                  len(closure.func.formals),
-                                  len(self.args))
-
-        return closure.func.body.eval(extended_env)
+            return closure.func.body.eval(extended_env)
 
 
 class BuiltIn(Primitive):
@@ -162,7 +165,7 @@ class Quote(BuiltIn):
         self.expr = expr
 
     def eval(self, env):
-        return self.expr
+        return self.expr.quoted_form()
 
 
 class Body(BuiltIn):

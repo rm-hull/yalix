@@ -130,7 +130,8 @@ Out[10]: 1
 
 ```
 
-The internal representation is currently a closure as detailed by Harold Abelson. 
+The internal representation of a cons is currently a closure as detailed by 
+Gerald Sussman and Harold Abelson in their MIT lecture series. 
 There is presently no print representation of lists (being addressed).
 
 ```scheme
@@ -288,6 +289,24 @@ evaluated under an environment (Note: 'Call' as an object name may change):
 ```scheme
 In [30]: (eval (read-string "(+ 11 (* 5 6))") 
 Out[30]: 41
+
+In [31]: (define x '(4 5 6))
+Out[31]: x
+
+In [32]: (eval x)
+Out[32]: <yalix.interpreter.Closure object at 0x7f178dff1610>
+
+In [33]: (define y (eval x))
+Out[33]: y
+
+In [34]: (first y)
+Out[34]: 4
+
+In [35]: (second y)
+Out[35]: 5
+
+In [36]: (third y)
+Out[36]: 6
 ```
 
 `apply` has not yet been implemented, so the circle is not yet complete.
@@ -299,8 +318,8 @@ current line. Comments are stripped out by the parser and are not passed
 to the interpreter.
 
 ```scheme
-In [31]: ; this is a comment, which is ignored 
-In [12]: 
+In [37]: ; this is a comment, which is ignored 
+In [38]:
 ```
 
 ### Implementation Details
