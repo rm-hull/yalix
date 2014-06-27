@@ -34,7 +34,7 @@ class InterOp(Primitive):
     """ Helper class for wrapping Python functions """
     def __init__(self, func, *args):
         self.func = func
-	self.args = args
+        self.args = args
 
     def eval(self, env):
         values = (a.eval(env) for a in self.args)
