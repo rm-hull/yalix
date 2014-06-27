@@ -111,11 +111,6 @@ Out[6]: False
 
 #### Lazy Lists
 
-Lists are lazily-evaluated by way of "thunks" by default, and represented by
-CONS-cells, which are "literally made out of nothing": their internal 
-implementation is currently a closure as described by Gerald Sussman and 
-Harold Abelson in their MIT lecture series. 
-
 Lists can be arbitrarily nested, and there is some syntactic sugar to make 
 creation simple:
 
@@ -143,8 +138,13 @@ In [11]: (iterate inc 0)
 Out[11]: (0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 ...)
 ```
 
-Note that ... is used to denote the list printing has been curtailed, not that 
+Note that `...` is used to denote the list printing has been curtailed, not that 
 the list ended at that point.
+
+Lists are lazily-evaluated by way of "thunks" by default, and represented by
+CONS-cells, which are "literally made out of nothing": their internal 
+structure is currently implemented as a closure as described by Gerald Sussman 
+and Harold Abelson in their MIT lecture series:
 
 ```scheme
 (define (cons a b)
@@ -338,10 +338,11 @@ In [39]:
 #### Debugging
 
 A basic trace facility shows call invocations. It can be started in the
-global frame by setting, and will produce lots of output:
+global frame by setting `*debug*` to a truth value, and will produce lots
+of output:
 
 ```scheme
-In [40]: (define *debug* #f)
+In [40]: (define *debug* #t)
 DEBUG: repr [('x', *debug*)]
 DEBUG: atom? [('G__6', *debug*)]
 DEBUG: repr-atom [('G__7', *debug*)]
@@ -367,6 +368,9 @@ DEBUG: fold [('f', <yalix.interpreter.Closure object at 0x7f9802cfa090>), ('val'
 DEBUG: empty? [('G__0', None)]
 Out[41]: (0 1 2)
 ```
+
+Of course, `*debug*` can be set inside a let binding as well, to either `#t` or `#f`,
+and will be honoured in that lexical scope.
 
 ### Implementation Details
 
