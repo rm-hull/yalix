@@ -138,8 +138,10 @@ binding is 20) to output lists in a human-readable form, and they will get
 curtailed after 20 elements are output. This is to prevent infinite lists
 being output, for example:
 
+```scheme
 In [11]: (iterate inc 0)
 Out[11]: (0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 ...)
+```
 
 Note that ... is used to denote the list printing has been curtailed, not that 
 the list ended at that point.
