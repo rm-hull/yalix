@@ -4,7 +4,6 @@
 import unittest
 import operator
 
-from yalix.utils import array_to_linked_list
 from yalix.environment import Env
 from yalix.interpreter import *
 
@@ -121,9 +120,7 @@ class BuiltinsTest(unittest.TestCase):
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
 
-        # Three ways to call
         self.assertEqual(154, Call(Symbol('+'), Atom(99), Atom(55)).eval(env))
-        self.assertEqual(154, Call([Symbol('+'), Atom(99), Atom(55)]).eval(env))
 
     def test_call_non_closure(self):
         env = Env()
@@ -170,18 +167,33 @@ class BuiltinsTest(unittest.TestCase):
         self.assertEqual(45, s.eval(env))
         self.assertEqual('fred', repr(s))
 
-    def test_quote(self):
+    def test_quote_atom(self):
         env = Env()
-        Define('+', [], Lambda(['x', 'y'],
-                           InterOp(operator.add,
-                                   Symbol('x'),
-                                   Symbol('y')))).eval(env)
+        q = Quote(Atom(5)).eval(env)
+        self.assertEquals(5, q.value)
 
-        q = Quote([Symbol('+'), Atom(2), Atom(3)]).eval(env)
-        value = Call(q).eval(env)
-        self.assertEqual(5, value)
+    def test_quote_symbol(self):
+        env = Env()
+        q = Quote(Symbol('toil')).eval(env)
+        self.assertEquals('toil', q.name)
 
-        # Call(Quote([Symbol('+'), Atom(2), Atom(3)])).eval(env)
+    def test_quote_empty_sexpr(self):
+        env = Env()
+        q = Quote(Call()).eval(env)
+        self.assertEqual(None, q.value)
+
+    def test_quote_sexpr(self):
+        #env = Env()
+        #define_cons().eval(env)
+        #Define('+', [], Lambda(['x', 'y'],
+        #                   InterOp(operator.add,
+        #                           Symbol('x'),
+        #                           Symbol('y')))).eval(env)#
+        #
+        #q = Quote(Call(Symbol('+'), Atom(2), Atom(3))).eval(env)
+        #self.assertEqual((Symbol('cons'), (Symbol('+'), (Delay(5), None))),
+        #                 q.args)
+        pass
 
     def test_conditional(self):
         # (let (rnd (random))

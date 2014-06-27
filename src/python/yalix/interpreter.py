@@ -91,6 +91,7 @@ class Call(Primitive):
         return t
 
     def quoted_form(self):
+        """ Override default implementation to present as a list """
         return self.make_lazy_list(self.args)
 
     def eval(self, env):
