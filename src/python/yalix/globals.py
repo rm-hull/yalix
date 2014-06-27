@@ -59,7 +59,7 @@ def error(msg):
 
 def atom_QUESTION(value):
     """ Checks if the supplied value is an atom """
-    return value != None and type(value) in [str, int, float, bool]
+    return value == None or type(value) in [str, int, float, bool, Symbol]
 
 
 def read_string(value):
@@ -75,6 +75,9 @@ class EvalWrapper(object):
 
     def __init__(self, env):
         self.env = env
+
+    def __getitem__(self, name):
+        return self.env[name]
 
     def __setitem__(self, name, primitive):
         self.env[name] = primitive.eval(self.env)
