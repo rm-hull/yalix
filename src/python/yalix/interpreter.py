@@ -297,7 +297,6 @@ class Define(BuiltIn):
 
     def params(self):
         if isinstance(self.expr, Lambda) and self.expr.formals:
-            print self.expr.formals
             return ' ' + str(self.expr.formals).replace('\'', '').replace(',', '')
         return ''
 
