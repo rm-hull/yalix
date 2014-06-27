@@ -111,28 +111,38 @@ Out[6]: False
 
 #### Lazy Lists
 
-Lists are lazy by default, and represented by CONS-cells, which are "literally 
-made out of nothing". They can be arbitrarily nested, and there is some syntactic 
-sugar to make creation simple:
+Lists are lazily-evaluated by way of "thunks" by default, and represented by
+CONS-cells, which are "literally made out of nothing": their internal 
+implementation is currently a closure as described by Gerald Sussman and 
+Harold Abelson in their MIT lecture series. 
+
+Lists can be arbitrarily nested, and there is some syntactic sugar to make 
+creation simple:
 
 ```scheme
 In [7]: (list "a" "b" (list "d" "e"))
-Out[7]: <yalix.interpreter.Closure object at 0x7f9b114c4790>
+Out[7]: ('a' 'b' ('d' 'e'))
 
 In [8]: (cons 1 2)
-Out[8]: <yalix.interpreter.Closure object at 0x7f9b114c4d10>
+Out[8]: ; not working with (repr) presently ... <yalix.interpreter.Closure object at 0x7f9b114c4d10>
 
 In [9]: (cons 1 (cons 2 (cons 3 nil)))
-Out[9]: <yalix.interpreter.Closure object at 0x7f9b114b8890>
+Out[9]: ; not working with (repr) presently ... <yalix.interpreter.Closure object at 0x7f9b114b8890>
 
 In [10]: (first (cons 1 2))
 Out[10]: 1
-
 ```
 
-The internal representation of a cons is currently a closure as detailed by 
-Gerald Sussman and Harold Abelson in their MIT lecture series. 
-There is presently no print representation of lists (being addressed).
+The REPL will use `*print-length*` (which should be numeric & positive; root
+binding is 20) to output lists in a human-readable form, and they will get
+curtailed after 20 elements are output. This is to prevent infinite lists
+being output, for example:
+
+In [11]: (iterate inc 0)
+Out[11]: (0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 ...)
+
+Note that ... is used to denote the list printing has been curtailed, not that 
+the list ended at that point.
 
 ```scheme
 (define (cons a b)
@@ -160,15 +170,15 @@ Access into and traversal of lists is via `car`/`cdr`, or `first`/`second`/`rest
 Let binding operate as per Racket, with three variations:
 
 ```scheme
-In [11]: (let (a 5)
+In [12]: (let (a 5)
     ...:   (+ a a))
-Out[11]: 10
+Out[12]: 10
 
-In [12]: (let* ((a 5)
+In [13]: (let* ((a 5)
     ...:        (b 7)
     ...:        (c (+ a b)))
     ...:   (/ (+ b c) a))
-Out[12]: 3
+Out[13]: 3
 ```
 
 The third variant, _letrec_, allows forward references like:
@@ -182,22 +192,23 @@ The third variant, _letrec_, allows forward references like:
                            (is-even? (dec n))))))
     (is-odd? 11))
 ```
-Although this example wont work because _or_ & _and_ haven't been implemented yet!
+Although this example wont quite work just yet because _or_ & _and_ haven't 
+been implemented yet!
 
 #### Lambdas and function definitions
 
 An anonymous function can be defined in the global stack as follows:
 
 ```scheme
-In [13]: (define sqr
+In [14]: (define sqr
     ...:   (lambda (x) (* x x)))
-Out[13]: sqr
+Out[14]: sqr
 
-In [14]: (sqr 3.75)
-Out[14]: 14.0625
+In [15]: (sqr 3.75)
+Out[15]: 14.0625
 
-In [15]: sqr
-Out[15]: <yalix.interpreter.Closure object at 0x7fe12b3ab9d0>
+In [16]: sqr
+Out[16]: <yalix.interpreter.Closure object at 0x7fe12b3ab9d0>
 ```
 
 Lambda's can be defined inside let bindings, and the unicode lambda symbol 'λ'
@@ -205,42 +216,42 @@ may be used instead. Note the _alternate_ syntactic sugar form of `define` which
 combines a binding-form and formals, which incorporates the outer lambda.
 
 ```scheme
-In [16]: (define (range n)
+In [17]: (define (range n)
     ...:   (letrec ((accum (λ (x) 
     ...:              (if (< x n)
     ...:                (cons x (accum (inc x)))))))
     ...:     (accum 0)))
-Out[16]: range
+Out[17]: range
 ```
 Functions are first class objects and can be passed around into and out 
 of other functions:
 
 ```scheme
-In [17]: (map sqr (range 10))
-Out[17]: (0, (1, (4, (9, (16, (25, (36, (49, (64, (81, None))))))))))
+In [18]: (map sqr (range 10))
+Out[18]: (0 1 4 9 16 25 36 49 64 81)
 
-In [18]: (define (comp f g)
+In [19]: (define (comp f g)
     ...:   (λ (x) 
     ...:     (f (g x))))
-Out[18]: comp
+Out[19]: comp
 
-In [19]: (map (comp inc sqr) (range 10))
-Out[19]: (1, (2, (5, (10, (17, (26, (37, (50, (65, (82, None))))))))))
+In [20]: (map (comp inc sqr) (range 10))
+Out[20]: (1 2 5 10 17 26 37 50 65 82)
 ```
 
-#### Variadic Functions
+#### Variadic functions
 
 Arguments in a variadic function are collected up into a list. Racket uses a 
 dot '.' to indicate collecting values - so do we. Clojure uses ampersand. 
 We may support that.
 
 ```scheme
-In [20]: (define  (str . xs)
+In [21]: (define  (str . xs)
     ...:     (fold + "" xs))
-Out[20]: str
+Out[21]: str
 
-In [21]: (str "hello" "big" "bad" "world")
-Out[21]: hellobigbadworld
+In [22]: (str "hello" "big" "bad" "world")
+Out[22]: hellobigbadworld
 ```
 
 #### Symbolic computing
@@ -252,26 +263,26 @@ Symbols can be created, and treated as first class objects, either in
 quoted form, or using `(quote ...)`:
 
 ```scheme
-In [22]: (symbol "fred")
-Out[22]: fred
+In [23]: (symbol "fred")
+Out[23]: fred
 
-In [23]: (symbol? fred)
+In [24]: (symbol? fred)
 EvaluationError: 'fred' is unbound in environment
 
-In [24]: (symbol? 'fred)
-Out[24]: True
-
-In [25]: (gensym)
-Out[25]: G__84
+In [25]: (symbol? 'fred)
+Out[25]: True
 
 In [26]: (gensym)
-Out[26]: G__85
+Out[26]: G__84
 
-In [27]: (symbol? (gensym))
-Out[27]: True
+In [27]: (gensym)
+Out[27]: G__85
 
-In [28]: (gensym)
-Out[28]: G__87
+In [28]: (symbol? (gensym))
+Out[28]: True
+
+In [29]: (gensym)
+Out[29]: G__87
 ```
 
 #### Metalinguistic evaluation
@@ -279,34 +290,34 @@ Out[28]: G__87
 The parser can be invoked directly by calling `read-string`:
 
 ```scheme
-In [29]: (read-string "(+ 14 (factorial 12))")
-Out[29]: <yalix.interpreter.Call object at 0x7fe12b3ff090>
+In [30]: (read-string "(+ 14 (factorial 12))")
+Out[30]: <yalix.interpreter.Call object at 0x7fe12b3ff090>
 ```
 
 This returns an un-evaluated s-expression which may then be directly 
 evaluated under an environment (Note: 'Call' as an object name may change):
 
 ```scheme
-In [30]: (eval (read-string "(+ 11 (* 5 6))") 
-Out[30]: 41
+In [31]: (eval (read-string "(+ 11 (* 5 6))") 
+Out[31]: 41
 
-In [31]: (define x '(4 5 6))
-Out[31]: x
+In [32]: (define x '(4 5 6))
+Out[32]: x
 
-In [32]: (eval x)
-Out[32]: <yalix.interpreter.Closure object at 0x7f178dff1610>
+In [33]: (eval x)
+Out[33]: (4 5 6)
 
-In [33]: (define y (eval x))
-Out[33]: y
+In [34]: (define y (eval x))
+Out[34]: y
 
-In [34]: (first y)
-Out[34]: 4
+In [35]: (first y)
+Out[35]: 4
 
-In [35]: (second y)
-Out[35]: 5
+In [36]: (second y)
+Out[36]: 5
 
-In [36]: (third y)
-Out[36]: 6
+In [37]: (third y)
+Out[37]: 6
 ```
 
 `apply` has not yet been implemented, so the circle is not yet complete.
@@ -318,8 +329,41 @@ current line. Comments are stripped out by the parser and are not passed
 to the interpreter.
 
 ```scheme
-In [37]: ; this is a comment, which is ignored 
-In [38]:
+In [38]: ; this is a comment, which is ignored 
+In [39]:
+```
+
+#### Debugging
+
+A basic trace facility shows call invocations. It can be started in the
+global frame by setting, and will produce lots of output:
+
+```scheme
+In [40]: (define *debug* #f)
+DEBUG: repr [('x', *debug*)]
+DEBUG: atom? [('G__6', *debug*)]
+DEBUG: repr-atom [('G__7', *debug*)]
+Out[40]: *debug*
+
+In [41]: (range 3)
+DEBUG: range [('n', 3)]
+DEBUG: iterate [('f', <yalix.interpreter.Closure object at 0x7f9802c6d490>), ('x', 0)]
+DEBUG: memoize [('f', <yalix.interpreter.Closure object at 0x7f9802cb8610>)]
+DEBUG: cons [('a', 0), ('b', <yalix.interpreter.Closure object at 0x7f9802c74790>)]
+DEBUG: take [('n', 3), ('xs', <yalix.interpreter.Closure object at 0x7f9802c99f50>)]
+DEBUG: pos? [('n', 3)]
+DEBUG: > [('G__47', 3), ('G__48', 0)]
+DEBUG: first [('xs', <yalix.interpreter.Closure object at 0x7f9802c99f50>)]
+
+             ---  8<  ---  Lots of logging elided  ---  8<  ---
+
+DEBUG: force [('delayed-object', <yalix.interpreter.Closure object at 0x7f9802c8d790>)]
+DEBUG: atom? [('G__6', <yalix.interpreter.Closure object at 0x7f9802c8d790>)]
+DEBUG: nil? [('G__0', <yalix.interpreter.Closure object at 0x7f9802c8d790>)]
+DEBUG: delayed-object [('x', <yalix.interpreter.Closure object at 0x7f9802ccb810>)]
+DEBUG: fold [('f', <yalix.interpreter.Closure object at 0x7f9802cfa090>), ('val', '(0 1 2)'), ('xs', None)]
+DEBUG: empty? [('G__0', None)]
+Out[41]: (0 1 2)
 ```
 
 ### Implementation Details

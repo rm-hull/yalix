@@ -120,10 +120,6 @@
     1
     (* n (factorial (- n 1)))))
 
-(define *print-item-limit* 
-  ; cant add doc to primitive int
-  55)
-
 (define (lazy-list xs)
   (if (not (empty? xs))
     (cons
@@ -137,3 +133,21 @@
 
 ; This is a comment
 
+(define *print-level* 10)
+
+(define *print-length* 20)
+
+(define (repr-list x n)
+  ;^ turn a list into a string
+  (if (not (nil? x))
+    (if (pos? n)
+      (if (cdr x)
+        (str (repr (first x)) " " (repr-list (rest x) (dec n)))
+        (repr (first x)))
+      "...")
+    "gg"))
+
+(define (repr x)
+  (if (atom? x)
+    (repr-atom x)
+    (str "(" (repr-list x *print-length*) ")")))

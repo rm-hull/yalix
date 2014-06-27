@@ -112,6 +112,7 @@ class Call(Primitive):
                                     len(closure.func.formals),
                                     len(params))
 
+            variadic = False
             extended_env = closure.env
             for i, bind_variable in enumerate(closure.func.formals):
                 if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
@@ -121,17 +122,21 @@ class Call(Primitive):
                     bind_variable = closure.func.formals[i + 1]
                     value = self.make_lazy_list(params[i:]).eval(env)
                     extended_env = extended_env.extend(bind_variable, value)
-                    return closure.func.body.eval(extended_env)
+                    variadic = True
+                    break
                 else:
                     value = params[i].eval(env)
                     extended_env = extended_env.extend(bind_variable, value)
 
-            if len(closure.func.formals) != len(params):
+            if not variadic and len(closure.func.formals) != len(params):
                 raise EvaluationError(self,
                                     'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
                                     funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
                                     len(closure.func.formals),
                                     len(params))
+
+            if extended_env['*debug*']:
+                utils.debug('{0} {1}', funexp.name, extended_env.local_stack)
 
             return closure.func.body.eval(extended_env)
 

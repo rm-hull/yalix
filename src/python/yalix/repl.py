@@ -196,7 +196,10 @@ def repl(print_callback=prn):
         try:
             text = read(count, in_prompt)
             for ast in parser.parseString(text, parseAll=True).asList():
-                result = ast.eval(env)
+
+                # Evaluate lazy list representations
+                result = Call(Symbol('repr'), ast).eval(env)
+
                 print_callback(text, result, count, out_prompt)
             if text.strip() != '':
                 print

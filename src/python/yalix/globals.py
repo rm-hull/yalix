@@ -49,10 +49,6 @@ def create_initial_env():
         return env
 
 
-def format_(value, format_spec):
-    return value.format(*utils.linked_list_to_array(format_spec))
-
-
 def error(msg):
     raise EvaluationError(None, msg)
 
@@ -87,6 +83,7 @@ def bootstrap_python_functions(env):
 
     env = EvalWrapper(env)
 
+    env['*debug*'] = Atom(False)
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
     env['gensym'] = interop(gensym, 0)
@@ -95,6 +92,7 @@ def bootstrap_python_functions(env):
     env['interop'] = interop(interop, 2)
     env['doc'] = interop(doc, 1)
     env['atom?'] = interop(atom_QUESTION, 1)
+    env['repr-atom'] = interop(repr, 1)
     env['read-string'] = interop(read_string, 1)  # Read just one symbol
     env['eval'] = interop(lambda x: x.eval(env), 1)
     env['error'] = interop(error, 1)
@@ -108,7 +106,6 @@ def bootstrap_python_functions(env):
 
     # String / Sequence Functions
     env['contains?'] = interop(operator.contains, 2)
-    env['format'] = interop(format_, 2)
 
     # Bitwise Ops
     env['bitwise-and'] = interop(operator.and_, 2)
