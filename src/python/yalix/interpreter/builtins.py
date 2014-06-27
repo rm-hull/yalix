@@ -168,25 +168,42 @@ class If(BuiltIn):
 class Define(BuiltIn):
     """ Updates entries in the Global Symbol Table """
 
-    def __init__(self, name, expr):
+    def __init__(self, name, doc_string, expr):
         self.name = name
         self.expr = expr
+        self.doc_string = doc_string
+
+    def params(self):
+        if isinstance(self.expr, Lambda) and self.expr.formals:
+            print self.expr.formals
+            return ' ' + str(self.expr.formals).replace('\'', '').replace(',', '')
+        return ''
+
+    def set_docstring(self, obj):
+        if self.doc_string:
+            tidied = ['-----------------', self.name + self.params()] + \
+                     ['  ' + x.replace(';^', '  ').strip() for x in self.doc_string]
+            setattr(obj, '__docstring__', '\n'.join(tidied))
 
     def eval(self, env):
-        env[self.name] = self.expr.eval(env)
+        obj = self.expr.eval(env)
+        self.set_docstring(obj)
+        env.global_frame[self.name] = obj
         return Symbol(self.name)
 
 
 class DefineFunction(BuiltIn):
     """ Syntactic sugar for define/lambda """
 
-    def __init__(self, name, formals, *body):
+    def __init__(self, name, formals, doc_string, *body):
         self.name = name
-        self.lambda_ = Lambda(formals, *body)
+        self.formals = formals
+        self.doc_string = doc_string
+        self.body = body
 
     def eval(self, env):
-        env[self.name] = self.lambda_.eval(env)
-        return Symbol(self.name)
+        return Define(self.name, self.doc_string,
+                      Lambda(self.formals, *self.body)).eval(env)
 
 
 class Set_PLING(BuiltIn):

@@ -35,6 +35,7 @@ developer under feature branches.
 * Immutable persistent data structures: linked lists
 * Some core library higher-order functions (map, fold, etc.)
 * Semi-colon comments
+* Docstring support
 
 #### Features forthcoming
 
@@ -316,19 +317,10 @@ Python code:
 ## TODO
 
 #### Parser
-* Support docstrings - no definition in Racket, per se. Suggest something like
-  below, which uses a deviation of the standard comment (;^) to scoop
+* ~~Support docstrings - no definition in Racket, per se. Suggest something which 
+  uses a deviation of the standard comment (;^) to scoop
   documentation into meta-data on the function definition. Accessed via a `(doc
-  factorial)` from the REPL.
-
-```scheme
-(define (factorial n)
-  ;^ The factorial of a non-negative integer n, denoted by n!, is
-  ;^ the product of all positive integers less than or equal to n.
-  (if (= n 0)
-    1
-    (* n (factorial (- n 1)))))
-```
+  factorial)` from the REPL.~~
 
 #### Interpreter
 * Lazy evaluation with `force`, `delay`, `memoize` 

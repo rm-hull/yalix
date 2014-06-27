@@ -42,17 +42,17 @@ class BuiltinsTest(unittest.TestCase):
         #                       0))))
         #     (accum 0)))
         env = Env()
-        Define('+', Lambda(['x', 'y'],
+        Define('+', [], Lambda(['x', 'y'],
                            InterOp(operator.add,
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
 
-        Define('<', Lambda(['x', 'y'],
+        Define('<', [], Lambda(['x', 'y'],
                            InterOp(operator.lt,
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
 
-        DefineFunction('sum', ['n'],
+        DefineFunction('sum', ['n'], [],
                        LetRec(('accum',
                                Lambda(['x'],
                                       If(Call(Symbol('<'), Symbol('x'), Symbol('n')),
@@ -95,8 +95,8 @@ class BuiltinsTest(unittest.TestCase):
         rho = 1.618033988749894848204586834
 
         # check unicode, pi & golden ratio
-        Define('π', Atom(pi)).eval(env)
-        Define('ϕ', Atom(rho)).eval(env)
+        Define('π', [], Atom(pi)).eval(env)
+        Define('ϕ', [], Atom(rho)).eval(env)
 
         self.assertAlmostEqual(pi, env['π'])
         self.assertAlmostEqual(rho, env['ϕ'])
@@ -106,7 +106,7 @@ class BuiltinsTest(unittest.TestCase):
 
     def test_call(self):
         env = Env()
-        Define('+', Lambda(['x', 'y'],
+        Define('+', [], Lambda(['x', 'y'],
                            InterOp(operator.add,
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
@@ -118,14 +118,14 @@ class BuiltinsTest(unittest.TestCase):
 
     def test_call_non_closure(self):
         env = Env()
-        Define('barf', Atom('barf')).eval(env)
+        Define('barf', [], Atom('barf')).eval(env)
 
         with self.assertRaises(EvaluationError):
             Call(Symbol('barf'), Atom(3)).eval(env)
 
     def test_call_wrong_arity(self):
         env = Env()
-        Define('+', Lambda(['x', 'y'],
+        Define('+', [], Lambda(['x', 'y'],
                            InterOp(operator.add,
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
@@ -142,7 +142,7 @@ class BuiltinsTest(unittest.TestCase):
         # Cheating?
         # (define (list* . xs) xs)
         env = Env()
-        DefineFunction('list*', ['.', 'xs'], Symbol('xs')).eval(env)
+        DefineFunction('list*', ['.', 'xs'], [], Symbol('xs')).eval(env)
 
         lst1 = Call(Symbol('list*')).eval(env)
         lst2 = Call(Symbol('list*'), Atom(1)).eval(env)
@@ -160,7 +160,7 @@ class BuiltinsTest(unittest.TestCase):
 
     def test_quote(self):
         env = Env()
-        Define('+', Lambda(['x', 'y'],
+        Define('+', [], Lambda(['x', 'y'],
                            InterOp(operator.add,
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
@@ -197,11 +197,11 @@ class BuiltinsTest(unittest.TestCase):
         #         (* x (factorial (- x 1))))))
         #
         env = Env()
-        Define('*', Lambda(['a', 'b'], InterOp(operator.mul, Symbol('a'), Symbol('b')))).eval(env)
-        Define('+', Lambda(['a', 'b'], InterOp(operator.add, Symbol('a'), Symbol('b')))).eval(env)
-        Define('-', Lambda(['a', 'b'], InterOp(operator.sub, Symbol('a'), Symbol('b')))).eval(env)
-        Define('=', Lambda(['a', 'b'], InterOp(operator.eq, Symbol('a'), Symbol('b')))).eval(env)
-        Define('zero?', Lambda(['n'], Call(Symbol('='), Symbol('n'), Atom(0)))).eval(env)
+        Define('*', [], Lambda(['a', 'b'], InterOp(operator.mul, Symbol('a'), Symbol('b')))).eval(env)
+        Define('+', [], Lambda(['a', 'b'], InterOp(operator.add, Symbol('a'), Symbol('b')))).eval(env)
+        Define('-', [], Lambda(['a', 'b'], InterOp(operator.sub, Symbol('a'), Symbol('b')))).eval(env)
+        Define('=', [], Lambda(['a', 'b'], InterOp(operator.eq, Symbol('a'), Symbol('b')))).eval(env)
+        Define('zero?', [], Lambda(['n'], Call(Symbol('='), Symbol('n'), Atom(0)))).eval(env)
 
         def body(name):
             return If(Call(Symbol('zero?'), Symbol('x')),
@@ -214,8 +214,8 @@ class BuiltinsTest(unittest.TestCase):
                                         Atom(1)))))
 
         # Two variants - define/lambda vs. syntactic sugar version
-        Define('factorial1', Lambda(['x'], body('factorial1'))).eval(env)
-        DefineFunction('factorial2', ['x'], body('factorial2')).eval(env)
+        Define('factorial1', [], Lambda(['x'], body('factorial1'))).eval(env)
+        DefineFunction('factorial2', ['x'], [], body('factorial2')).eval(env)
 
         # (factorial 10)
         value1 = Call(Symbol('factorial1'), Atom(10)).eval(env)
@@ -235,7 +235,7 @@ class BuiltinsTest(unittest.TestCase):
         #   (set! froobe 91)
         #   (+ froobe 11))
         env = Env()
-        Define('+', Lambda(['a', 'b'], InterOp(operator.add, Symbol('a'), Symbol('b')))).eval(env)
+        Define('+', [], Lambda(['a', 'b'], InterOp(operator.add, Symbol('a'), Symbol('b')))).eval(env)
         value = Let('froobe', Atom(43),
                     Set_PLING('froobe', Atom(91)),
                     Call(Symbol('+'), Symbol('froobe'), Atom(11))).eval(env)

@@ -38,6 +38,10 @@ def interop(fun, arity):
     return Lambda(bind_variables, InterOp(fun, *symbols))
 
 
+def doc(value):
+    return getattr(value, '__docstring__', None)
+
+
 def create_initial_env():
     with log_progress("Creating initial environment"):
         env = Env()
@@ -106,6 +110,7 @@ def bootstrap_python_functions(env):
     env['symbol'] = interop(lambda x: Symbol(x), 1)
     env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
     env['interop'] = interop(interop, 2)
+    env['doc'] = interop(doc, 1)
     env['cons'] = interop(lambda x, y: (x, y), 2)
     env['car'] = interop(car, 1)
     env['first'] = interop(car, 1)

@@ -154,8 +154,12 @@ def read(count, primary_prompt):
             prefill = '  ' * parens_count
 
 
-def prn(input, result, count, prompt):
-    print prompt.format(count, result)
+def prn(input, result, count, primary_prompt):
+    prompt = primary_prompt.format(count)
+    secondary_prompt = ' ' * len(str(count)) + red('  ...: ')
+    for line in str(result).split('\n'):
+        print prompt + line
+        prompt = secondary_prompt
 
 
 def ready():
@@ -175,7 +179,7 @@ def repl(print_callback=prn):
     ready()
 
     in_prompt = green('In [') + green(bold('{0}')) + green(']: ')
-    out_prompt = red('Out[') + red(bold('{0}')) + red(']: ') + '{1}'
+    out_prompt = red('Out[') + red(bold('{0}')) + red(']: ')
 
     parser = scheme_parser()
     count = 1
