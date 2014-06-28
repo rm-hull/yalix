@@ -54,7 +54,7 @@ def error(msg):
 
 def atom_QUESTION(value):
     """ Checks if the supplied value is an atom """
-    return value is None or type(value) in [str, int, float, bool, Symbol]
+    return value is None or type(value) in [str, int, long, float, bool, Symbol]
 
 
 def read_string(value):
