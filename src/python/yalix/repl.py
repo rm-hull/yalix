@@ -9,8 +9,7 @@ from datetime import datetime
 from pyparsing import ParseException
 from yalix.exceptions import EvaluationError
 from yalix.completer import Completer
-from yalix.interpreter.primitives import *
-from yalix.interpreter.builtins import *
+from yalix.interpreter import *
 from yalix.parser import scheme_parser
 from yalix.utils import log_progress, log
 from yalix.utils.color import red, green, blue, bold
@@ -154,14 +153,28 @@ def read(count, primary_prompt):
             prefill = '  ' * parens_count
 
 
-def prn(input, result, count, prompt):
-    print prompt.format(count, result)
+def prn(input, result, count, primary_prompt):
+    prompt = primary_prompt.format(count)
+    secondary_prompt = ' ' * len(str(count)) + red('  ...: ')
+    for line in str(result).split('\n'):
+        print prompt + line
+        prompt = secondary_prompt
 
 
 def ready():
     log()
     log(bold('Yalix [{0}]') + ' on Python {1} {2}', version(), sys.version, sys.platform)
     log('Type "help", "copyright", "credits" or "license" for more information.')
+
+
+def source_view(exception):
+    if exception.location and exception.source:
+        src = exception.source()
+        loc = exception.location()
+
+        # pygments magic here
+        # to closing bracket
+        return src[loc:]
 
 
 def repl(print_callback=prn):
@@ -175,7 +188,7 @@ def repl(print_callback=prn):
     ready()
 
     in_prompt = green('In [') + green(bold('{0}')) + green(']: ')
-    out_prompt = red('Out[') + red(bold('{0}')) + red(']: ') + '{1}'
+    out_prompt = red('Out[') + red(bold('{0}')) + red(']: ')
 
     parser = scheme_parser()
     count = 1
@@ -183,7 +196,10 @@ def repl(print_callback=prn):
         try:
             text = read(count, in_prompt)
             for ast in parser.parseString(text, parseAll=True).asList():
-                result = ast.eval(env)
+
+                # Evaluate lazy list representations
+                result = Call(Symbol('repr'), ast).eval(env)
+
                 print_callback(text, result, count, out_prompt)
             if text.strip() != '':
                 print
@@ -199,8 +215,7 @@ def repl(print_callback=prn):
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)
 
             # TODO: Format error logging better
-            log("Source: {0}", ex.source())
-            log("Location: {0}", ex.location())
+            log(source_view(ex))
 
         except ParseException as ex:
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)
@@ -211,3 +226,4 @@ def repl(print_callback=prn):
 if __name__ == '__main__':
     repl()
     sys.exit()
+

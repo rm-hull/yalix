@@ -4,34 +4,48 @@
 import unittest
 import operator
 
-from yalix.utils import array_to_linked_list
 from yalix.environment import Env
-from yalix.interpreter.primitives import *
-from yalix.interpreter.builtins import *
+from yalix.interpreter import *
 
+
+def define_cons():
+    return DefineFunction('cons', ['a', 'b'], [],
+                          InterOp(lambda a, b: (a, b),
+                                  Symbol('a'),
+                                  Symbol('b')))
+
+def make_env():
+    env = Env()
+    env['*debug*'] = Atom(False)
+    return env
+
+def make_linked_list(*arr):
+    t = Atom(None)
+    while arr:
+        t = Call(Symbol('cons'), arr[-1], t)
+        arr = arr[:-1]
+    return t
 
 class BuiltinsTest(unittest.TestCase):
 
-    def test_list(self):
-        env = Env()
-        lst = List(Atom(4), Atom(2), Atom(3)).eval(env)
-        self.assertEqual((4, (2, (3, None))), lst)
-
     def test_let_binding(self):
-        env = Env()
+        env = make_env()
+        define_cons().eval(env)
+
         lst = Let("f",
                   Atom("Hello"),
-                  List(Symbol("f"),
-                       Symbol("f"))).eval(env)
+                  make_linked_list(Symbol("f"), Symbol("f"))).eval(env)
         self.assertEqual(('Hello', ('Hello', None)), lst)
 
     def test_let_STAR_shadow_binding(self):
-        env = Env()
+        env = make_env()
+        define_cons().eval(env)
+
         lst = Let_STAR(['a', Atom('Hello'),
-                        'b', List(Atom(1), Atom(2), Atom(3)),
+                        'b', make_linked_list(Atom(1), Atom(2), Atom(3)),
                         'c', Atom('World'),
-                        'c', List(Atom('Big'), Symbol('c'))],  # <-- re-def shadowing
-                List(Symbol('a'), Symbol('c'), Symbol('b'))).eval(env)
+                        'c', make_linked_list(Atom('Big'), Symbol('c'))],  # <-- re-def shadowing
+                make_linked_list(Symbol('a'), Symbol('c'), Symbol('b'))).eval(env)
         self.assertEqual(('Hello', (('Big', ('World', None)), ((1, (2, (3, None))), None))), lst)
 
     def test_letrec(self):
@@ -41,18 +55,18 @@ class BuiltinsTest(unittest.TestCase):
         #                       (+ x (accum (+ x 1)))
         #                       0))))
         #     (accum 0)))
-        env = Env()
-        Define('+', Lambda(['x', 'y'],
+        env = make_env()
+        Define('+', [], Lambda(['x', 'y'],
                            InterOp(operator.add,
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
 
-        Define('<', Lambda(['x', 'y'],
+        Define('<', [], Lambda(['x', 'y'],
                            InterOp(operator.lt,
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
 
-        DefineFunction('sum', ['n'],
+        DefineFunction('sum', ['n'], [],
                        LetRec(('accum',
                                Lambda(['x'],
                                       If(Call(Symbol('<'), Symbol('x'), Symbol('n')),
@@ -71,13 +85,13 @@ class BuiltinsTest(unittest.TestCase):
         self.assertEqual(990, value)
 
     def test_lambda(self):
-        env = Env()
+        env = make_env()
         value = Let('identity', Lambda(['x'], Symbol('x')),  # <-- anonymous fn
                   Call(Symbol('identity'), Atom(99))).eval(env)
         self.assertEqual(99, value)
 
     def test_lambda_duplicated_formals(self):
-        env = Env()
+        env = make_env()
         with self.assertRaises(EvaluationError):
             Lambda(['x', 'y', 'x', 'z'], Symbol('x')).eval(env)
 
@@ -85,18 +99,18 @@ class BuiltinsTest(unittest.TestCase):
     def test_interop(self):
         # InterOp, i.e. using Python functions
         import operator
-        env = Env()
+        env = make_env()
         value = InterOp(operator.add, Atom(41), Atom(23)).eval(env)
         self.assertEqual(64, value)
 
     def test_define_unicode(self):
-        env = Env()
+        env = make_env()
         pi = 3.14159265358979323846264338327950288419716939937510
         rho = 1.618033988749894848204586834
 
         # check unicode, pi & golden ratio
-        Define('π', Atom(pi)).eval(env)
-        Define('ϕ', Atom(rho)).eval(env)
+        Define('π', [], Atom(pi)).eval(env)
+        Define('ϕ', [], Atom(rho)).eval(env)
 
         self.assertAlmostEqual(pi, env['π'])
         self.assertAlmostEqual(rho, env['ϕ'])
@@ -105,27 +119,24 @@ class BuiltinsTest(unittest.TestCase):
         self.assertAlmostEqual(rho, Symbol('ϕ').eval(env))
 
     def test_call(self):
-        env = Env()
-        Define('+', Lambda(['x', 'y'],
+        env = make_env()
+        Define('+', [], Lambda(['x', 'y'],
                            InterOp(operator.add,
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
 
-        # Three ways to call
         self.assertEqual(154, Call(Symbol('+'), Atom(99), Atom(55)).eval(env))
-        self.assertEqual(154, Call([Symbol('+'), Atom(99), Atom(55)]).eval(env))
-        self.assertEqual(154, Call(array_to_linked_list([Symbol('+'), Atom(99), Atom(55)])).eval(env))
 
     def test_call_non_closure(self):
-        env = Env()
-        Define('barf', Atom('barf')).eval(env)
+        env = make_env()
+        Define('barf', [], Atom('barf')).eval(env)
 
         with self.assertRaises(EvaluationError):
             Call(Symbol('barf'), Atom(3)).eval(env)
 
     def test_call_wrong_arity(self):
-        env = Env()
-        Define('+', Lambda(['x', 'y'],
+        env = make_env()
+        Define('+', [], Lambda(['x', 'y'],
                            InterOp(operator.add,
                                    Symbol('x'),
                                    Symbol('y')))).eval(env)
@@ -138,38 +149,56 @@ class BuiltinsTest(unittest.TestCase):
         with self.assertRaises(EvaluationError):
             Call(Symbol('+'), Atom(3), Atom(4), Atom(5)).eval(env)
 
-    def test_call_variadic_fn(self):
-        # Cheating?
-        # (define (list* . xs) xs)
-        env = Env()
-        DefineFunction('list*', ['.', 'xs'], Symbol('xs')).eval(env)
-
-        lst1 = Call(Symbol('list*')).eval(env)
-        lst2 = Call(Symbol('list*'), Atom(1)).eval(env)
-        lst3 = Call(Symbol('list*'), Atom(1), Atom(4), Atom(17)).eval(env)
-
-        self.assertEqual(None, lst1)
-        self.assertEqual((1, None), lst2)
-        self.assertEqual((1, (4, (17, None))), lst3)
+#    def test_call_variadic_fn(self):
+#        # Cheating?
+#        # (define (list* . xs) xs)
+#        env = make_env()
+#        define_cons().eval(env)
+#        DefineFunction('list*', ['.', 'xs'], [], Symbol('xs')).eval(env)
+#
+#        lst1 = Call(Symbol('list*')).eval(env)
+#        lst2 = Call(Symbol('list*'), Atom(1)).eval(env)
+#        lst3 = Call(Symbol('list*'), Atom(1), Atom(4), Atom(17)).eval(env)
+#
+#        self.assertEqual(None, lst1)
+#        self.assertEqual(1, lst2[0])
+#        self.assertEqual(None, lst2[1].eval(env))
+#
+#        self.assertEqual((1, (4, (17, None))), lst3)
 
     def test_symbol(self):
-        env = Env().extend('fred', 45)
+        env = make_env().extend('fred', 45)
         s = Symbol('fred')
         self.assertEqual(45, s.eval(env))
         self.assertEqual('fred', repr(s))
 
-    def test_quote(self):
-        env = Env()
-        Define('+', Lambda(['x', 'y'],
-                           InterOp(operator.add,
-                                   Symbol('x'),
-                                   Symbol('y')))).eval(env)
+    def test_quote_atom(self):
+        env = make_env()
+        q = Quote(Atom(5)).eval(env)
+        self.assertEquals(5, q.value)
 
-        q = Quote([Symbol('+'), Atom(2), Atom(3)]).eval(env)
-        value = Call(q).eval(env)
-        self.assertEqual(5, value)
+    def test_quote_symbol(self):
+        env = make_env()
+        q = Quote(Symbol('toil')).eval(env)
+        self.assertEquals('toil', q.name)
 
-        # Call(Quote([Symbol('+'), Atom(2), Atom(3)])).eval(env)
+    def test_quote_empty_sexpr(self):
+        env = make_env()
+        q = Quote(Call()).eval(env)
+        self.assertEqual(None, q.value)
+
+    def test_quote_sexpr(self):
+        #env = make_env()
+        #define_cons().eval(env)
+        #Define('+', [], Lambda(['x', 'y'],
+        #                   InterOp(operator.add,
+        #                           Symbol('x'),
+        #                           Symbol('y')))).eval(env)#
+        #
+        #q = Quote(Call(Symbol('+'), Atom(2), Atom(3))).eval(env)
+        #self.assertEqual((Symbol('cons'), (Symbol('+'), (Delay(5), None))),
+        #                 q.args)
+        pass
 
     def test_conditional(self):
         # (let (rnd (random))
@@ -196,12 +225,12 @@ class BuiltinsTest(unittest.TestCase):
         #         1
         #         (* x (factorial (- x 1))))))
         #
-        env = Env()
-        Define('*', Lambda(['a', 'b'], InterOp(operator.mul, Symbol('a'), Symbol('b')))).eval(env)
-        Define('+', Lambda(['a', 'b'], InterOp(operator.add, Symbol('a'), Symbol('b')))).eval(env)
-        Define('-', Lambda(['a', 'b'], InterOp(operator.sub, Symbol('a'), Symbol('b')))).eval(env)
-        Define('=', Lambda(['a', 'b'], InterOp(operator.eq, Symbol('a'), Symbol('b')))).eval(env)
-        Define('zero?', Lambda(['n'], Call(Symbol('='), Symbol('n'), Atom(0)))).eval(env)
+        env = make_env()
+        Define('*', [], Lambda(['a', 'b'], InterOp(operator.mul, Symbol('a'), Symbol('b')))).eval(env)
+        Define('+', [], Lambda(['a', 'b'], InterOp(operator.add, Symbol('a'), Symbol('b')))).eval(env)
+        Define('-', [], Lambda(['a', 'b'], InterOp(operator.sub, Symbol('a'), Symbol('b')))).eval(env)
+        Define('=', [], Lambda(['a', 'b'], InterOp(operator.eq, Symbol('a'), Symbol('b')))).eval(env)
+        Define('zero?', [], Lambda(['n'], Call(Symbol('='), Symbol('n'), Atom(0)))).eval(env)
 
         def body(name):
             return If(Call(Symbol('zero?'), Symbol('x')),
@@ -214,8 +243,8 @@ class BuiltinsTest(unittest.TestCase):
                                         Atom(1)))))
 
         # Two variants - define/lambda vs. syntactic sugar version
-        Define('factorial1', Lambda(['x'], body('factorial1'))).eval(env)
-        DefineFunction('factorial2', ['x'], body('factorial2')).eval(env)
+        Define('factorial1', [], Lambda(['x'], body('factorial1'))).eval(env)
+        DefineFunction('factorial2', ['x'], [], body('factorial2')).eval(env)
 
         # (factorial 10)
         value1 = Call(Symbol('factorial1'), Atom(10)).eval(env)
@@ -225,7 +254,7 @@ class BuiltinsTest(unittest.TestCase):
         self.assertEquals(3628800, value2)
 
     def test_set_PLING_unbound(self):
-        env = Env()
+        env = make_env()
         with self.assertRaises(EvaluationError):
             Set_PLING('froobe', Atom(91)).eval(env)
 
@@ -234,8 +263,8 @@ class BuiltinsTest(unittest.TestCase):
         # (let (froobe 43)
         #   (set! froobe 91)
         #   (+ froobe 11))
-        env = Env()
-        Define('+', Lambda(['a', 'b'], InterOp(operator.add, Symbol('a'), Symbol('b')))).eval(env)
+        env = make_env()
+        Define('+', [], Lambda(['a', 'b'], InterOp(operator.add, Symbol('a'), Symbol('b')))).eval(env)
         value = Let('froobe', Atom(43),
                     Set_PLING('froobe', Atom(91)),
                     Call(Symbol('+'), Symbol('froobe'), Atom(11))).eval(env)

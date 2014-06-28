@@ -51,10 +51,11 @@ developer under feature branches.
 * Immutable persistent data structures: linked lists
 * Some core library higher-order functions (map, fold, etc.)
 * Semi-colon comments
+* Lazy evaluation with force/delay/memoize
+* Docstring support
 
 #### Features forthcoming
 
-* Lazy evaluation with force/delay/memoize
 * Hygenic macros
 * Fuller coverage of core library
 * Performance tweaks around free variables
@@ -124,46 +125,78 @@ In [6]: #f
 Out[6]: False
 ```
 
-#### Lists
+#### Lazy Lists
 
-Lists are represented by CONS-cells, can be arbitrarily nested, and there
-is some syntactic sugar to make creation simple:
+Lists can be arbitrarily nested, and there is some syntactic sugar to make 
+creation simple:
 
 ```scheme
-In [7]: [1 2 3 4]
-Out[7]: (1, (2, (3, (4, None))))
+In [7]: (list "a" "b" (list "d" "e"))
+Out[7]: ('a' 'b' ('d' 'e'))
 
-In [8]: (list "a" "b" (list "d" "e"))
-Out[8]: ('a', ('b', (('d', ('e', None)), None)))
+In [8]: (cons 1 2)
+Out[8]: ; not working with (repr) presently ... <yalix.interpreter.Closure object at 0x7f9b114c4d10>
 
-In [9]: (cons 1 2)
-Out[9]: (1, 2)
+In [9]: (cons 1 (cons 2 (cons 3 nil)))
+Out[9]: ; not working with (repr) presently ... <yalix.interpreter.Closure object at 0x7f9b114b8890>
 
-In [10]: (cons 1 (cons 2 (cons 3 nil)))
-Out[10]: (1, (2, (3, None)))
+In [10]: (first (cons 1 2))
+Out[10]: 1
 ```
 
-The internal representation is currently a 2-element tuple, but **this is
-liable to change** so that it prints as a conventional list - to be done as
-part of implementing lazy lists.
+The REPL will use `*print-length*` (which should be numeric & positive; root
+binding is 20) to output lists in a human-readable form, and they will get
+curtailed after 20 elements are output. This is to prevent infinite lists
+being output, for example:
 
-Access into and traversal of lists is via `car`/`cdr`, or `first`/`second`/`rest`/`next`.
-Expect that `take` and `drop` (and variants) will be implemented shortly.
+```scheme
+In [11]: (iterate inc 0)
+Out[11]: (0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 ...)
+```
+
+Note that `...` is used to denote the list printing has been curtailed, not that 
+the list ended at that point.
+
+Lists are lazily-evaluated by way of "thunks" by default, and represented by
+CONS-cells, which are "literally made out of nothing": their internal 
+structure is currently implemented as a closure as described by Gerald Sussman 
+and Harold Abelson in their MIT lecture series:
+
+```scheme
+(define (cons a b)
+  (λ (index)
+    (if index b a)))
+
+(define (car xs)
+  (if (not (nil? xs))
+    (xs 0)))
+
+(define (cdr xs)
+  (if (not (nil? xs))
+    (force (xs 1))))
+```
+
+Many construction functions will utilize the `memoize` and `delay` procedures to
+automatically create lazy lists. `cdr` will automatically sense if it should force
+evaluation. However it is not mandatory that `cons` creates lazy structures.
+
+Access into and traversal of lists is via `car`/`cdr`, or `first`/`second`/`rest`/`next`/`nth`.
+`take` and `drop` (and variants) have also been implemented.
 
 #### Let bindings
 
 Let binding operate as per Racket, with three variations:
 
 ```scheme
-In [11]: (let (a 5)
+In [12]: (let (a 5)
     ...:   (+ a a))
-Out[11]: 10
+Out[12]: 10
 
-In [12]: (let* ((a 5)
+In [13]: (let* ((a 5)
     ...:        (b 7)
     ...:        (c (+ a b)))
     ...:   (/ (+ b c) a))
-Out[12]: 3
+Out[13]: 3
 ```
 
 The third variant, _letrec_, allows forward references like:
@@ -177,22 +210,23 @@ The third variant, _letrec_, allows forward references like:
                            (is-even? (dec n))))))
     (is-odd? 11))
 ```
-Although this example wont work because _or_ & _and_ haven't been implemented yet!
+Although this example wont quite work just yet because _or_ & _and_ haven't 
+been implemented yet!
 
 #### Lambdas and function definitions
 
 An anonymous function can be defined in the global stack as follows:
 
 ```scheme
-In [13]: (define sqr
+In [14]: (define sqr
     ...:   (lambda (x) (* x x)))
-Out[13]: sqr
+Out[14]: sqr
 
-In [14]: (sqr 3.75)
-Out[14]: 14.0625
+In [15]: (sqr 3.75)
+Out[15]: 14.0625
 
-In [15]: sqr
-Out[15]: <yalix.interpreter.primitives.Closure object at 0x7fe12b3ab9d0>
+In [16]: sqr
+Out[16]: <yalix.interpreter.Closure object at 0x7fe12b3ab9d0>
 ```
 
 Lambda's can be defined inside let bindings, and the unicode lambda symbol 'λ'
@@ -200,42 +234,42 @@ may be used instead. Note the _alternate_ syntactic sugar form of `define` which
 combines a binding-form and formals, which incorporates the outer lambda.
 
 ```scheme
-In [16]: (define (range n)
+In [17]: (define (range n)
     ...:   (letrec ((accum (λ (x) 
     ...:              (if (< x n)
     ...:                (cons x (accum (inc x)))))))
     ...:     (accum 0)))
-Out[16]: range
+Out[17]: range
 ```
 Functions are first class objects and can be passed around into and out 
 of other functions:
 
 ```scheme
-In [17]: (map sqr (range 10))
-Out[17]: (0, (1, (4, (9, (16, (25, (36, (49, (64, (81, None))))))))))
+In [18]: (map sqr (range 10))
+Out[18]: (0 1 4 9 16 25 36 49 64 81)
 
-In [18]: (define (comp f g)
+In [19]: (define (comp f g)
     ...:   (λ (x) 
     ...:     (f (g x))))
-Out[18]: comp
+Out[19]: comp
 
-In [19]: (map (comp inc sqr) (range 10))
-Out[19]: (1, (2, (5, (10, (17, (26, (37, (50, (65, (82, None))))))))))
+In [20]: (map (comp inc sqr) (range 10))
+Out[20]: (1 2 5 10 17 26 37 50 65 82)
 ```
 
-#### Variadic Functions
+#### Variadic functions
 
 Arguments in a variadic function are collected up into a list. Racket uses a 
 dot '.' to indicate collecting values - so do we. Clojure uses ampersand. 
 We may support that.
 
 ```scheme
-In [20]: (define  (str . xs)
+In [21]: (define  (str . xs)
     ...:     (fold + "" xs))
-Out[20]: str
+Out[21]: str
 
-In [21]: (str "hello" "big" "bad" "world")
-Out[21]: hellobigbadworld
+In [22]: (str "hello" "big" "bad" "world")
+Out[22]: hellobigbadworld
 ```
 
 #### Symbolic computing
@@ -247,26 +281,26 @@ Symbols can be created, and treated as first class objects, either in
 quoted form, or using `(quote ...)`:
 
 ```scheme
-In [22]: (symbol "fred")
-Out[22]: fred
+In [23]: (symbol "fred")
+Out[23]: fred
 
-In [23]: (symbol? fred)
+In [24]: (symbol? fred)
 EvaluationError: 'fred' is unbound in environment
 
-In [24]: (symbol? 'fred)
-Out[24]: True
-
-In [25]: (gensym)
-Out[25]: G__84
+In [25]: (symbol? 'fred)
+Out[25]: True
 
 In [26]: (gensym)
-Out[26]: G__85
+Out[26]: G__84
 
-In [27]: (symbol? (gensym))
-Out[27]: True
+In [27]: (gensym)
+Out[27]: G__85
 
-In [28]: (gensym)
-Out[28]: G__87
+In [28]: (symbol? (gensym))
+Out[28]: True
+
+In [29]: (gensym)
+Out[29]: G__87
 ```
 
 #### Metalinguistic evaluation
@@ -274,16 +308,34 @@ Out[28]: G__87
 The parser can be invoked directly by calling `read-string`:
 
 ```scheme
-In [29]: (read-string "(+ 14 (factorial 12))")
-Out[29]: <yalix.interpreter.primitives.Call object at 0x7fe12b3ff090>
+In [30]: (read-string "(+ 14 (factorial 12))")
+Out[30]: <yalix.interpreter.Call object at 0x7fe12b3ff090>
 ```
 
 This returns an un-evaluated s-expression which may then be directly 
 evaluated under an environment (Note: 'Call' as an object name may change):
 
 ```scheme
-In [30]: (eval (read-string "(+ 11 (* 5 6))") 
-Out[30]: 41
+In [31]: (eval (read-string "(+ 11 (* 5 6))") 
+Out[31]: 41
+
+In [32]: (define x '(4 5 6))
+Out[32]: x
+
+In [33]: (eval x)
+Out[33]: (4 5 6)
+
+In [34]: (define y (eval x))
+Out[34]: y
+
+In [35]: (first y)
+Out[35]: 4
+
+In [36]: (second y)
+Out[36]: 5
+
+In [37]: (third y)
+Out[37]: 6
 ```
 
 `apply` has not yet been implemented, so the circle is not yet complete.
@@ -295,9 +347,46 @@ current line. Comments are stripped out by the parser and are not passed
 to the interpreter.
 
 ```scheme
-In [31]: ; this is a comment, which is ignored 
-In [12]: 
+In [38]: ; this is a comment, which is ignored 
+In [39]:
 ```
+
+#### Debugging
+
+A basic trace facility shows call invocations. It can be started in the
+global frame by setting `*debug*` to a truth value, and will produce lots
+of output:
+
+```scheme
+In [40]: (define *debug* #t)
+DEBUG: repr [('x', *debug*)]
+DEBUG: atom? [('G__6', *debug*)]
+DEBUG: repr-atom [('G__7', *debug*)]
+Out[40]: *debug*
+
+In [41]: (range 3)
+DEBUG: range [('n', 3)]
+DEBUG: iterate [('f', <yalix.interpreter.Closure object at 0x7f9802c6d490>), ('x', 0)]
+DEBUG: memoize [('f', <yalix.interpreter.Closure object at 0x7f9802cb8610>)]
+DEBUG: cons [('a', 0), ('b', <yalix.interpreter.Closure object at 0x7f9802c74790>)]
+DEBUG: take [('n', 3), ('xs', <yalix.interpreter.Closure object at 0x7f9802c99f50>)]
+DEBUG: pos? [('n', 3)]
+DEBUG: > [('G__47', 3), ('G__48', 0)]
+DEBUG: first [('xs', <yalix.interpreter.Closure object at 0x7f9802c99f50>)]
+
+             ---  8<  ---  Lots of logging elided  ---  8<  ---
+
+DEBUG: force [('delayed-object', <yalix.interpreter.Closure object at 0x7f9802c8d790>)]
+DEBUG: atom? [('G__6', <yalix.interpreter.Closure object at 0x7f9802c8d790>)]
+DEBUG: nil? [('G__0', <yalix.interpreter.Closure object at 0x7f9802c8d790>)]
+DEBUG: delayed-object [('x', <yalix.interpreter.Closure object at 0x7f9802ccb810>)]
+DEBUG: fold [('f', <yalix.interpreter.Closure object at 0x7f9802cfa090>), ('val', '(0 1 2)'), ('xs', None)]
+DEBUG: empty? [('G__0', None)]
+Out[41]: (0 1 2)
+```
+
+Of course, `*debug*` can be set inside a let binding as well, to either `#t` or `#f`,
+and will be honoured in that lexical scope.
 
 ### Implementation Details
 
@@ -332,23 +421,14 @@ Python code:
 ## TODO
 
 #### Parser
-* Support docstrings - no definition in Racket, per se. Suggest something like
-  below, which uses a deviation of the standard comment (;^) to scoop
+* ~~Support docstrings - no definition in Racket, per se. Suggest something which 
+  uses a deviation of the standard comment (;^) to scoop
   documentation into meta-data on the function definition. Accessed via a `(doc
-  factorial)` from the REPL.
-
-```scheme
-(define (factorial n)
-  ;^ The factorial of a non-negative integer n, denoted by n!, is
-  ;^ the product of all positive integers less than or equal to n.
-  (if (= n 0)
-    1
-    (* n (factorial (- n 1)))))
-```
+  factorial)` from the REPL.~~
 
 #### Interpreter
-* Lazy evaluation with `force`, `delay`, `memoize` 
-  (see [lazy-lists](https://github.com/rm-hull/yalix/tree/feature/lazy-lists) branch).
+* ~~Lazy evaluation with `force`, `delay`, `memoize` 
+  (see [lazy-lists](https://github.com/rm-hull/yalix/tree/feature/lazy-lists) branch).~~
 * Implement `defmacro`, `macro-expand`, splicing, backticks, etc.
 * Implement `apply` as a method or special form
 * Destructuring-bind
@@ -356,25 +436,15 @@ Python code:
 
 #### Core Library
 * Macro implementations for `and`, `or`, `cond`, etc.
-* Convert list from built-in to something like:
-
-```scheme
-(define (list . xs)
-  (if (empty? xs)
-    nil
-    (cons
-      (car xs)
-      (list (cdr xs)))))
-```
-
+* ~~Convert list syntactic sugar from built-in to use variadic definition.~~
 * Continue implementation of HOF's: `filter`, `remove`, `take`, `drop`, etc.
 * Implementation of common predicates: `odd?`, `even?`, `zero?`, `pos?`, `neg?`
 * File I/O interop
 
 #### Other
 * Make it work with PyPy
-* Unit testing
-* Travis CI integration
+* ~~Unit testing~~
+* ~~Travis CI integration~~
 
 ## References
 

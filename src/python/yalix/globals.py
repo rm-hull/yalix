@@ -14,8 +14,7 @@ import yalix.utils as utils
 from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
-from yalix.interpreter.primitives import Atom, InterOp
-from yalix.interpreter.builtins import Lambda, Symbol
+from yalix.interpreter import Atom, InterOp, Call, Lambda, Symbol
 from yalix.utils import log_progress
 
 gensym_nextID = 0
@@ -38,6 +37,10 @@ def interop(fun, arity):
     return Lambda(bind_variables, InterOp(fun, *symbols))
 
 
+def doc(value):
+    return getattr(value, '__docstring__', None)
+
+
 def create_initial_env():
     with log_progress("Creating initial environment"):
         env = Env()
@@ -46,36 +49,13 @@ def create_initial_env():
         return env
 
 
-def format_(value, format_spec):
-    return value.format(*utils.linked_list_to_array(format_spec))
-
-
-def car(value):
-    """ Contents of the Address part of Register number """
-    if value is None:
-        return None
-    elif isinstance(value, tuple):
-        return value[0]
-    else:
-        raise EvaluationError(None, '{0} is not a cons-cell', value)
-
-
-def cdr(value):
-    """ Contents of the Decrement part of Register number """
-    if value is None:
-        return None
-    elif isinstance(value, tuple):
-        return value[1]
-    else:
-        raise EvaluationError(None, '{0} is not a cons-cell', value)
+def error(msg):
+    raise EvaluationError(None, msg)
 
 
 def atom_QUESTION(value):
     """ Checks if the supplied value is an atom """
-    if value is None:
-        return False
-    else:
-        return not isinstance(value, tuple)
+    return value == None or type(value) in [str, int, float, bool, Symbol]
 
 
 def read_string(value):
@@ -92,6 +72,9 @@ class EvalWrapper(object):
     def __init__(self, env):
         self.env = env
 
+    def __getitem__(self, name):
+        return self.env[name]
+
     def __setitem__(self, name, primitive):
         self.env[name] = primitive.eval(self.env)
 
@@ -100,21 +83,19 @@ def bootstrap_python_functions(env):
 
     env = EvalWrapper(env)
 
+    env['*debug*'] = Atom(False)
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
     env['gensym'] = interop(gensym, 0)
     env['symbol'] = interop(lambda x: Symbol(x), 1)
     env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
     env['interop'] = interop(interop, 2)
-    env['cons'] = interop(lambda x, y: (x, y), 2)
-    env['car'] = interop(car, 1)
-    env['first'] = interop(car, 1)
-    env['cdr'] = interop(cdr, 1)
-    env['next'] = interop(cdr, 1)
-    env['rest'] = interop(cdr, 1)
+    env['doc'] = interop(doc, 1)
     env['atom?'] = interop(atom_QUESTION, 1)
+    env['repr-atom'] = interop(repr, 1)
     env['read-string'] = interop(read_string, 1)  # Read just one symbol
     env['eval'] = interop(lambda x: x.eval(env), 1)
+    env['error'] = interop(error, 1)
 
     # Basic Arithmetic Functions
     env['+'] = interop(operator.add, 2)
@@ -125,7 +106,6 @@ def bootstrap_python_functions(env):
 
     # String / Sequence Functions
     env['contains?'] = interop(operator.contains, 2)
-    env['format'] = interop(format_, 2)
 
     # Bitwise Ops
     env['bitwise-and'] = interop(operator.and_, 2)
