@@ -6,6 +6,7 @@
 from pyparsing import *
 from yalix.interpreter import *
 
+ParserElement.enablePackrat()
 
 def _brand(obj, src, loc):
     """ As the object was derived from some source, brand it so """
@@ -36,11 +37,12 @@ def scheme_parser(debug=False):
     docString = Regex(r";\^.*")
 
     # Atoms
-    integer = Regex(r"[+-]?\d+")
+    integer = Regex(r"[+-]?\d+") + Suppress(Optional('L'))
+    hex_ = Regex(r"0x[0-9a-fA-F]+")
     real = Regex(r"[+-]?\d+\.\d*([eE][+-]?\d+)?")
     boolean = (Keyword("#t") | Keyword("#f"))
 
-    atom = real | integer | boolean | dblQuotedString
+    atom =  real | hex_ | integer |  boolean | dblQuotedString
 
     expr = Forward()
 
@@ -75,6 +77,7 @@ def scheme_parser(debug=False):
     for name, var, fn in [
             ('integer',             integer,            _atom(int)),
             ('real number',         real,               _atom(float)),
+            ('hex',                 hex_,               _atom(lambda x: int(x, 0))),
             ('boolean',             boolean,            _atom(lambda x: x == '#t')),
             ('string',              dblQuotedString,    _atom(lambda x: x[1:-1])),
             ('symbol',              symbol,             _specialForm(Symbol)),
