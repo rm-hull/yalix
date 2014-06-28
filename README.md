@@ -418,6 +418,19 @@ Python code:
   arithmetic and other 'numeric-tower' type operations, cons-cell construction
   & manipulation, and higher-order functions like map, filter & fold.
 
+## Editor Integration
+
+### Vim bindings
+
+Add the following likes to your `.vimrc` to enable syntax highlighting for *.ylx files and to bind ALT-L to λ.
+
+```vim
+:inoremap <A-l> <C-v>u3bb<Space>
+:autocmd BufRead,BufNewFile *.ylx setlocal filetype=scheme
+```
+
+### Emax bindings
+
 ## TODO
 
 #### Parser
