@@ -1,5 +1,21 @@
 # Yalix [![Build Status](https://secure.travis-ci.org/rm-hull/yalix.png)](http://travis-ci.org/rm-hull/yalix)
 
+
+> One night, around 3am, I was watching an infomercial for a product 
+> claiming to restore men's hair. As I watched the story of one 
+> formerly-bald individual, I became overwhelmed with joy. "At last!", 
+> my brain said to itself, "This man has gotten the love and success 
+> he deserves! What an incredible product this is, giving hope to the 
+> hopeless!"
+> 
+> Throughout the intervening years I've found myself wondering if I 
+> could somehow recreate the emotional abandon and appreciation for 
+> life induced by chronic sleep deprivation. The ultimate solution 
+> would be some kind of potion — a couple quaffs to unleash my inner 
+> Richard Simmons, but not for too long.
+
+— _Clojure for the Brave and True_ 
+
 Yalix is a LISP interpreter written in Python. The dialect it mostly
 resembles is that of [Racket](http://racket-lang.org/) but is by far
 less feature packed. It is an experiment to (a) learn implementing parsers
