@@ -9,12 +9,10 @@ import random
 import math
 import threading
 
-import yalix.utils as utils
-
 from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
-from yalix.interpreter import Atom, InterOp, Call, Lambda, Symbol
+from yalix.interpreter import Atom, InterOp, Lambda, Symbol
 from yalix.utils import log_progress
 
 gensym_nextID = 0
@@ -38,7 +36,8 @@ def interop(fun, arity):
 
 
 def doc(value):
-    return getattr(value, '__docstring__', None)
+    print getattr(value, '__docstring__', None)
+    return None
 
 
 def create_initial_env():
@@ -55,7 +54,7 @@ def error(msg):
 
 def atom_QUESTION(value):
     """ Checks if the supplied value is an atom """
-    return value == None or type(value) in [str, int, float, bool, Symbol]
+    return value is None or type(value) in [str, int, float, bool, Symbol]
 
 
 def read_string(value):
@@ -98,10 +97,10 @@ def bootstrap_python_functions(env):
     env['error'] = interop(error, 1)
 
     # Basic Arithmetic Functions
-    env['+'] = interop(operator.add, 2)
-    env['-'] = interop(operator.sub, 2)
-    env['*'] = interop(operator.mul, 2)
-    env['/'] = interop(operator.div, 2)
+    env['primitive-add'] = interop(operator.add, 2)
+    env['primitive-sub'] = interop(operator.sub, 2)
+    env['primitive-mul'] = interop(operator.mul, 2)
+    env['primitive-div'] = interop(operator.div, 2)
     env['negate'] = interop(operator.neg, 1)
 
     # String / Sequence Functions

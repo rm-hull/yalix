@@ -49,10 +49,10 @@
 (define empty? nil?)
 
 (define (dec n)
-  (- n 1))
+  (primitive-sub n 1))
 
 (define (inc n)
-  (+ n 1))
+  (primitive-add n 1))
 
 (define (pos? n)
   (> n 0))
@@ -91,6 +91,14 @@
       (f val (first xs))
       (rest xs))))
 
+(define (reductions f val xs)
+  (cons 
+    val
+    (memoize
+      (delay
+        (if (not (empty? xs))
+          (reductions f (f val (first xs)) (rest xs)))))))
+
 (define (take n xs)
   (if (pos? n)
     (cons 
@@ -111,7 +119,7 @@
   (first (drop index xs)))
 
 (define  (str . xs)
-  (fold + "" xs))
+  (fold primitive-add "" xs))
 
 (define (factorial n)
    ;^ The factorial of a non-negative integer n, denoted by n!, is
@@ -133,8 +141,6 @@
 
 ; This is a comment
 
-(define *print-level* 10)
-
 (define *print-length* 20)
 
 (define (repr-list x n)
@@ -144,10 +150,26 @@
       (if (cdr x)
         (str (repr (first x)) " " (repr-list (rest x) (dec n)))
         (repr (first x)))
-      "...")
-    "gg"))
+      "...")))
 
 (define (repr x)
   (if (atom? x)
     (repr-atom x)
     (str "(" (repr-list x *print-length*) ")")))
+
+(define (+ . xs)
+  ;^ Returns the sum of numbers. (+) returns 0.
+  (fold primitive-add 0 xs))
+
+(define (- x . xs)
+  ;^ If just one argument is supplied, returns the negation of that value, 
+  ;^ else subtracts the values successively. (-) returns 0.
+  (if (empty? xs)
+    (negate x)
+    (fold primitive-sub x xs)))
+
+(define (* . xs)
+  ;^ Returns the product of the numbers. (*) returns 1.
+  (fold primitive-mul 1 xs))
+
+(define / primitive-div)
