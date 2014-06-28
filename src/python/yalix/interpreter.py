@@ -94,6 +94,26 @@ class Call(Primitive):
         """ Override default implementation to present as a list """
         return self.make_lazy_list(self.args)
 
+    def extend_env(self, env, params, closure):
+        """
+        Extend the closure's environment by binding the
+        params to the functions formals
+        """
+        extended_env = closure.env
+        for i, bind_variable in enumerate(closure.func.formals):
+            if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
+                # Use the next formal as the /actual/ bind variable,
+                # evaluate the remaining arguments into a list (NOTE offset from i)
+                # and dont process any more arguments
+                bind_variable = closure.func.formals[i + 1]
+                value = self.make_lazy_list(params[i:]).eval(env)
+                extended_env = extended_env.extend(bind_variable, value)
+                break
+            else:
+                value = params[i].eval(env)
+                extended_env = extended_env.extend(bind_variable, value)
+        return extended_env
+
     def eval(self, env):
         if self.args:
             funexp = self.args[0]
@@ -107,34 +127,19 @@ class Call(Primitive):
 
             if not closure.func.has_sufficient_arity(params):
                 raise EvaluationError(self,
-                                    'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
-                                    funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                    len(closure.func.formals),
-                                    len(params))
+                                      'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
+                                      funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                      len(closure.func.formals),
+                                      len(params))
 
-            variadic = False
-            extended_env = closure.env
-            for i, bind_variable in enumerate(closure.func.formals):
-                if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
-                    # Use the next formal as the /actual/ bind variable,
-                    # evaluate the remaining arguments into a list (NOTE offset from i)
-                    # and dont process any more arguments
-                    bind_variable = closure.func.formals[i + 1]
-                    value = self.make_lazy_list(params[i:]).eval(env)
-                    extended_env = extended_env.extend(bind_variable, value)
-                    variadic = True
-                    break
-                else:
-                    value = params[i].eval(env)
-                    extended_env = extended_env.extend(bind_variable, value)
-
-            if not variadic and len(closure.func.formals) != len(params):
+            if not closure.func.is_variadic() and len(closure.func.formals) != len(params):
                 raise EvaluationError(self,
-                                    'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
-                                    funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                    len(closure.func.formals),
-                                    len(params))
+                                      'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
+                                      funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                      len(closure.func.formals),
+                                      len(params))
 
+            extended_env = self.extend_env(env, params, closure)
             if extended_env['*debug*']:
                 utils.debug('{0} {1}', funexp.name, extended_env.local_stack)
 
@@ -256,6 +261,9 @@ class Lambda(BuiltIn):
     def __init__(self, formals, *body):
         self.formals = [] if formals is None else formals
         self.body = Body(*body)
+
+    def is_variadic(self):
+        return Primitive.VARIADIC_MARKER in list(self.formals)
 
     def has_sufficient_arity(self, args):
         try:
