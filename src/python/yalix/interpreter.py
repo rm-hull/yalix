@@ -11,10 +11,6 @@ from abc import ABCMeta, abstractmethod
 from yalix.exceptions import EvaluationError
 
 
-__special_forms__ = ['symbol', 'quote', 'lambda', 'define', 'if',
-                     'let', 'let*', 'letrec', 'set!', 'delay']
-
-
 class Primitive(object):
     __metaclass__ = ABCMeta
     VARIADIC_MARKER = '.'
@@ -39,6 +35,16 @@ class InterOp(Primitive):
     def eval(self, env):
         values = (a.eval(env) for a in self.args)
         return self.func(*values)
+
+
+class SpecialForm(Primitive):
+    """ A proxy for other built-in types """
+
+    def __init__(self, name):
+        self.impl = __special_forms__[name]
+
+    def eval(self, env):
+        return self
 
 
 class Atom(Primitive):
@@ -77,16 +83,29 @@ class ForwardRef(Primitive):
         return self.reference
 
 
-class Call(Primitive):
-    """ A function call (call-by-value) """
+# http://code.activestate.com/recipes/474088/
+class List(Primitive):
+    """ A list """
 
     def __init__(self, *args):
         self.args = args
+        if args:
+            self.funexp = self.args[0]
+            self.params = self.args[1:]
+
+    def __len__(self):
+        return len(self.args)
+
+    def __iter__(self):
+        return self.args.__iter__()
+
+    def __getitem__(self, index):
+        return self.args.__getitem__(index)
 
     def make_lazy_list(self, arr):
         t = Atom(None)
         while arr:
-            t = Call(Symbol('cons'), arr[-1], Delay(t))
+            t = List(Symbol('cons'), arr[-1], Delay(t))
             arr = arr[:-1]
         return t
 
@@ -114,36 +133,54 @@ class Call(Primitive):
                 extended_env = extended_env.extend(bind_variable, value)
         return extended_env
 
+    def dispatch(self, env, value):
+        tbl = {
+            ForwardRef: self.handle_forward_ref,
+            Closure: self.handle_closure,
+            SpecialForm: self.handle_special_form
+        }
+
+        fn = tbl.get(type(value), self.default_handler)
+        return fn(env, value)
+
+    def handle_forward_ref(self, env, forward_ref):
+        return self.dispatch(env, forward_ref.reference)
+
+    def handle_closure(self, env, closure):
+        if not closure.func.has_sufficient_arity(self.params):
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
+                                  self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  len(closure.func.formals),
+                                  len(self.params))
+
+        if not closure.func.is_variadic() and len(closure.func.formals) != len(self.params):
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
+                                  self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  len(closure.func.formals),
+                                  len(self.params))
+
+        extended_env = self.extend_env(env, self.params, closure)
+        if extended_env['*debug*']:
+            utils.debug('{0} {1}', self.funexp.name, extended_env.local_stack)
+
+        return closure.func.body.eval(extended_env)
+
+    def handle_special_form(self, env, special_form):
+        """ Don't evaluate params for special forms """
+        if env['*debug*']:
+            utils.debug('{0} {1}', self.funexp.name, self.params)
+
+        return special_form.impl(*self.params).eval(env)
+
+    def default_handler(self, env, value):
+        raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', value)
+
     def eval(self, env):
         if self.args:
-            funexp = self.args[0]
-            params = self.args[1:]
-            closure = funexp.eval(env)
-            if isinstance(closure, ForwardRef):
-                closure = closure.reference
-
-            if not isinstance(closure, Closure):
-                raise EvaluationError(self, 'Call applied with non-closure: \'{0}\'', closure)
-
-            if not closure.func.has_sufficient_arity(params):
-                raise EvaluationError(self,
-                                      'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
-                                      funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                      len(closure.func.formals),
-                                      len(params))
-
-            if not closure.func.is_variadic() and len(closure.func.formals) != len(params):
-                raise EvaluationError(self,
-                                      'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
-                                      funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                      len(closure.func.formals),
-                                      len(params))
-
-            extended_env = self.extend_env(env, params, closure)
-            if extended_env['*debug*']:
-                utils.debug('{0} {1}', funexp.name, extended_env.local_stack)
-
-            return closure.func.body.eval(extended_env)
+            value = self.funexp.eval(env)
+            return self.dispatch(env, value)
 
 
 class BuiltIn(Primitive):
@@ -198,14 +235,14 @@ class Body(BuiltIn):
 class Let(BuiltIn):
     """ A local binding """
 
-    def __init__(self, binding_form, expr, *body):
-        self.binding_form = binding_form
-        self.expr = expr
+    def __init__(self, binding, *body):
+        self.binding_form = binding.args[0]
+        self.expr = binding.args[1]
         self.body = Body(*body)
 
     def eval(self, env):
         value = self.expr.eval(env)
-        extended_env = env.extend(self.binding_form, value)
+        extended_env = env.extend(self.binding_form.name, value)
         return self.body.eval(extended_env)
 
 
@@ -218,9 +255,9 @@ class Let_STAR(BuiltIn):
 
     def eval(self, env):
         extended_env = env
-        for name, expr in utils.chunks(self.bindings, 2):
+        for symbol, expr in self.bindings:
             value = expr.eval(extended_env)
-            extended_env = extended_env.extend(name, value)
+            extended_env = extended_env.extend(symbol.name, value)
 
         return self.body.eval(extended_env)
 
@@ -238,19 +275,19 @@ class LetRec(BuiltIn):
         # All names are created first and filled with forward
         # references and bound to the environment
         forward_refs = {}
-        for name in self.bindings:
+        for symbol, _ in self.bindings:
 
-            if name in forward_refs:
+            if symbol.name in forward_refs:
                 # bindings are NOT shadowed in letrec
-                raise EvaluationError(self, "'{0}' is not distinct in letrec", name)
+                raise EvaluationError(self, "'{0}' is not distinct in letrec", symbol.name)
 
             ref = ForwardRef()
-            forward_refs[name] = ref
-            extended_env = extended_env.extend(name, ref)
+            forward_refs[symbol.name] = ref
+            extended_env = extended_env.extend(symbol.name, ref)
 
         # Then the binding expressions are evaluated and set in the fwd-refs
-        for name, expr in utils.chunks(self.bindings, 2):
-            forward_refs[name].reference = expr.eval(extended_env)
+        for symbol, expr in self.bindings:
+            forward_refs[symbol.name].reference = expr.eval(extended_env)
 
         return self.body.eval(extended_env)
 
@@ -259,16 +296,16 @@ class Lambda(BuiltIn):
     """ A recursive n-argument anonymous function """
 
     def __init__(self, formals, *body):
-        self.formals = [] if formals is None else formals
+        self.formals = [f.name for f in formals]
         self.body = Body(*body)
 
     def is_variadic(self):
-        return Primitive.VARIADIC_MARKER in list(self.formals)
+        return Primitive.VARIADIC_MARKER in self.formals
 
     def has_sufficient_arity(self, args):
         try:
             # Must be at least n args (where n is the variadic marker position)
-            return len(args) >= list(self.formals).index(Primitive.VARIADIC_MARKER)
+            return len(args) >= self.formals.index(Primitive.VARIADIC_MARKER)
         except ValueError:
             # no. args must match exactly
             return len(args) == len(self.formals)
@@ -286,7 +323,7 @@ class Delay(BuiltIn):
         self.expr = expr
 
     def eval(self, env):
-        return Lambda([], self.expr).eval(env)
+        return Lambda(List(), self.expr).eval(env)
 
 
 class If(BuiltIn):
@@ -307,41 +344,52 @@ class If(BuiltIn):
 class Define(BuiltIn):
     """ Updates entries in the Global Symbol Table """
 
-    def __init__(self, name, doc_string, expr):
-        self.name = name
-        self.expr = expr
-        self.doc_string = doc_string
+    def __init__(self, *args):
+        if len(args) == 0:
+            raise EvaluationError(self, "Too few arguments supplied to define")
 
-    def params(self):
-        if isinstance(self.expr, Lambda) and self.expr.formals:
-            return ' ' + str(self.expr.formals).replace('\'', '').replace(',', '')
-        return ''
+        self.args = args
 
-    def set_docstring(self, obj):
-        if self.doc_string:
-            tidied = ['-----------------', self.name + self.params()] + \
-                     ['  ' + x.replace(';^', '  ').strip() for x in self.doc_string]
+    def name(self):
+        first = self.args[0]
+        if isinstance(first, List):
+            return first.args[0].name
+        else:
+            return first.name
+
+    def docstring(self):
+        return [text for text in self.args[1:] if isinstance(text, str) and text.startswith(';^')]
+
+    def body(self):
+        return [expr for expr in self.args[1:] if isinstance(expr, Primitive)]
+
+    def set_docstring_on(self, obj):
+        params = ''
+        if isinstance(obj, Lambda) and obj.formals:
+            params = ' ' + str(self.expr.formals).replace(',', '')
+
+        if self.docstring():
+            tidied = ['-----------------', self.name() + params] + \
+                     ['  ' + x.replace(';^', '  ').strip() for x in self.docstring()]
             setattr(obj, '__docstring__', '\n'.join(tidied))
 
     def eval(self, env):
-        obj = self.expr.eval(env)
-        self.set_docstring(obj)
-        env.global_frame[self.name] = obj
-        return Symbol(self.name)
+        first = self.args[0]
+        if isinstance(first, List):
+            formals = first.args[1:]
+            obj = Lambda(List(*formals), *self.body()).eval(env)
+        else:
+            body = self.body()
+            if len(body) > 1:
+                raise EvaluationError(self, "Too many arguments supplied to define")
 
+            obj = body[0].eval(env)
 
-class DefineFunction(BuiltIn):
-    """ Syntactic sugar for define/lambda """
+        self.set_docstring_on(obj)
 
-    def __init__(self, name, formals, doc_string, *body):
-        self.name = name
-        self.formals = formals
-        self.doc_string = doc_string
-        self.body = body
-
-    def eval(self, env):
-        return Define(self.name, self.doc_string,
-                      Lambda(self.formals, *self.body)).eval(env)
+        name = self.name()
+        env[name] = obj
+        return Symbol(name)
 
 
 class Set_PLING(BuiltIn):
@@ -354,7 +402,23 @@ class Set_PLING(BuiltIn):
     def eval(self, env):
         try:
             value = self.expr.eval(env)
-            env.set_local(self.binding_form, value)
+            env.set_local(self.binding_form.name, value)
             return None
         except ValueError as ex:
             raise EvaluationError(self, str(ex))
+
+
+__special_forms__ = {
+    'symbol': Symbol,
+    'quote': Quote,
+    'lambda': Lambda,
+    'λ': Lambda,
+    'define': Define,
+    'begin': Body,
+    'if': If,
+    'let': Let,
+    'let*': Let_STAR,
+    'letrec': LetRec,
+    'set!': Set_PLING,
+    'delay': Delay
+}

@@ -9,7 +9,7 @@ from datetime import datetime
 from pyparsing import ParseException
 from yalix.exceptions import EvaluationError
 from yalix.completer import Completer
-from yalix.interpreter import *
+from yalix.interpreter import List, Symbol
 from yalix.parser import scheme_parser
 from yalix.utils import log_progress, log
 from yalix.utils.color import red, green, blue, bold
@@ -198,7 +198,8 @@ def repl(print_callback=prn):
             for ast in parser.parseString(text, parseAll=True).asList():
 
                 # Evaluate lazy list representations
-                result = Call(Symbol('repr'), ast).eval(env)
+                #result = List(Symbol('repr'), ast).eval(env)
+                result = ast.eval(env)
 
                 print_callback(text, result, count)
             if text.strip() != '':
@@ -226,4 +227,3 @@ def repl(print_callback=prn):
 if __name__ == '__main__':
     repl()
     sys.exit()
-

@@ -9,11 +9,14 @@ import random
 import math
 import threading
 
+from yalix.utils import log_progress
 from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
-from yalix.interpreter import Atom, InterOp, Lambda, Symbol
-from yalix.utils import log_progress
+from yalix.interpreter import Atom, InterOp, Lambda, List, \
+        Symbol, SpecialForm, __special_forms__
+
+__core_libraries__ =  ['core', 'hof', 'num', 'repr']
 
 gensym_nextID = 0
 gensym_lock = threading.Lock()
@@ -30,9 +33,8 @@ def gensym(prefix='G__'):
 
 def interop(fun, arity):
     """ Helper to create a lisp function from a python function """
-    symbols = [gensym() for _ in range(arity)]
-    bind_variables = [s.name for s in symbols]
-    return Lambda(bind_variables, InterOp(fun, *symbols))
+    bind_variables = [gensym() for _ in range(arity)]
+    return Lambda(List(*bind_variables), InterOp(fun, *bind_variables))
 
 
 def doc(value):
@@ -41,11 +43,16 @@ def doc(value):
 
 
 def create_initial_env():
+    env = Env()
     with log_progress("Creating initial environment"):
-        env = Env()
+        bootstrap_special_forms(env)
         bootstrap_python_functions(env)
-        bootstrap_lisp_functions(env, "lib/core.ylx")
-        return env
+
+    for lib in __core_libraries__:
+        with log_progress("Loading library: " + lib):
+            bootstrap_lisp_functions(env, "lib/{0}.ylx".format(lib))
+
+    return env
 
 
 def error(msg):
@@ -78,8 +85,13 @@ class EvalWrapper(object):
         self.env[name] = primitive.eval(self.env)
 
 
-def bootstrap_python_functions(env):
+def bootstrap_special_forms(env):
+    env = EvalWrapper(env)
+    for name in __special_forms__.keys():
+        env[name] = SpecialForm(name)
 
+
+def bootstrap_python_functions(env):
     env = EvalWrapper(env)
 
     env['*debug*'] = Atom(False)
