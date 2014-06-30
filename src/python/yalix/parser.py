@@ -4,8 +4,8 @@
 """ Takes a stream of characters and produces an Abstract Syntax Tree"""
 
 from pyparsing import *
-from yalix.interpreter.primitives import *
-from yalix.interpreter.builtins import *
+from yalix.interpreter import *
+
 
 def _brand(obj, src, loc):
     """ As the object was derived from some source, brand it so """
@@ -13,15 +13,18 @@ def _brand(obj, src, loc):
     setattr(obj, '__location__', loc)
     return obj
 
+
 def _specialForm(builtinClass):
     def invoke(src, loc, tokens):
         return _brand(builtinClass(*tokens), src, loc)
     return invoke
 
+
 def _atom(converter):
     def invoke(src, loc, tokens):
         return _brand(Atom(converter(tokens[0])), src, loc)
     return invoke
+
 
 def scheme_parser(debug=False):
     # Simple BNF representation of S-Expressions
@@ -29,10 +32,8 @@ def scheme_parser(debug=False):
     LPAREN = Suppress('(')
     RPAREN = Suppress(')')
 
-    LBRACKET = Suppress('[')
-    RBRACKET = Suppress(']')
-
-    comment = Suppress(Regex(r";.*"))
+    comment = Suppress(Regex(r";[^^].*"))
+    docString = Regex(r";\^.*")
 
     # Atoms
     integer = Regex(r"[+-]?\d+")
@@ -47,26 +48,26 @@ def scheme_parser(debug=False):
     binding_form = Word(alphanums + "-/_:*+=!?<>")
     formals = Group(ZeroOrMore(binding_form) + Optional(Keyword('.') + binding_form))
 
-    let = (LPAREN + Suppress('let') + LPAREN + binding_form + expr + RPAREN + body + RPAREN)
-    let_STAR = (LPAREN + Suppress('let*') + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
-    letrec = (LPAREN + Suppress('letrec') + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
-    if_ = (LPAREN + Suppress('if') + expr + expr + Optional(expr) + RPAREN)
-    define = (LPAREN + Suppress('define') + binding_form + expr + RPAREN)
-    defun = (LPAREN + Suppress('define') + LPAREN + binding_form + formals + RPAREN + body + RPAREN)
-    quote = (LPAREN + Suppress('quote') + expr + RPAREN) | Suppress('\'') + expr
-    list_ = (LBRACKET + ZeroOrMore(expr) + RBRACKET) | (LPAREN + Suppress('list') + ZeroOrMore(expr) + RPAREN)
-    lambda_ = (LPAREN + (Suppress('lambda') | Suppress('λ')) + LPAREN + formals + RPAREN + body + RPAREN)
-    begin = (LPAREN + Suppress('begin') + body + RPAREN)
-    set_PLING = (LPAREN + Suppress('set!') + binding_form + expr + RPAREN)
+    let = (LPAREN + Suppress(Keyword('let')) + LPAREN + binding_form + expr + RPAREN + body + RPAREN)
+    let_STAR = (LPAREN + Suppress(Keyword('let*')) + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
+    letrec = (LPAREN + Suppress(Keyword('letrec')) + LPAREN + Group(OneOrMore(LPAREN + binding_form + expr + RPAREN)) + RPAREN + body + RPAREN)
+    if_ = (LPAREN + Suppress(Keyword('if')) + expr + expr + Optional(expr) + RPAREN)
+    define = (LPAREN + Suppress(Keyword('define')) + binding_form + Group(ZeroOrMore(docString)) + expr + RPAREN)
+    defun = (LPAREN + Suppress(Keyword('define')) + LPAREN + binding_form + formals + RPAREN + Group(ZeroOrMore(docString)) + body + RPAREN)
+    quote = (LPAREN + Suppress(Keyword('quote')) + expr + RPAREN) | Suppress('\'') + expr
+    lambda_ = (LPAREN + (Suppress(Keyword('lambda')) | Suppress(Keyword('λ'))) + LPAREN + formals + RPAREN + body + RPAREN)
+    begin = (LPAREN + Suppress(Keyword('begin')) + body + RPAREN)
+    delay = (LPAREN + Suppress(Keyword('delay')) + expr + RPAREN)
+    set_PLING = (LPAREN + Suppress(Keyword('set!')) + binding_form + expr + RPAREN)
 
     # Built-ins
-    built_in = let_STAR | letrec | let | if_ | defun | define | quote | lambda_ | list_ | set_PLING | begin
+    built_in = let_STAR | letrec | let | if_ | defun | define | quote | lambda_ | begin | delay | set_PLING
 
     # Symbols
     symbol = Word(alphanums + "-/_:*+=!?<>")
 
     # Expressions
-    sexp = (LPAREN + expr + ZeroOrMore(expr) + RPAREN)
+    sexp = (LPAREN + ZeroOrMore(expr) + RPAREN)
     expr << (atom | built_in | symbol | sexp)
     expr.ignore(comment).setDebug(debug)
 
@@ -84,9 +85,9 @@ def scheme_parser(debug=False):
             ('definition',          define,             _specialForm(Define)),
             ('function definition', defun,              _specialForm(DefineFunction)),
             ('quote',               quote,              _specialForm(Quote)),
-            ('list',                list_,              _specialForm(List)),
             ('lambda',              lambda_,            _specialForm(Lambda)),
             ('begin',               begin,              _specialForm(Body)),
+            ('delay',               delay,              _specialForm(Delay)),
             ('set!',                set_PLING,          _specialForm(Set_PLING)),
             ('S-expression',        sexp,               _specialForm(Call))]:
         var.setParseAction(fn)

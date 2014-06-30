@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from yalix.interpreter.builtins import __special_forms__
+from yalix.interpreter import __special_forms__
 
 
 class Completer:

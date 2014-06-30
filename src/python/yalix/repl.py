@@ -9,8 +9,7 @@ from datetime import datetime
 from pyparsing import ParseException
 from yalix.exceptions import EvaluationError
 from yalix.completer import Completer
-from yalix.interpreter.primitives import *
-from yalix.interpreter.builtins import *
+from yalix.interpreter import *
 from yalix.parser import scheme_parser
 from yalix.utils import log_progress, log
 from yalix.utils.color import red, green, blue, bold
@@ -22,13 +21,13 @@ def version():
 
 
 def copyright():
-    return Atom("""
+    return """
 Copyright (c) {0} Richard Hull.
-All Rights Reserved.""".format(datetime.now().year))
+All Rights Reserved.""".format(datetime.now().year)
 
 
 def license():
-    return Atom("""
+    return """
 The MIT License (MIT)
 
 Copyright (c) {0} Richard Hull
@@ -49,11 +48,11 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.""".format(datetime.now().year))
+THE SOFTWARE.""".format(datetime.now().year)
 
 
 def help():
-    return Atom("""
+    return """
 Yalix is a LISP interpreter: it's dialect most closely resembles that of Racket
 or PLT-Scheme. This particular implementation is written in Python, and serves
 as a reference implementation only. It is subject to on-going development, and
@@ -78,12 +77,12 @@ the following S-Exp at the prompt:
 
     (doc first)
 
-See https://github.com/rm-hull/yalex/ for further information.""")
+See https://github.com/rm-hull/yalex/ for further information."""
 
 
 def credits():
-    return Atom("""
-TBD""")
+    return """
+TBD"""
 
 
 def init_readline(env):
@@ -137,10 +136,11 @@ def balance(text, bal=0):
         return balance(text[1:], bal)
 
 
-def read(count, primary_prompt):
-    prompt = primary_prompt.format(count)
-    secondary_prompt = ' ' * len(str(count)) + green('  ...: ')
+def read(count):
+    primary_prompt = '\001' + green('\002In [\001') + green('\002{0}\001', style='bold') + green('\002]: \001') + '\002'
+    secondary_prompt = ' ' * len(str(count)) + '\001' + green('\002  ...: \001') + '\002'
 
+    prompt = primary_prompt.format(count)
     prefill = ''
     entry = ''
 
@@ -154,14 +154,29 @@ def read(count, primary_prompt):
             prefill = '  ' * parens_count
 
 
-def prn(input, result, count, prompt):
-    print prompt.format(count, result)
+def prn(input, result, count):
+    primary_prompt = red('Out[') + red('{0}', style='bold') + red(']: ')
+    secondary_prompt = ' ' * len(str(count)) + red('  ...: ')
+    prompt = primary_prompt.format(count)
+    for line in str(result).split('\n'):
+        print prompt + line
+        prompt = secondary_prompt
 
 
 def ready():
     log()
     log(bold('Yalix [{0}]') + ' on Python {1} {2}', version(), sys.version, sys.platform)
     log('Type "help", "copyright", "credits" or "license" for more information.')
+
+
+def source_view(exception):
+    if exception.location and exception.source:
+        src = exception.source()
+        loc = exception.location()
+
+        # pygments magic here
+        # to closing bracket
+        return src[loc:]
 
 
 def repl(print_callback=prn):
@@ -174,17 +189,18 @@ def repl(print_callback=prn):
     init_readline(env)
     ready()
 
-    in_prompt = green('In [') + green(bold('{0}')) + green(']: ')
-    out_prompt = red('Out[') + red(bold('{0}')) + red(']: ') + '{1}'
 
     parser = scheme_parser()
     count = 1
     while True:
         try:
-            text = read(count, in_prompt)
+            text = read(count)
             for ast in parser.parseString(text, parseAll=True).asList():
-                result = ast.eval(env)
-                print_callback(text, result, count, out_prompt)
+
+                # Evaluate lazy list representations
+                result = Call(Symbol('repr'), ast).eval(env)
+
+                print_callback(text, result, count)
             if text.strip() != '':
                 print
 
@@ -199,8 +215,7 @@ def repl(print_callback=prn):
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)
 
             # TODO: Format error logging better
-            log("Source: {0}", ex.source())
-            log("Location: {0}", ex.location())
+            log(source_view(ex))
 
         except ParseException as ex:
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)
@@ -211,3 +226,4 @@ def repl(print_callback=prn):
 if __name__ == '__main__':
     repl()
     sys.exit()
+
