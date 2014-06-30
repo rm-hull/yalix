@@ -29,18 +29,20 @@
     (if index b a)))
 
 (define (car xs)
-  (if (not (nil? xs))
+  (if (nil? xs)     ; TODO: convert to if-not macro when available
+    nil
     (xs 0)))
 
 (define (cdr xs)
-  (if (not (nil? xs))
-    (force (xs 1))))
+  (if (nil? xs)     ; TODO: convert to if-not macro when available
+    nil
+    (xs 1)))
 
 (define first car)
 
-(define next cdr)
+(define next (comp force cdr))
 
-(define rest cdr)
+(define rest (comp force cdr))
 
 (define second (comp first next))
 
