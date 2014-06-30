@@ -100,7 +100,9 @@ from PLT-Scheme and Racket.
 
 #### Atoms
 
-Integers, Real numbers, Strings and Booleans are all supported:
+Integers, Real numbers, Hexadeicmal numbers (prefixed with 0x), Strings and 
+Booleans are all supported. `nil` is classed as an atom, as are 
+[symbols](#symbolic-computing).
 
 ```scheme
 Yalix [0.0.1] on Python 2.7.6 (default, Mar 22 2014, 22:59:56) 
@@ -115,8 +117,8 @@ Out[2]: True
 In [3]: (* 11 (+ 2.9 4.5))
 Out[3]: 81.4
 
-In [4]: nil
-Out[4]: None
+In [4]: 0xFFFF
+Out[4]: 65535
 
 In [5]: #t
 Out[5]: True
