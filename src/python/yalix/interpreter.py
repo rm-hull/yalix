@@ -200,6 +200,12 @@ class Symbol(BuiltIn):
     def __repr__(self):
         return str(self.name)
 
+    def __eq__(self, other):
+        return type(other) == Symbol and self.name == other.name
+
+    def __ne__(self, other):
+        return not self == other
+
     def eval(self, env):
         try:
             return env[self.name]

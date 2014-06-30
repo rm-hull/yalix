@@ -151,6 +151,14 @@ class BuiltinsTest(unittest.TestCase):
         self.assertEqual(45, s.eval(env))
         self.assertEqual('fred', repr(s))
 
+    def test_symbol_equality(self):
+        env = make_env().extend('fred', 45)
+        s1 = Symbol('fred')
+        s2 = Symbol('fred')
+        s3 = Symbol('jim')
+        self.assertEqual(s1, s2)
+        self.assertNotEqual(s1, s3)
+
     def test_quote_atom(self):
         env = make_env()
         q = Quote(Atom(5)).eval(env)
