@@ -1,0 +1,7 @@
+
+(define (factorial n)
+   ;^ The factorial of a non-negative integer n, denoted by n!, is
+   ;^ the product of all positive integers less than or equal to n.
+   (fold * 1 (take 100 (iterate inc 1))))
+
+(define *print-length* 20)
