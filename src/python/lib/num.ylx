@@ -15,6 +15,12 @@
 (define (neg? n)
   (< n 0))
 
+(define (even? n)
+  (zero? (mod n 2)))
+
+(define (odd? n)
+  (not (even? n)))
+
 (define (+ . xs)
   ;^ Returns the sum of numbers. (+) returns 0.
   (fold add 0 xs))
