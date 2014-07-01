@@ -19,7 +19,7 @@
          result))))
 
 (define (force delayed-object)
-  (if (if (atom? delayed-object) #t (nil? delayed-object))  ; OR .. need macros!
+  (if (atom? delayed-object)
     delayed-object
     (delayed-object)))
 
@@ -29,96 +29,26 @@
     (if index b a)))
 
 (define (car xs)
-  (if (not (nil? xs))
+  (if (nil? xs)     ; TODO: convert to if-not macro when available
+    nil
     (xs 0)))
 
 (define (cdr xs)
-  (if (not (nil? xs))
-    (force (xs 1))))
+  (if (nil? xs)     ; TODO: convert to if-not macro when available
+    nil
+    (xs 1)))
 
 (define first car)
 
-(define next cdr)
+(define next (comp force cdr))
 
-(define rest cdr)
+(define rest (comp force cdr))
 
 (define second (comp first next))
 
 (define third (comp second next))
 
 (define empty? nil?)
-
-(define (dec n)
-  (- n 1))
-
-(define (inc n)
-  (+ n 1))
-
-(define (pos? n)
-  (> n 0))
-
-(define (zero? n)
-  (= n 0))
-
-(define (neg? n)
-  (< n 0))
-
-(define (iterate f x)
-  (cons
-    x
-    (memoize 
-      (delay 
-        (iterate f (f x))))))
-
-(define (range n)
-  (take n (iterate inc 0)))
-
-(define (map f xs)
-  ;^ Maps a function over a list
-  (if (empty? xs)
-    nil
-    (cons
-      (f (first xs))
-      (memoize 
-        (delay 
-          (map f (rest xs)))))))
-
-(define (fold f val xs)
-  (if (empty? xs)
-    val
-    (fold
-      f
-      (f val (first xs))
-      (rest xs))))
-
-(define (take n xs)
-  (if (pos? n)
-    (cons 
-      (first xs)
-      (memoize 
-        (delay 
-          (take (dec n) (rest xs)))))))
-
-(define (drop n xs)
-  (letrec ((step (λ (n xs)
-                   (if (if (pos? n) (not (nil? xs)) #f)   ; AND ... Need macros! 
-                     (step (dec n) (rest xs))             ; need tail-recursion here too
-                     xs))))
-    (if (pos? n)
-      (step n xs))))
-
-(define (nth xs index)
-  (first (drop index xs)))
-
-(define  (str . xs)
-  (fold + "" xs))
-
-(define (factorial n)
-   ;^ The factorial of a non-negative integer n, denoted by n!, is
-   ;^ the product of all positive integers less than or equal to n.
-   (if (= n 0)
-    1
-    (* n (factorial (- n 1)))))
 
 (define (lazy-list xs)
   (if (not (empty? xs))
@@ -131,23 +61,3 @@
 (define (list . xs)
     (lazy-list xs))
 
-; This is a comment
-
-(define *print-level* 10)
-
-(define *print-length* 20)
-
-(define (repr-list x n)
-  ;^ turn a list into a string
-  (if (not (nil? x))
-    (if (pos? n)
-      (if (cdr x)
-        (str (repr (first x)) " " (repr-list (rest x) (dec n)))
-        (repr (first x)))
-      "...")
-    "gg"))
-
-(define (repr x)
-  (if (atom? x)
-    (repr-atom x)
-    (str "(" (repr-list x *print-length*) ")")))

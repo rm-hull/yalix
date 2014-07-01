@@ -1,0 +1,58 @@
+; Higher-order functions
+
+(define (iterate f x)
+  (cons
+    x
+    (memoize 
+      (delay 
+        (iterate f (f x))))))
+
+(define (range n)
+  (take n (iterate inc 0)))
+
+(define (map f xs)
+  ;^ Maps a function over a list
+  (if (empty? xs)
+    nil
+    (cons
+      (f (first xs))
+      (memoize 
+        (delay 
+          (map f (rest xs)))))))
+
+(define (fold f val xs)
+  (if (empty? xs)
+    val
+    (fold
+      f
+      (f val (first xs))
+      (rest xs))))
+
+(define (reductions f val xs)
+  (cons 
+    val
+    (memoize
+      (delay
+        (if (not (empty? xs))
+          (reductions f (f val (first xs)) (rest xs)))))))
+
+(define (take n xs)
+  (if (pos? n)
+    (cons 
+      (first xs)
+      (memoize 
+        (delay 
+          (take (dec n) (rest xs)))))))
+
+(define (drop n xs)
+  (letrec ((step (λ (n xs)
+                   (if (if (pos? n) (not (nil? xs)) #f)   ; AND ... Need macros! 
+                     (step (dec n) (rest xs))             ; need tail-recursion here too
+                     xs))))
+    (if (pos? n)
+      (step n xs))))
+
+(define (nth xs index)
+  (first (drop index xs)))
+
+

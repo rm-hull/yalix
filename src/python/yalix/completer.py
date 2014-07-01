@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from yalix.interpreter import __special_forms__
-
 
 class Completer:
     def __init__(self, env):
@@ -33,10 +31,6 @@ class Completer:
         matches = []
         n = len(text)
         for word, _ in list(self.env.items()):
-            if word[:n] == text:
-                matches.append(word)
-
-        for word in __special_forms__:
             if word[:n] == text:
                 matches.append(word)
 

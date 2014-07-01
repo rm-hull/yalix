@@ -1,0 +1,33 @@
+; Numeric functions
+
+(define (dec n)
+  (sub n 1))
+
+(define (inc n)
+  (add n 1))
+
+(define (pos? n)
+  (> n 0))
+
+(define (zero? n)
+  (= n 0))
+
+(define (neg? n)
+  (< n 0))
+
+(define (+ . xs)
+  ;^ Returns the sum of numbers. (+) returns 0.
+  (fold add 0 xs))
+
+(define (- x . xs)
+  ;^ If just one argument is supplied, returns the negation of that value, 
+  ;^ else subtracts the values successively. (-) returns 0.
+  (if (empty? xs)
+    (negate x)
+    (fold sub x xs)))
+
+(define (* . xs)
+  ;^ Returns the product of the numbers. (*) returns 1.
+  (fold mul 1 xs))
+
+(define / div)
