@@ -64,7 +64,6 @@ def doc(value):
 
 
 def print_(value):
-    print "value = ", str_(value)
     print str_(value)
     return None
 

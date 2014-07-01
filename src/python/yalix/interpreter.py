@@ -456,7 +456,9 @@ class Repr(Primitive):
         self.atom_or_list = atom_or_list
 
     def eval(self, env):
-        if List(Symbol('atom?'), self.atom_or_list).eval(env):
+        if self.atom_or_list is None or type(self.atom_or_list) in [str, int, long, float, bool, Symbol]:
+            return str(self.atom_or_list)
+        elif List(Symbol('atom?'), self.atom_or_list).eval(env):
             return str(self.atom_or_list.eval(env))
         else:
             current_head = self.atom_or_list
