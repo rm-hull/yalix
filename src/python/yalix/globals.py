@@ -13,33 +13,13 @@ from yalix.utils import log_progress
 from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
-from yalix.interpreter import Atom, InterOp, Lambda, List, \
-        Symbol, SpecialForm, __special_forms__
+from yalix.interpreter import Primitive, Atom, InterOp, Lambda, List, \
+        Realize, Symbol, SpecialForm, __special_forms__
 
 __core_libraries__ =  ['core', 'hof', 'num', 'repr']
 
 gensym_nextID = 0
 gensym_lock = threading.Lock()
-
-
-def gensym(prefix='G__'):
-    global gensym_nextID
-    global gensym_lock
-    with gensym_lock:
-        old = gensym_nextID
-        gensym_nextID += 1
-    return Symbol(prefix + str(old))
-
-
-def interop(fun, arity):
-    """ Helper to create a lisp function from a python function """
-    bind_variables = [gensym() for _ in range(arity)]
-    return Lambda(List(*bind_variables), InterOp(fun, *bind_variables))
-
-
-def doc(value):
-    print getattr(value, '__docstring__', None)
-    return None
 
 
 def create_initial_env():
@@ -53,6 +33,54 @@ def create_initial_env():
             bootstrap_lisp_functions(env, "lib/{0}.ylx".format(lib))
 
     return env
+
+
+def gensym(prefix='G__'):
+    global gensym_nextID
+    global gensym_lock
+    with gensym_lock:
+        old = gensym_nextID
+        gensym_nextID += 1
+    return Symbol(prefix + str(old))
+
+
+def interop(fun, arity, variadic=False):
+    """ Helper to create a lisp function from a python function """
+    bind_variables = [gensym() for _ in range(arity)]
+
+    if variadic:
+        # Insert the variadic marker at the last-but one position
+        formals = list(bind_variables)
+        formals.insert(-1, Symbol(Primitive.VARIADIC_MARKER))
+        bind_variables[-1] = Realize(bind_variables[-1])
+    else:
+        formals = bind_variables
+
+    return Lambda(List(*formals), InterOp(fun, *bind_variables))
+
+
+def doc(value):
+    return print_(getattr(value, '__docstring__', None))
+
+
+def print_(value):
+    print "value = ", str_(value)
+    print str_(value)
+    return None
+
+
+def str_(args=None):
+    def strnil(x):
+        return '' if x is None else str(x)
+    if args is None:
+        return ''
+    return reduce(lambda x, y: strnil(x) + strnil(y), args)
+
+
+def format_(format_spec, args=None):
+    if args is None:
+        args = []
+    return format_spec.format(*args)
 
 
 def error(msg):
@@ -98,21 +126,23 @@ def bootstrap_python_functions(env):
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
     env['gensym'] = interop(gensym, 0)
-    env['symbol'] = interop(lambda x: Symbol(x), 1)
-    env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
+    env['symbol'] = interop(lambda env, x: Symbol(x), 1)
+    env['symbol?'] = interop(lambda env, x: isinstance(x, Symbol), 1)
     env['interop'] = interop(interop, 2)
     env['doc'] = interop(doc, 1)
+    env['print'] = interop(print_, 1, variadic=True)
+    env['format'] = interop(format_, 2, variadic=True)
     env['atom?'] = interop(atom_QUESTION, 1)
-    env['repr-atom'] = interop(repr, 1)
+    env['str'] = interop(str_, 1, variadic=True)
     env['read-string'] = interop(read_string, 1)  # Read just one symbol
-    env['eval'] = interop(lambda x: x.eval(env), 1)
+    env['eval'] = interop(lambda env, x: x.eval(env), 1)
     env['error'] = interop(error, 1)
 
     # Basic Arithmetic Functions
-    env['primitive-add'] = interop(operator.add, 2)
-    env['primitive-sub'] = interop(operator.sub, 2)
-    env['primitive-mul'] = interop(operator.mul, 2)
-    env['primitive-div'] = interop(operator.div, 2)
+    env['add'] = interop(operator.add, 2)
+    env['sub'] = interop(operator.sub, 2)
+    env['mul'] = interop(operator.mul, 2)
+    env['div'] = interop(operator.div, 2)
     env['negate'] = interop(operator.neg, 1)
 
     # String / Sequence Functions

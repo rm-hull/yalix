@@ -1,25 +1,7 @@
-(define  (str . xs)
-  (fold primitive-add "" xs))
 
 (define (factorial n)
    ;^ The factorial of a non-negative integer n, denoted by n!, is
    ;^ the product of all positive integers less than or equal to n.
-   (if (= n 0)
-    1
-    (* n (factorial (- n 1)))))
+   (fold * 1 (take 100 (iterate inc 1))))
 
 (define *print-length* 20)
-
-(define (repr-list x n)
-  ;^ turn a list into a string
-  (if (not (nil? x))
-    (if (pos? n)
-      (if (cdr x)
-        (str (repr (first x)) " " (repr-list (rest x) (dec n)))
-        (repr (first x)))
-      "...")))
-
-(define (repr x)
-  (if (atom? x)
-    (repr-atom x)
-    (str "(" (repr-list x *print-length*) ")")))

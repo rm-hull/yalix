@@ -4,7 +4,7 @@
 try:
     from colors import red, green, blue, faint, bold
 except ImportError:
-    def identity(x):
+    def identity(x, **kwargs):
         return x
     global red, green, blue
     global bold, faint

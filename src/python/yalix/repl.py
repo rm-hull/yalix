@@ -9,7 +9,7 @@ from datetime import datetime
 from pyparsing import ParseException
 from yalix.exceptions import EvaluationError
 from yalix.completer import Completer
-from yalix.interpreter import List, Symbol
+from yalix.interpreter import Atom, List, Symbol, Repr
 from yalix.parser import scheme_parser
 from yalix.utils import log_progress, log
 from yalix.utils.color import red, green, blue, bold
@@ -178,13 +178,16 @@ def source_view(exception):
         # to closing bracket
         return src[loc:]
 
+def left_margin(text):
+    """ Make sure text is flushed to the right margin """
+    return text.replace('\n', '\n\r        \r')
 
 def repl(print_callback=prn):
     env = create_initial_env()
-    env['copyright'] = copyright()
-    env['license'] = license()
-    env['help'] = help()
-    env['credits'] = credits()
+    env['copyright'] = left_margin(copyright())
+    env['license'] = left_margin(license())
+    env['help'] = left_margin(help())
+    env['credits'] = left_margin(credits())
 
     init_readline(env)
     ready()
@@ -199,7 +202,7 @@ def repl(print_callback=prn):
 
                 # Evaluate lazy list representations
                 #result = List(Symbol('repr'), ast).eval(env)
-                result = ast.eval(env)
+                result = Repr(ast).eval(env)
 
                 print_callback(text, result, count)
             if text.strip() != '':

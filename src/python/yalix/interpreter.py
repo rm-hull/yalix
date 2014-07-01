@@ -33,7 +33,7 @@ class InterOp(Primitive):
         self.args = args
 
     def eval(self, env):
-        values = (a.eval(env) for a in self.args)
+        values = [a.eval(env) for a in self.args]
         return self.func(*values)
 
 
@@ -81,6 +81,7 @@ class ForwardRef(Primitive):
 
     def eval(self, env):
         return self.reference
+
 
 
 # http://code.activestate.com/recipes/474088/
@@ -151,14 +152,14 @@ class List(Primitive):
             raise EvaluationError(self,
                                   'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
                                   self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                  len(closure.func.formals),
+                                  closure.func.arity(),
                                   len(self.params))
 
         if not closure.func.is_variadic() and len(closure.func.formals) != len(self.params):
             raise EvaluationError(self,
                                   'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
                                   self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                  len(closure.func.formals),
+                                  closure.func.arity(),
                                   len(self.params))
 
         extended_env = self.extend_env(env, self.params, closure)
@@ -299,6 +300,12 @@ class Lambda(BuiltIn):
         self.formals = [f.name for f in formals]
         self.body = Body(*body)
 
+    def arity(self):
+        if self.is_variadic():
+            return self.formals.index(Primitive.VARIADIC_MARKER)
+        else:
+            return len(self.formals)
+
     def is_variadic(self):
         return Primitive.VARIADIC_MARKER in self.formals
 
@@ -406,6 +413,63 @@ class Set_PLING(BuiltIn):
             return None
         except ValueError as ex:
             raise EvaluationError(self, str(ex))
+
+
+class Realize(Primitive):
+    """
+    Lazy list unpacker - eagerly takes *ALL* the content from a nested lazy list
+    and returns as a nested array of arrays. Should not be used with infinite
+    streams.
+    """
+    def __init__(self, atom_or_list):
+        self.atom_or_list = atom_or_list
+
+    def eval(self, env):
+        if List(Symbol('atom?'), self.atom_or_list).eval(env):
+            return self.atom_or_list.eval(env)
+        else:
+            arr = []
+            current_head = self.atom_or_list
+            while current_head is not None:
+                value = List(Symbol('first'), current_head)
+                arr.append(Realize(value).eval(env))
+                current_head = List(Symbol('rest'), current_head).eval(env)
+            return arr
+
+
+class Repr(Primitive):
+    """
+    A string representation of atoms/lists, implemented with iteration so as
+    not to blow Python's stack. Note nested lists are (presently) handled
+    with recursion - this may change to an explicit stack.
+
+    List traversal will not extend beyond the *print-length* (if not nil).
+    """
+
+    def __init__(self, atom_or_list):
+        self.atom_or_list = atom_or_list
+
+    def eval(self, env):
+        if List(Symbol('atom?'), self.atom_or_list).eval(env):
+            return str(self.atom_or_list.eval(env))
+        else:
+            current_head = self.atom_or_list
+            max_iterations = env['*print-length*']
+            ret = '('
+            while current_head is not None and (max_iterations is None or max_iterations > 0):
+                value = List(Symbol('first'), current_head)
+                ret += Repr(value).eval(env)
+                current_head = List(Symbol('rest'), current_head).eval(env)
+                if max_iterations is not None:
+                    max_iterations -= 1
+                if current_head is not None:
+                    ret += ' '
+
+            if current_head is not None and max_iterations == 0:
+                ret += '...'
+
+            ret += ')'
+            return ret
 
 
 __special_forms__ = {
