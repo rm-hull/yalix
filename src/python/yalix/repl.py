@@ -7,12 +7,13 @@ import sys
 from datetime import datetime
 
 from pyparsing import ParseException
+from yalix.source_view import source_view
 from yalix.exceptions import EvaluationError
 from yalix.completer import Completer
-from yalix.interpreter import Atom, List, Symbol, Repr
+from yalix.interpreter import Repr
 from yalix.parser import scheme_parser
 from yalix.utils import log_progress, log
-from yalix.utils.color import red, green, blue, bold
+from yalix.utils.color import red, green, blue, bold, highlight_syntax
 from yalix.globals import create_initial_env
 
 
@@ -64,7 +65,7 @@ writing a LISP interpreter and a core library of functions, in a number of
 different computer languages. The intention is that there will eventually be
 "Seven LISPs in seven languages", where each implementation is idiomatic in
 the target language. Although not fully decided, the languages will most
-likely be: Python, Lua, Julia, Java/Scala, Haskell, a.n.other, and course
+likely be: Python, Lua, Go/Rust, Java/Scala, Haskell/Idris, Forth, and course
 there really needs to be a Yalix implementation too!
 
 The REPL that you are now connected to has readline capabilities, and stores
@@ -75,7 +76,13 @@ completion facility.
 Documentation for a particular function (e.g. first) can be found by evaluating
 the following S-Exp at the prompt:
 
-    (doc first)
+    (doc map)
+
+The source code for a previously defined function will be shown when the
+following is entered at the prompt (Note: special forms will not show any
+source):
+
+    (source map)
 
 See https://github.com/rm-hull/yalex/ for further information."""
 
@@ -169,18 +176,10 @@ def ready():
     log('Type "help", "copyright", "credits" or "license" for more information.')
 
 
-def source_view(exception):
-    if exception.location and exception.source:
-        src = exception.source()
-        loc = exception.location()
-
-        # pygments magic here
-        # to closing bracket
-        return src[loc:]
-
 def left_margin(text):
     """ Make sure text is flushed to the right margin """
     return text.replace('\n', '\n\r        \r')
+
 
 def repl(print_callback=prn):
     env = create_initial_env()
@@ -191,7 +190,6 @@ def repl(print_callback=prn):
 
     init_readline(env)
     ready()
-
 
     parser = scheme_parser()
     count = 1
@@ -218,8 +216,9 @@ def repl(print_callback=prn):
         except EvaluationError as ex:
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)
 
-            # TODO: Format error logging better
-            log(source_view(ex))
+            # TODO: Show source file and column/line
+
+            log(highlight_syntax(source_view(ex.primitive)))
 
         except ParseException as ex:
             log("{0}: {1}", bold(red(type(ex).__name__)), ex)

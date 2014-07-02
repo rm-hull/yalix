@@ -11,10 +11,3 @@ class EvaluationError(Exception):
 
     def __str__(self):
         return self.message
-
-    def source(self):
-        return getattr(self.primitive, '__source__', None)
-
-    def location(self):
-        return getattr(self.primitive, '__location__', None)
-

@@ -60,12 +60,23 @@ def interop(fun, arity, variadic=False):
 
 
 def doc(value):
-    return print_(getattr(value, '__docstring__', None))
+    doc = getattr(value, '__docstring__', None)
+    if doc:
+        print '-----------------'
+        print doc
+
+
+def source(value):
+    from yalix.utils.color import highlight_syntax
+    from yalix.source_view import source_view
+    src = source_view(value)
+    if src:
+        print '-----------------'
+        print highlight_syntax(source_view(value))
 
 
 def print_(value):
     print str_(value)
-    return None
 
 
 def str_(args=None):
@@ -97,6 +108,7 @@ def read_string(value):
 
 def bootstrap_lisp_functions(env, from_file):
     for ast in scheme_parser().parseFile(from_file, parseAll=True).asList():
+        # TODO: brand AST nodes with filename
         ast.eval(env)
 
 
@@ -129,6 +141,7 @@ def bootstrap_python_functions(env):
     env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
     env['interop'] = interop(interop, 2)
     env['doc'] = interop(doc, 1)
+    env['source'] = interop(source, 1)
     env['print'] = interop(print_, 1, variadic=True)
     env['format'] = interop(format_, 2, variadic=True)
     env['atom?'] = interop(atom_QUESTION, 1)

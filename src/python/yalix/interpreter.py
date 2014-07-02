@@ -56,6 +56,7 @@ class Atom(Primitive):
     def eval(self, env):
         return self.value
 
+
 class Closure(Primitive):
     """ A closure is not in 'source' programs; it is what functions evaluate to """
 
@@ -80,7 +81,6 @@ class ForwardRef(Primitive):
 
     def eval(self, env):
         return self.reference
-
 
 
 # http://code.activestate.com/recipes/474088/
@@ -223,6 +223,7 @@ class Quote(BuiltIn):
 
     def quoted_form(self):
         return self.expr
+
 
 class Body(BuiltIn):
     """
@@ -367,9 +368,9 @@ class Define(BuiltIn):
     def name(self):
         first = self.args[0]
         if isinstance(first, List):
-            return first.args[0].name
+            return first.args[0]
         else:
-            return first.name
+            return first
 
     def docstring(self):
         return [text for text in self.args[1:] if isinstance(text, str) and text.startswith(';^')]
@@ -379,15 +380,21 @@ class Define(BuiltIn):
 
     def set_docstring_on(self, obj):
         params = ''
-        if isinstance(obj, Lambda) and obj.formals:
-            params = ' ' + str(self.expr.formals).replace(',', '')
+        if isinstance(obj, Closure) and obj.func.formals:
+            params = ' ' + str(obj.func.formals).replace(',', '').replace('\'', '')
 
         if self.docstring():
-            tidied = ['-----------------', self.name() + params] + \
+            tidied = [repr(self.name()) + params] + \
                      ['  ' + x.replace(';^', '  ').strip() for x in self.docstring()]
             setattr(obj, '__docstring__', '\n'.join(tidied))
 
+    def set_source_on(self, obj):
+        if isinstance(obj, Closure):
+            for attr in ['__source__', '__location__']:
+                setattr(obj, attr, getattr(self.name(), attr, None))
+
     def eval(self, env):
+        symbol = self.name()
         first = self.args[0]
         if isinstance(first, List):
             formals = first.args[1:]
@@ -400,10 +407,10 @@ class Define(BuiltIn):
             obj = body[0].eval(env)
 
         self.set_docstring_on(obj)
+        self.set_source_on(obj)
 
-        name = self.name()
-        env[name] = obj
-        return Symbol(name)
+        env[repr(symbol)] = obj
+        return symbol
 
 
 class Set_PLING(BuiltIn):
@@ -487,8 +494,6 @@ class Eval(BuiltIn):
         self.expr = expr
 
     def eval(self, env):
-        print self.expr
-        print self.expr.quoted_form()
         return self.expr.quoted_form().eval(env)
 
 
