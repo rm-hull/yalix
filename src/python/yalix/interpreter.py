@@ -56,7 +56,6 @@ class Atom(Primitive):
     def eval(self, env):
         return self.value
 
-
 class Closure(Primitive):
     """ A closure is not in 'source' programs; it is what functions evaluate to """
 
@@ -222,6 +221,8 @@ class Quote(BuiltIn):
     def eval(self, env):
         return self.expr.quoted_form()
 
+    def quoted_form(self):
+        return self.expr
 
 class Body(BuiltIn):
     """
@@ -480,6 +481,17 @@ class Repr(Primitive):
             return ret
 
 
+class Eval(BuiltIn):
+
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self, env):
+        print self.expr
+        print self.expr.quoted_form()
+        return self.expr.quoted_form().eval(env)
+
+
 __special_forms__ = {
     'symbol': Symbol,
     'quote': Quote,
@@ -492,5 +504,6 @@ __special_forms__ = {
     'let*': Let_STAR,
     'letrec': LetRec,
     'set!': Set_PLING,
-    'delay': Delay
+    'delay': Delay,
+    'eval': Eval
 }

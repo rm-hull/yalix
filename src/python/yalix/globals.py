@@ -125,8 +125,8 @@ def bootstrap_python_functions(env):
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
     env['gensym'] = interop(gensym, 0)
-    env['symbol'] = interop(lambda env, x: Symbol(x), 1)
-    env['symbol?'] = interop(lambda env, x: isinstance(x, Symbol), 1)
+    env['symbol'] = interop(lambda x: Symbol(x), 1)
+    env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
     env['interop'] = interop(interop, 2)
     env['doc'] = interop(doc, 1)
     env['print'] = interop(print_, 1, variadic=True)
@@ -134,7 +134,6 @@ def bootstrap_python_functions(env):
     env['atom?'] = interop(atom_QUESTION, 1)
     env['str'] = interop(str_, 1, variadic=True)
     env['read-string'] = interop(read_string, 1)  # Read just one symbol
-    env['eval'] = interop(lambda env, x: x.eval(env), 1)
     env['error'] = interop(error, 1)
 
     # Basic Arithmetic Functions
