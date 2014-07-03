@@ -22,8 +22,8 @@ class Primitive(object):
     def eval(self, env):
         raise NotImplementedError()
 
-    def quoted_form(self):
-        return self
+    def quoted_form(self, env):
+        return self.eval(env)
 
 
 class InterOp(Primitive):
@@ -109,9 +109,17 @@ class List(Primitive):
             arr = arr[:-1]
         return t
 
-    def quoted_form(self):
+    def splice_args(self, args, env):
+        for arg in args:
+            if isinstance(arg, UnquoteSplice):
+                for elem in self.splice_args(arg.eval(env), env):
+                    yield elem
+            else:
+                yield arg
+
+    def quoted_form(self, env):
         """ Override default implementation to present as a list """
-        return self.make_lazy_list(self.args)
+        return self.make_lazy_list([Quote(a) for a in self.splice_args(self.args, env)])
 
     def extend_env(self, env, params, closure):
         """
@@ -193,11 +201,12 @@ class Symbol(BuiltIn):
     closures in local symbol stack, then against a global symbol table.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, unique_id=''):
         self.name = name
+        self.unique_id = unique_id
 
     def __repr__(self):
-        return str(self.name)
+        return str(self.name + self.unique_id)
 
     def __eq__(self, other):
         return type(other) == Symbol and self.name == other.name
@@ -211,6 +220,9 @@ class Symbol(BuiltIn):
         except ValueError as ex:
             raise EvaluationError(self, str(ex))
 
+    def quoted_form(self, env):
+        return self
+
 
 class Quote(BuiltIn):
     """ Makes no effort to call the supplied expression when evaluated """
@@ -219,10 +231,44 @@ class Quote(BuiltIn):
         self.expr = expr
 
     def eval(self, env):
-        return self.expr.quoted_form()
+        return self.expr.quoted_form(env)
 
-    def quoted_form(self):
+    def quoted_form(self, env):
         return self.expr
+
+
+class SyntaxQuote(BuiltIn):
+
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self, env):
+        return self.expr.quoted_form(env)
+
+    def quoted_form(self, env):
+        return self.expr
+
+
+class Unquote(BuiltIn):
+
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self, env):
+        value = self.expr.eval(env)
+        if isinstance(value, List):
+            value = value.eval(env)
+        return value
+
+
+class UnquoteSplice(BuiltIn):
+
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self, env):
+        list_ = self.expr.eval(env)
+        return Realize(list_).eval(env)
 
 
 class Body(BuiltIn):
@@ -494,7 +540,7 @@ class Eval(BuiltIn):
         self.expr = expr
 
     def eval(self, env):
-        return self.expr.quoted_form().eval(env)
+        return self.expr.quoted_form(env).eval(env)
 
 
 __special_forms__ = {

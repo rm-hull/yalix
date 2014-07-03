@@ -52,7 +52,8 @@ developer under feature branches.
 * Some core library higher-order functions (map, fold, etc.)
 * Semi-colon comments
 * Lazy evaluation with force/delay/memoize
-* Docstring support
+* Docstring support & colorized source view
+* Quoting, Unquoting, Unquote-splicing
 
 #### Features forthcoming
 
@@ -342,6 +343,21 @@ Out[37]: 6
 
 `apply` has not yet been implemented, so the circle is not yet complete.
 
+#### Macros
+
+Quoting, syntax-quoting, unquoting and unquote-splicing are all supported:
+
+```scheme
+In [38]: (define x 5)
+Out[38]: x
+
+In [39]: (define lst '(a b c))
+Out[39]: lst
+
+In [40]: `(fred x ~x lst ~lst 7 8 ~@lst)
+Out[40]: (fred x 5 lst (a b c) 7 8 a b c)
+```
+
 #### Comments
 
 The semi-colon character is used to represent a comment to the end of the
@@ -349,8 +365,8 @@ current line. Comments are stripped out by the parser and are not passed
 to the interpreter.
 
 ```scheme
-In [38]: ; this is a comment, which is ignored 
-In [39]:
+In [41]: ; this is a comment, which is ignored 
+In [42]:
 ```
 
 #### Debugging
@@ -360,13 +376,13 @@ global frame by setting `*debug*` to a truth value, and will produce lots
 of output:
 
 ```scheme
-In [40]: (define *debug* #t)
+In [43]: (define *debug* #t)
 DEBUG: repr [('x', *debug*)]
 DEBUG: atom? [('G__6', *debug*)]
 DEBUG: repr-atom [('G__7', *debug*)]
-Out[40]: *debug*
+Out[43]: *debug*
 
-In [41]: (range 3)
+In [44]: (range 3)
 DEBUG: range [('n', 3)]
 DEBUG: iterate [('f', <yalix.interpreter.Closure object at 0x7f9802c6d490>), ('x', 0)]
 DEBUG: memoize [('f', <yalix.interpreter.Closure object at 0x7f9802cb8610>)]
@@ -384,7 +400,7 @@ DEBUG: nil? [('G__0', <yalix.interpreter.Closure object at 0x7f9802c8d790>)]
 DEBUG: delayed-object [('x', <yalix.interpreter.Closure object at 0x7f9802ccb810>)]
 DEBUG: fold [('f', <yalix.interpreter.Closure object at 0x7f9802cfa090>), ('val', '(0 1 2)'), ('xs', None)]
 DEBUG: empty? [('G__0', None)]
-Out[41]: (0 1 2)
+Out[44]: (0 1 2)
 ```
 
 Of course, `*debug*` can be set inside a let binding as well, to either `#t` or `#f`,

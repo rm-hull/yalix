@@ -16,7 +16,7 @@ from yalix.exceptions import EvaluationError
 from yalix.interpreter import Primitive, Atom, InterOp, Lambda, List, \
         Realize, Symbol, SpecialForm, __special_forms__
 
-__core_libraries__ =  ['core', 'hof', 'num', 'repr']
+__core_libraries__ =  ['core', 'hof', 'num', 'macros', 'repr']
 
 gensym_nextID = 0
 gensym_lock = threading.Lock()

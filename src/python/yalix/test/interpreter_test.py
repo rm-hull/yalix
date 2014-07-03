@@ -162,16 +162,19 @@ class BuiltinsTest(unittest.TestCase):
     def test_quote_atom(self):
         env = make_env()
         q = Quote(Atom(5)).eval(env)
-        self.assertEquals(5, q.value)
+        self.assertIsInstance(q, int)
+        self.assertEquals(5, q)
 
     def test_quote_symbol(self):
         env = make_env()
         q = Quote(Symbol('toil')).eval(env)
+        self.assertIsInstance(q, Symbol)
         self.assertEquals('toil', q.name)
 
     def test_quote_empty_sexpr(self):
         env = make_env()
         q = Quote(List()).eval(env)
+        self.assertIsInstance(q, Atom)
         self.assertEqual(None, q.value)
 
     def test_quote_sexpr(self):
