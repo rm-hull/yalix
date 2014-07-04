@@ -1,0 +1,9 @@
+; TODO change into a macro and assert on 
+(define (assert expr message)
+  (if (not expr)   ; TODO: convert to if-not macro
+    (error (str "Assertion failed: " message))))
+
+(define (assert-equal expr1 expr2 message)
+  (if (not= expr1 expr2)   ; TODO: convert to if-not macro
+    (error (str "Assertion failed: " message))))
+
