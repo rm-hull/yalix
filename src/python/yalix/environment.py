@@ -39,6 +39,12 @@ class Env(object):
 
         raise ValueError('Assignment disallowed: \'{0}\' is unbound in local environment'.format(name))
 
+    def __contains__(self, name):
+        """
+        Look in the local stack first for the named item, then try the global frame
+        """
+        return name in self.lvar or name in self.global_frame
+
     def __getitem__(self, name):
         """
         Look in the local stack first for the named item, then try the global frame

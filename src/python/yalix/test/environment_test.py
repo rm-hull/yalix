@@ -31,6 +31,12 @@ class GlobalFrameTests(unittest.TestCase):
         self.assertEqual(list(range(10)), sorted([k for k, _ in env.items()]))
         self.assertEqual(list(range(10)), sorted([v for _, v in env.items()]))
 
+    def test_contains(self):
+        env = Env()
+        self.assertFalse('a' in env)
+        env['a'] = 2
+        self.assertTrue('a' in env)
+
 
 class LocalStackTests(unittest.TestCase):
 
@@ -100,6 +106,14 @@ class LocalStackTests(unittest.TestCase):
         extended_env.set_local('a', 46)
         self.assertEqual(50, env['a'])
         self.assertEqual(46, extended_env['a'])
+
+    def test_contains(self):
+        env = Env()
+        self.assertFalse('a' in env)
+        extended_env = env.extend('a', 16)
+        self.assertFalse('a' in env)
+        self.assertTrue('a' in extended_env)
+
 
 if __name__ == '__main__':
     unittest.main()
