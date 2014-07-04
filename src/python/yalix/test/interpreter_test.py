@@ -174,8 +174,7 @@ class BuiltinsTest(unittest.TestCase):
     def test_quote_empty_sexpr(self):
         env = make_env()
         q = Quote(List()).eval(env)
-        self.assertIsInstance(q, Atom)
-        self.assertEqual(None, q.value)
+        self.assertEqual(None, q)
 
     def test_quote_sexpr(self):
         #env = make_env()

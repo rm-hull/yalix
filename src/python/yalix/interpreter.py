@@ -8,6 +8,7 @@ evaluate the AST under the environment
 
 import yalix.utils as utils
 from abc import ABCMeta, abstractmethod
+from yalix.environment import Env
 from yalix.exceptions import EvaluationError
 
 
@@ -94,9 +95,7 @@ class Closure(Primitive):
                 extended_env = extended_env.extend(bind_variable, value)
         return extended_env
 
-
     def call(self, env, caller):
-
         if not self.func.has_sufficient_arity(caller.params):
             raise EvaluationError(self,
                                   'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
@@ -171,7 +170,8 @@ class List(Primitive):
 
     def quoted_form(self, env):
         """ Override default implementation to present as a list """
-        return List.make_lazy_list([Quote(a) for a in self.splice_args(self.args, env)])
+        quote = SyntaxQuote if SyntaxQuote.ID in env else Quote
+        return List.make_lazy_list([quote(a) for a in self.splice_args(self.args, env)]).eval(env)
 
     def eval(self, env):
         if self.args:
@@ -194,12 +194,11 @@ class Symbol(BuiltIn):
     closures in local symbol stack, then against a global symbol table.
     """
 
-    def __init__(self, name, unique_id=''):
+    def __init__(self, name):
         self.name = name
-        self.unique_id = unique_id
 
     def __repr__(self):
-        return str(self.name + self.unique_id)
+        return str(self.name)
 
     def __eq__(self, other):
         return isinstance(other, Symbol) and self.name == other.name
@@ -214,7 +213,12 @@ class Symbol(BuiltIn):
             raise EvaluationError(self, str(ex))
 
     def quoted_form(self, env):
-        return self
+        if self.name.endswith('#') and SyntaxQuote.ID in env:
+            unique_id = env[SyntaxQuote.ID]
+            name = "{0}__{1}__auto__".format(self.name[:-1], unique_id)
+            return Symbol(name)
+        else:
+            return self
 
 
 class Quote(BuiltIn):
@@ -230,16 +234,14 @@ class Quote(BuiltIn):
         return self.expr
 
 
-class SyntaxQuote(BuiltIn):
+class SyntaxQuote(Quote):
 
-    def __init__(self, expr):
-        self.expr = expr
+    ID = 'G__syntax_quote_id'
 
     def eval(self, env):
+        if SyntaxQuote.ID not in env:
+            env = env.extend(SyntaxQuote.ID, Env.next_id())
         return self.expr.quoted_form(env)
-
-    def quoted_form(self, env):
-        return self.expr
 
 
 class Unquote(BuiltIn):
