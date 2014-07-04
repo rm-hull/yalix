@@ -22,6 +22,9 @@ class Primitive(object):
     def eval(self, env):
         raise NotImplementedError()
 
+    def call(self, env, caller):
+        raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', self)
+
     def quoted_form(self, env):
         return self.eval(env)
 
@@ -46,6 +49,10 @@ class SpecialForm(Primitive):
     def eval(self, env):
         return self
 
+    def call(self, env, caller):
+        """ Don't evaluate params for special forms """
+        return self.impl(*caller.params).eval(env)
+
 
 class Atom(Primitive):
     """ An atom """
@@ -67,6 +74,46 @@ class Closure(Primitive):
     def eval(self, env):
         return self
 
+    def extend_env(self, env, params):
+        """
+        Extend the closure's environment by binding the
+        params to the functions formals
+        """
+        extended_env = self.env
+        for i, bind_variable in enumerate(self.func.formals):
+            if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
+                # Use the next formal as the /actual/ bind variable,
+                # evaluate the remaining arguments into a list (NOTE offset from i)
+                # and dont process any more arguments
+                bind_variable = self.func.formals[i + 1]
+                value = List.make_lazy_list(params[i:]).eval(env)
+                extended_env = extended_env.extend(bind_variable, value)
+                break
+            else:
+                value = params[i].eval(env)
+                extended_env = extended_env.extend(bind_variable, value)
+        return extended_env
+
+
+    def call(self, env, caller):
+
+        if not self.func.has_sufficient_arity(caller.params):
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
+                                  caller.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  self.func.arity(),
+                                  len(caller.params))
+
+        if not self.func.is_variadic() and len(self.func.formals) != len(caller.params):
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
+                                  caller.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  self.func.arity(),
+                                  len(caller.params))
+
+        extended_env = self.extend_env(env, caller.params)
+        return self.func.body.eval(extended_env)
+
 
 class ForwardRef(Primitive):
     """
@@ -81,6 +128,10 @@ class ForwardRef(Primitive):
 
     def eval(self, env):
         return self.reference
+
+    def call(self, env, caller):
+        """ Don't evaluate params for special forms """
+        return self.reference.call(env, caller)
 
 
 # http://code.activestate.com/recipes/474088/
@@ -102,7 +153,8 @@ class List(Primitive):
     def __getitem__(self, index):
         return self.args.__getitem__(index)
 
-    def make_lazy_list(self, arr):
+    @classmethod
+    def make_lazy_list(cls, arr):
         t = Atom(None)
         while arr:
             t = List(Symbol('cons'), arr[-1], Delay(t))
@@ -119,76 +171,14 @@ class List(Primitive):
 
     def quoted_form(self, env):
         """ Override default implementation to present as a list """
-        return self.make_lazy_list([Quote(a) for a in self.splice_args(self.args, env)])
-
-    def extend_env(self, env, params, closure):
-        """
-        Extend the closure's environment by binding the
-        params to the functions formals
-        """
-        extended_env = closure.env
-        for i, bind_variable in enumerate(closure.func.formals):
-            if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
-                # Use the next formal as the /actual/ bind variable,
-                # evaluate the remaining arguments into a list (NOTE offset from i)
-                # and dont process any more arguments
-                bind_variable = closure.func.formals[i + 1]
-                value = self.make_lazy_list(params[i:]).eval(env)
-                extended_env = extended_env.extend(bind_variable, value)
-                break
-            else:
-                value = params[i].eval(env)
-                extended_env = extended_env.extend(bind_variable, value)
-        return extended_env
-
-    def dispatch(self, env, value):
-        tbl = {
-            ForwardRef: self.handle_forward_ref,
-            Closure: self.handle_closure,
-            SpecialForm: self.handle_special_form
-        }
-
-        fn = tbl.get(type(value), self.default_handler)
-        return fn(env, value)
-
-    def handle_forward_ref(self, env, forward_ref):
-        return self.dispatch(env, forward_ref.reference)
-
-    def handle_closure(self, env, closure):
-        if not closure.func.has_sufficient_arity(self.params):
-            raise EvaluationError(self,
-                                  'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
-                                  self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                  closure.func.arity(),
-                                  len(self.params))
-
-        if not closure.func.is_variadic() and len(closure.func.formals) != len(self.params):
-            raise EvaluationError(self,
-                                  'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
-                                  self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                  closure.func.arity(),
-                                  len(self.params))
-
-        extended_env = self.extend_env(env, self.params, closure)
-        if extended_env['*debug*']:
-            utils.debug('{0} {1}', self.funexp.name, extended_env.local_stack)
-
-        return closure.func.body.eval(extended_env)
-
-    def handle_special_form(self, env, special_form):
-        """ Don't evaluate params for special forms """
-        if env['*debug*']:
-            utils.debug('{0} {1}', self.funexp.name, self.params)
-
-        return special_form.impl(*self.params).eval(env)
-
-    def default_handler(self, env, value):
-        raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', value)
+        return List.make_lazy_list([Quote(a) for a in self.splice_args(self.args, env)])
 
     def eval(self, env):
         if self.args:
             value = self.funexp.eval(env)
-            return self.dispatch(env, value)
+            if env['*debug*']:
+                utils.debug('{0} {1}', self.funexp.name, self.params)
+            return value.call(env, self)
 
 
 class BuiltIn(Primitive):
