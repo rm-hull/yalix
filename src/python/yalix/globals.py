@@ -7,7 +7,6 @@ Some predefined functions injected into an environment
 import operator
 import random
 import math
-import threading
 
 from yalix.utils import log_progress
 from yalix.parser import scheme_parser
@@ -16,10 +15,8 @@ from yalix.exceptions import EvaluationError
 from yalix.interpreter import Primitive, Atom, InterOp, Lambda, List, \
         Realize, Symbol, SpecialForm, __special_forms__
 
-__core_libraries__ =  ['core', 'hof', 'num', 'macros', 'repr', 'test']
 
-gensym_nextID = 0
-gensym_lock = threading.Lock()
+__core_libraries__ = ['core', 'hof', 'num', 'macros', 'repr', 'test']
 
 
 def create_initial_env():
@@ -36,12 +33,7 @@ def create_initial_env():
 
 
 def gensym(prefix='G__'):
-    global gensym_nextID
-    global gensym_lock
-    with gensym_lock:
-        old = gensym_nextID
-        gensym_nextID += 1
-    return Symbol(prefix + str(old))
+    return Symbol(prefix + str(Env.next_id()))
 
 
 def interop(fun, arity, variadic=False):

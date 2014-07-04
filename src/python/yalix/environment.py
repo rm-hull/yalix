@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import threading
+
+
 class Env(object):
+
+    counter = 0
+    lock = threading.Lock()
 
     def __init__(self, local_stack=None, global_frame=None):
         self.local_stack = local_stack if local_stack else list()
@@ -18,8 +24,7 @@ class Env(object):
         new_stack = [pair for pair in self.local_stack if pair[0] != name]
         new_stack.append((name, value))
 
-        return Env(local_stack=new_stack,
-                   global_frame=self.global_frame)
+        return Env(new_stack, self.global_frame)
 
     def set_local(self, name, value):
         """
@@ -60,3 +65,10 @@ class Env(object):
 
     def items(self):
         return self.global_frame.items()
+
+    @classmethod
+    def next_id(cls):
+        with cls.lock:
+            old = cls.counter
+            cls.counter += 1
+        return old
