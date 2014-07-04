@@ -7,6 +7,7 @@ Some predefined functions injected into an environment
 import operator
 import random
 import math
+import time
 
 from yalix.utils import log_progress
 from yalix.parser import scheme_parser
@@ -140,6 +141,7 @@ def bootstrap_python_functions(env):
     env['str'] = interop(str_, 1, variadic=True)
     env['read-string'] = interop(read_string, 1)  # Read just one symbol
     env['error'] = interop(error, 1)
+    env['epoch-time'] = interop(time.time, 0)
 
     # Basic Arithmetic Functions
     env['add'] = interop(operator.add, 2)
