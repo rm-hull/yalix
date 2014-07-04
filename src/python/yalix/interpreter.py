@@ -178,7 +178,10 @@ class List(Primitive):
             value = self.funexp.eval(env)
             if env['*debug*']:
                 utils.debug('{0} {1}', self.funexp.name, self.params)
-            return value.call(env, self)
+            try:
+                return value.call(env, self)
+            except:
+                raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', value)
 
 
 class BuiltIn(Primitive):
