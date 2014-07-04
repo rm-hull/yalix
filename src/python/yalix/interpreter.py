@@ -202,7 +202,7 @@ class Symbol(BuiltIn):
         return str(self.name + self.unique_id)
 
     def __eq__(self, other):
-        return type(other) == Symbol and self.name == other.name
+        return isinstance(other, Symbol) and self.name == other.name
 
     def __ne__(self, other):
         return not self == other
