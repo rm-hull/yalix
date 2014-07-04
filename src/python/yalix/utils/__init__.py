@@ -38,7 +38,8 @@ class log_progress(object):
 
 
 def log(message='', *args):
-    sys.stdout.write(message.format(*args) + '\n')
+    if message:
+        sys.stdout.write(message.format(*args) + '\n')
 
 
 def debug(message='', *args):
