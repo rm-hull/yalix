@@ -180,7 +180,7 @@ class List(Primitive):
                 utils.debug('{0} {1}', self.funexp.name, self.params)
             try:
                 return value.call(env, self)
-            except:
+            except AttributeError:
                 raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', value)
 
 
