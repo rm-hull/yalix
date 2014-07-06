@@ -504,19 +504,22 @@ class Repr(Primitive):
     def __init__(self, atom_or_list):
         self.atom_or_list = atom_or_list
 
+
+    def isatom(self, atom_or_list):
+        return self.atom_or_list is None or type(self.atom_or_list) in [str, int, long, float, bool, Symbol]
+
+
     def eval(self, env):
-        if self.atom_or_list is None or type(self.atom_or_list) in [str, int, long, float, bool, Symbol]:
+        if self.isatom(self.atom_or_list):
             return str(self.atom_or_list)
-        elif List(Symbol('atom?'), self.atom_or_list).eval(env):
-            return str(self.atom_or_list.eval(env))
-        else:
+        elif type(self.atom_or_list) == tuple:
             current_head = self.atom_or_list
             max_iterations = env['*print-length*']
             ret = '('
             while current_head is not None and (max_iterations is None or max_iterations > 0):
-                value = List(Symbol('first'), current_head)
+                value = List(Symbol('first'), Atom(current_head)).eval(env)
                 ret += Repr(value).eval(env)
-                current_head = List(Symbol('rest'), current_head).eval(env)
+                current_head = List(Symbol('rest'), Atom(current_head)).eval(env)
                 if max_iterations is not None:
                     max_iterations -= 1
                 if current_head is not None:
@@ -527,6 +530,9 @@ class Repr(Primitive):
 
             ret += ')'
             return ret
+        else:
+            return str(self.atom_or_list.eval(env))
+
 
 
 class Eval(BuiltIn):

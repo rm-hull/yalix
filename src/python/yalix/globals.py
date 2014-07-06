@@ -99,6 +99,28 @@ def read_string(value):
     return scheme_parser().parseString(value, parseAll=True).asList()[0]
 
 
+def pair_QUESTION(value):
+    return isinstance(value, tuple)
+
+
+def car(value):
+    if value is None:
+        return None
+    elif isinstance(value, tuple):
+        return value[0]
+    else:
+        raise EvaluationError(value, "Cannot car on non-cons cell: '{0}'", value)
+
+
+def cdr(value):
+    if value is None:
+        return None
+    elif isinstance(value, tuple):
+        return value[1]
+    else:
+        raise EvaluationError(value, "Cannot cdr on non-cons cell: '{0}'", value)
+
+
 def bootstrap_lisp_functions(env, from_file):
     for ast in scheme_parser().parseFile(from_file, parseAll=True).asList():
         # TODO: brand AST nodes with filename
@@ -129,6 +151,10 @@ def bootstrap_python_functions(env):
     env['*debug*'] = Atom(False)
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
+    env['pair?'] = interop(pair_QUESTION, 1)
+    env['cons'] = interop(lambda x, y: (x, y), 2)
+    env['car'] = interop(car, 1)
+    env['cdr'] = interop(cdr, 1)
     env['gensym'] = interop(gensym, 0)
     env['symbol'] = interop(lambda x: Symbol(x), 1)
     env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)

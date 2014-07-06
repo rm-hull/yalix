@@ -21,22 +21,9 @@
 (define (force delayed-object)
   (if (atom? delayed-object)
     delayed-object
-    (delayed-object)))
-
-
-(define (cons a b)
-  (λ (index)
-    (if index b a)))
-
-(define (car xs)
-  (if (nil? xs)     ; TODO: convert to if-not macro when available
-    nil
-    (xs 0)))
-
-(define (cdr xs)
-  (if (nil? xs)     ; TODO: convert to if-not macro when available
-    nil
-    (xs 1)))
+    (if (pair? delayed-object)
+      delayed-object
+      (delayed-object))))
 
 (define first car)
 

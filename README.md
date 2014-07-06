@@ -141,7 +141,7 @@ In [8]: (cons 1 2)
 Out[8]: ; not working with (repr) presently ... <yalix.interpreter.Closure object at 0x7f9b114c4d10>
 
 In [9]: (cons 1 (cons 2 (cons 3 nil)))
-Out[9]: ; not working with (repr) presently ... <yalix.interpreter.Closure object at 0x7f9b114b8890>
+Out[9]: (1 2 3)
 
 In [10]: (first (cons 1 2))
 Out[10]: 1
@@ -161,27 +161,12 @@ Note that `...` is used to denote the list printing has been curtailed, not that
 the list ended at that point.
 
 Lists are lazily-evaluated by way of "thunks" by default, and represented by
-CONS-cells, which are "literally made out of nothing": their internal 
-structure is currently implemented as a closure as described by Gerald Sussman 
-and Harold Abelson in their MIT lecture series:
-
-```scheme
-(define (cons a b)
-  (λ (index)
-    (if index b a)))
-
-(define (car xs)
-  (if (not (nil? xs))
-    (xs 0)))
-
-(define (cdr xs)
-  (if (not (nil? xs))
-    (force (xs 1))))
-```
+CONS-cells, whose internal structure is currently implemented as a tuple.
 
 Many construction functions will utilize the `memoize` and `delay` procedures to
-automatically create lazy lists. `cdr` will automatically sense if it should force
-evaluation. However it is not mandatory that `cons` creates lazy structures.
+automatically create lazy lists. `cdr` will **NOT** automatically sense if it should 
+force evaluation, however `rest` and `next` will. It is not mandatory that `cons` 
+creates lazy structures.
 
 Access into and traversal of lists is via `car`/`cdr`, or `first`/`second`/`rest`/`next`/`nth`.
 `take` and `drop` (and variants) have also been implemented.
