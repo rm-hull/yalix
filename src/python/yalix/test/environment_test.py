@@ -115,5 +115,21 @@ class LocalStackTests(unittest.TestCase):
         self.assertTrue('a' in extended_env)
 
 
+class CounterTests(unittest.TestCase):
+    def test_counter_increments(self):
+        env = Env()
+        start_counter = env.next_id()
+        next_counter = env.next_id()
+        self.assertEqual(next_counter, start_counter + 1)
+
+    def test_counter_diff_environments(self):
+        env1 = Env()
+        start_counter = env1.next_id()
+        env2 = Env()
+        next_counter = env2.next_id()
+        last_counter = env1.next_id()
+        self.assertEqual(next_counter, start_counter + 1)
+        self.assertEqual(last_counter, start_counter + 2)
+
 if __name__ == '__main__':
     unittest.main()

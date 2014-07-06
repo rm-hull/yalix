@@ -38,7 +38,10 @@ class InterOp(Primitive):
 
     def eval(self, env):
         values = [a.eval(env) for a in self.args]
-        return self.func(*values)
+        try:
+            return self.func(*values)
+        except TypeError as ex:
+            raise EvaluationError(self, str(ex))
 
 
 class SpecialForm(Primitive):
@@ -367,6 +370,13 @@ class Lambda(BuiltIn):
             return len(args) == len(self.formals)
 
     def eval(self, env):
+        if self.is_variadic():
+            if sum(1 for f in self.formals if f == Primitive.VARIADIC_MARKER) > 1:
+                raise EvaluationError(self, 'invalid variadic argument spec: {0}', self.formals)
+
+            if self.formals.index(Primitive.VARIADIC_MARKER) != len(self.formals)-2:
+                raise EvaluationError(self, 'only one variadic argument is allowed: {0}', self.formals)
+
         if len(self.formals) != len(set(self.formals)):
             raise EvaluationError(self, 'formals are not distinct: {0}', self.formals)
 
@@ -397,13 +407,23 @@ class If(BuiltIn):
             return self.else_expr.eval(env)
 
 
+class Unbound(BuiltIn):
+    def eval(self, env):
+        return self
+
+    def __eq__(self, other):
+        return isinstance(other, Unbound)
+
+    def __ne__(self, other):
+        return not self == other
+
+
 class Define(BuiltIn):
     """ Updates entries in the Global Symbol Table """
 
     def __init__(self, *args):
         if len(args) == 0:
             raise EvaluationError(self, "Too few arguments supplied to define")
-
         self.args = args
 
     def name(self):
@@ -442,10 +462,13 @@ class Define(BuiltIn):
             obj = Lambda(List(*formals), *self.body()).eval(env)
         else:
             body = self.body()
-            if len(body) > 1:
+            body_size = len(body)
+            if body_size > 1:
                 raise EvaluationError(self, "Too many arguments supplied to define")
-
-            obj = body[0].eval(env)
+            elif body_size == 0:
+                obj = Unbound()
+            else:
+                obj = body[0].eval(env)
 
         self.set_docstring_on(obj)
         self.set_source_on(obj)
@@ -504,10 +527,8 @@ class Repr(Primitive):
     def __init__(self, atom_or_list):
         self.atom_or_list = atom_or_list
 
-
     def isatom(self, atom_or_list):
         return self.atom_or_list is None or type(self.atom_or_list) in [str, int, long, float, bool, Symbol]
-
 
     def eval(self, env):
         if self.isatom(self.atom_or_list):
@@ -532,7 +553,6 @@ class Repr(Primitive):
             return ret
         else:
             return str(self.atom_or_list.eval(env))
-
 
 
 class Eval(BuiltIn):

@@ -7,6 +7,7 @@ import operator
 from yalix.environment import Env
 from yalix.interpreter import *
 
+
 def make_env():
     env = Env()
     env['*debug*'] = Atom(False)
@@ -21,12 +22,21 @@ def make_env():
 
     return env
 
+
 def make_linked_list(*arr):
     t = Atom(None)
     while arr:
         t = List(Symbol('cons'), arr[-1], t)
         arr = arr[:-1]
     return t
+
+
+class Caller(object):
+
+    def __init__(self, funexp, *params):
+        self.funexp = funexp
+        self.params = params
+
 
 class BuiltinsTest(unittest.TestCase):
 
@@ -84,6 +94,28 @@ class BuiltinsTest(unittest.TestCase):
         with self.assertRaises(EvaluationError):
             Lambda(List(Symbol('x'), Symbol('y'), Symbol('x'), Symbol('z')), Symbol('x')).eval(env)
 
+    def test_lambda_variadic(self):
+        env = make_env()
+        Define(List(Symbol('list*'), Symbol('.'), Symbol('xs')), Symbol('xs')).eval(env)
+        values = List(Symbol('list*'), Atom(1), Atom(2), Atom(3)).eval(env)
+        caller = Caller('n/a')
+        self.assertEqual(1, values[0])
+        values = values[1].call(env, caller)
+        self.assertEqual(2, values[0])
+        values = values[1].call(env, caller)
+        self.assertEqual(3, values[0])
+        values = values[1].call(env, caller)
+        self.assertEqual(None, values)
+
+    def test_lambda_only_one_variadic_arg(self):
+        env = make_env()
+        with self.assertRaises(EvaluationError):
+            Define(List(Symbol('list*'), Symbol('.'), Symbol('xs'), Symbol('ys')), Symbol('xs')).eval(env)
+
+    def test_lambda_invalid_variadic_spec(self):
+        env = make_env()
+        with self.assertRaises(EvaluationError):
+            Define(List(Symbol('list*'), Symbol('.'), Symbol('xs'), Symbol('.')), Symbol('xs')).eval(env)
 
     def test_interop(self):
         # InterOp, i.e. using Python functions
@@ -129,22 +161,6 @@ class BuiltinsTest(unittest.TestCase):
         with self.assertRaises(EvaluationError):
             List(Symbol('+'), Atom(3), Atom(4), Atom(5)).eval(env)
 
-#    def test_call_variadic_fn(self):
-#        # Cheating?
-#        # (define (list* . xs) xs)
-#        env = make_env()
-#        DefineFunction('list*', ['.', 'xs'], [], Symbol('xs')).eval(env)
-#
-#        lst1 = List(Symbol('list*')).eval(env)
-#        lst2 = List(Symbol('list*'), Atom(1)).eval(env)
-#        lst3 = List(Symbol('list*'), Atom(1), Atom(4), Atom(17)).eval(env)
-#
-#        self.assertEqual(None, lst1)
-#        self.assertEqual(1, lst2[0])
-#        self.assertEqual(None, lst2[1].eval(env))
-#
-#        self.assertEqual((1, (4, (17, None))), lst3)
-
     def test_symbol(self):
         env = make_env().extend('fred', 45)
         s = Symbol('fred')
@@ -185,21 +201,19 @@ class BuiltinsTest(unittest.TestCase):
         pass
 
     def test_conditional(self):
-        # (let (rnd (random))
-        #   (if (< rnd 0.5)
-        #     "Unlucky"
-        #     (if (< rnd 0.75)
-        #       "Close, but no cigar"
-        #       "Lucky")))
+        # (let (a 5)
+        #   (+ a 7))
         #
-        #Let('rnd',
-        #    List(Symbol('random')),
-        #    If(List(Symbol('<'), Symbol('rnd'), Atom(0.5)),
-        #    Atom("Unlucky"),
-        #    If(List(Symbol('<'), Symbol('rnd'), Atom(0.75)),
-        #        Atom("Close, but no cigar"),
-        #        Atom("Lucky")))).eval(env)
-        pass
+        env = make_env()
+        value = Let(List(Symbol('a'), Atom(5)),
+                    List(Symbol('+'), Symbol('a'), Atom(7))).eval(env)
+        self.assertEquals(12, value)
+
+    def test_delay(self):
+        env = make_env()
+        value = Delay(Atom(5)).eval(env)
+        self.assertIsInstance(value, Closure)
+        self.assertEqual(5, value.call(env, Caller('n/a')))
 
     def test_function_defn(self):
         # Equivalent to:
@@ -232,11 +246,36 @@ class BuiltinsTest(unittest.TestCase):
         value2 = List(Symbol('factorial2'), Atom(10)).eval(env)
         self.assertEquals(3628800, value2)
 
+    def test_define_too_many_args(self):
+        env = make_env()
+        with self.assertRaises(EvaluationError):
+            Define(Symbol('err'), Atom('atom1'), Atom(3)).eval(env)
+
+    def test_define_too_few_args(self):
+        env = make_env()
+        with self.assertRaises(EvaluationError):
+            Define().eval(env)
+
+    def test_define_no_args(self):
+        env = make_env()
+        Define(Symbol('unbound')).eval(env)
+        self.assertEqual(Unbound(), Symbol('unbound').eval(env))
+
+    def test_unbound_equality(self):
+        env = make_env()
+        u1 = Unbound()
+        u2 = Unbound()
+        self.assertEqual(u1, u2)
+        self.assertEqual(u1.eval(env), u2)
+        self.assertEqual(u1, u2.eval(env))
+        self.assertEqual(u1.eval(env), u2.eval(env))
+        self.assertNotEqual(u1, None)
+        self.assertNotEqual(u1, Atom(3))
+
     def test_set_PLING_unbound(self):
         env = make_env()
         with self.assertRaises(EvaluationError):
             Set_PLING(Symbol('froobe'), Atom(91)).eval(env)
-
 
     def test_set_PLING_bound(self):
         # (let (froobe 43)
@@ -248,7 +287,18 @@ class BuiltinsTest(unittest.TestCase):
                     List(Symbol('+'), Symbol('froobe'), Atom(11))).eval(env)
         self.assertEquals(102, value)
 
+    def test_special_form_eval(self):
+        env = make_env()
+        sf = SpecialForm('quote')
+        self.assertEquals(sf, sf.eval(env))
 
+    def test_special_form_call(self):
+        env = make_env()
+        symbol = Symbol('test')
+        caller = Caller("unused", symbol)
+        sf = SpecialForm('quote')
+        value = sf.call(env, caller)
+        self.assertEquals(value, symbol)
 
 
 # Should be in globals

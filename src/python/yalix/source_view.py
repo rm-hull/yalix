@@ -24,6 +24,7 @@ def line_col(primitive):
     else:
         return None, None
 
+
 def find_outer_form_bounds(primitive):
     src = source(primitive)
     loc = location(primitive)
@@ -57,6 +58,7 @@ def find_outer_form_bounds(primitive):
 
     return start, end
 
+
 def source_view(primitive):
     src = source(primitive)
     if src is not None:
@@ -65,4 +67,4 @@ def source_view(primitive):
             start, end = bounds
             return src[start:end]
         else:
-            return src # [location(primitive):]
+            return src  # [location(primitive):]
