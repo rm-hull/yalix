@@ -7,7 +7,7 @@ Some predefined functions injected into an environment
 import operator
 import random
 import math
-import threading
+import time
 
 from yalix.utils import log_progress
 from yalix.parser import scheme_parser
@@ -16,10 +16,8 @@ from yalix.exceptions import EvaluationError
 from yalix.interpreter import Primitive, Atom, InterOp, Lambda, List, \
         Realize, Symbol, SpecialForm, __special_forms__
 
-__core_libraries__ =  ['core', 'hof', 'num', 'repr']
 
-gensym_nextID = 0
-gensym_lock = threading.Lock()
+__core_libraries__ = ['core', 'hof', 'num', 'macros', 'repr', 'test']
 
 
 def create_initial_env():
@@ -36,12 +34,7 @@ def create_initial_env():
 
 
 def gensym(prefix='G__'):
-    global gensym_nextID
-    global gensym_lock
-    with gensym_lock:
-        old = gensym_nextID
-        gensym_nextID += 1
-    return Symbol(prefix + str(old))
+    return Symbol(prefix + str(Env.next_id()))
 
 
 def interop(fun, arity, variadic=False):
@@ -60,13 +53,23 @@ def interop(fun, arity, variadic=False):
 
 
 def doc(value):
-    return print_(getattr(value, '__docstring__', None))
+    doc = getattr(value, '__docstring__', None)
+    if doc:
+        print '-----------------'
+        print doc
+
+
+def source(value):
+    from yalix.utils.color import highlight_syntax
+    from yalix.source_view import source_view
+    src = source_view(value)
+    if src:
+        print '-----------------'
+        print highlight_syntax(source_view(value))
 
 
 def print_(value):
-    print "value = ", str_(value)
     print str_(value)
-    return None
 
 
 def str_(args=None):
@@ -96,8 +99,31 @@ def read_string(value):
     return scheme_parser().parseString(value, parseAll=True).asList()[0]
 
 
+def pair_QUESTION(value):
+    return isinstance(value, tuple)
+
+
+def car(value):
+    if value is None:
+        return None
+    elif isinstance(value, tuple):
+        return value[0]
+    else:
+        raise EvaluationError(value, "Cannot car on non-cons cell: '{0}'", value)
+
+
+def cdr(value):
+    if value is None:
+        return None
+    elif isinstance(value, tuple):
+        return value[1]
+    else:
+        raise EvaluationError(value, "Cannot cdr on non-cons cell: '{0}'", value)
+
+
 def bootstrap_lisp_functions(env, from_file):
     for ast in scheme_parser().parseFile(from_file, parseAll=True).asList():
+        # TODO: brand AST nodes with filename
         ast.eval(env)
 
 
@@ -125,18 +151,23 @@ def bootstrap_python_functions(env):
     env['*debug*'] = Atom(False)
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
+    env['pair?'] = interop(pair_QUESTION, 1)
+    env['cons'] = interop(lambda x, y: (x, y), 2)
+    env['car'] = interop(car, 1)
+    env['cdr'] = interop(cdr, 1)
     env['gensym'] = interop(gensym, 0)
-    env['symbol'] = interop(lambda env, x: Symbol(x), 1)
-    env['symbol?'] = interop(lambda env, x: isinstance(x, Symbol), 1)
+    env['symbol'] = interop(lambda x: Symbol(x), 1)
+    env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
     env['interop'] = interop(interop, 2)
     env['doc'] = interop(doc, 1)
+    env['source'] = interop(source, 1)
     env['print'] = interop(print_, 1, variadic=True)
     env['format'] = interop(format_, 2, variadic=True)
     env['atom?'] = interop(atom_QUESTION, 1)
     env['str'] = interop(str_, 1, variadic=True)
     env['read-string'] = interop(read_string, 1)  # Read just one symbol
-    env['eval'] = interop(lambda env, x: x.eval(env), 1)
     env['error'] = interop(error, 1)
+    env['epoch-time'] = interop(time.time, 0)
 
     # Basic Arithmetic Functions
     env['add'] = interop(operator.add, 2)

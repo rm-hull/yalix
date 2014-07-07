@@ -10,6 +10,43 @@
 (define (range n)
   (take n (iterate inc 0)))
 
+(define (sequence low high stride)
+  (if (> low high)
+    nil
+    (cons
+      low
+      (memoize
+        (delay
+          (sequence (+ low stride) high stride))))))
+
+
+(define (constantly x)
+  (λ (. args)
+     x))
+
+(define (reverse xs)
+  ;^ Not lazy
+  (letrec ((aux (λ (l a)
+                  (if (empty? l)
+                    a
+                    (aux    ; tail recursion
+                      (rest l)
+                      (cons
+                        (first l)
+                        (memoize (delay a))))))))
+    (aux xs nil)))
+
+(define (concat xs ys)
+  (letrec ((aux (λ (xs ys)
+                  (if (nil? xs)
+                    ys
+                    (aux
+                      (rest xs)
+                      (cons
+                        (first xs)
+                        (memoize (delay ys))))))))
+    (aux (reverse xs) ys)))
+
 (define (map f xs)
   ;^ Maps a function over a list
   (if (empty? xs)
@@ -19,6 +56,14 @@
       (memoize 
         (delay 
           (map f (rest xs)))))))
+
+(define (filter pred xs)
+  (if (empty? xs)
+    nil
+    (let* ((fst (first xs)))
+      (if (pred fst)
+        (cons fst (memoize (delay (filter pred (rest xs)))) )
+        (filter pred (rest xs))))))  ; Needs tail recursion
 
 (define (fold f val xs)
   (if (empty? xs)

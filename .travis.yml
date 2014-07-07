@@ -8,5 +8,6 @@ python:
 install:
 #  - "pip install ."
   - "pip install -r src/python/requirements.txt"
+  - "pip install coverage"
 # command to run tests
-script: nosetests --with-coverage -w src/python
+script: nosetests --with-coverage --cover-package yalix -w src/python
