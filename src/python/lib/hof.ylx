@@ -37,15 +37,13 @@
     (aux xs nil)))
 
 (define (concat xs ys)
-  (letrec ((aux (λ (xs ys)
-                  (if (nil? xs)
-                    ys
-                    (aux
-                      (rest xs)
-                      (cons
-                        (first xs)
-                        (memoize (delay ys))))))))
-    (aux (reverse xs) ys)))
+  (if (empty? xs)
+    ys
+    (cons
+      (first xs)
+      (memoize
+        (delay
+          (concat (rest xs) ys))))))
 
 (define (map f xs)
   ;^ Maps a function over a list
