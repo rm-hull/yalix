@@ -17,10 +17,12 @@
 — _Clojure for the Brave and True_ 
 
 Yalix is a LISP interpreter written in Python. The dialect it mostly
-resembles is that of [Racket](http://racket-lang.org/) but is by far
-less feature packed. It is an experiment to (a) learn implementing parsers
-and interpreters, (b) implementing parsers and interpreters in other
-computer languages I am not familiar with.
+resembles is that of [Racket](http://racket-lang.org/) but borrows
+ideas from [Clojure](http://clojure.org/) as well. Yalix is by far
+less feature packed than both of the above; it is an experiment to 
+(a) learn about implementing parsers, interpreters, streams and macros, 
+and then (b) re-implementing those features parsers in other computer 
+languages I am not particularly familiar with.
 
 The long term aim of this project is to firstly build a featue rich 
 implementation in Python which is easy to read, and easy to extend. 
@@ -30,8 +32,8 @@ programming langugaes, including itself!
 
 ### Current Status
 
-This project is the culmination of about a weeks worth of hacking, but
-so far presents a plausible implementation that can be used for 
+This project is the culmination of a couple of weeks worth of hacking, 
+but so far presents a plausible implementation that can be used for 
 experimentiion. There are many missing features and many (probably)
 hidden bugs.
 
