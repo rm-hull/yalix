@@ -21,7 +21,7 @@ resembles is that of [Racket](http://racket-lang.org/) but borrows
 ideas from [Clojure](http://clojure.org/) as well. Yalix is by far
 less feature packed than both of the above; it is an experiment to 
 (a) learn about implementing parsers, interpreters, streams and macros, 
-and then (b) re-implementing those features parsers in other computer 
+and then (b) re-implementing those features in other computer 
 languages I am not particularly familiar with.
 
 The long term aim of this project is to firstly build a featue rich 
