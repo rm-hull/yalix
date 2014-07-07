@@ -395,7 +395,7 @@ class Promise(Closure):
 
     def call(self, env, caller):
         if not self.realized:
-            self.result = self.closure.eval(env).call(env, caller)
+            self.result = self.closure.call(env, caller)
             self.realized = True
 
         return self.result
