@@ -383,13 +383,35 @@ class Lambda(BuiltIn):
         return Closure(env, self)
 
 
-class Delay(BuiltIn):
+class Promise(Closure):
 
-    def __init__(self, expr):
-        self.expr = expr
+    def __init__(self, closure):
+        self.closure = closure
+        self.realized = False
+        self.result = None
 
     def eval(self, env):
-        return Lambda(List(), self.expr).eval(env)
+        return self
+
+    def call(self, env, caller):
+        if not self.realized:
+            self.result = self.closure.eval(env).call(env, caller)
+            self.realized = True
+
+        return self.result
+
+class Delay(BuiltIn):
+    """
+    Creates a promise that when forced, evaluates the body to produce its
+    value. The result is then cached so that further uses of force produces
+    the cached value immediately.
+    """
+
+    def __init__(self, *body):
+        self.body = body
+
+    def eval(self, env):
+        return Promise(Lambda(List(), *self.body).eval(env))
 
 
 class If(BuiltIn):
