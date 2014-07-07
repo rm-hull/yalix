@@ -434,7 +434,7 @@ Add the following likes to your `.vimrc` to enable syntax highlighting for *.ylx
 :autocmd BufRead,BufNewFile *.ylx setlocal filetype=scheme
 ```
 
-### Emax bindings
+### Emacs bindings
 
 ## TODO
 
