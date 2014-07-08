@@ -38,7 +38,11 @@ def highlight_syntax(code, outfile=None):
 @contextlib.contextmanager
 def capture():
     import sys
-    from cStringIO import StringIO
+    try:
+        from cStringIO import StringIO
+    except ImportError:
+        from io import StringIO
+
     oldout, olderr = sys.stdout, sys.stderr
     try:
         out = [StringIO(), StringIO()]

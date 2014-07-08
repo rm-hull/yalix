@@ -4,6 +4,7 @@
 """
 Some predefined functions injected into an environment
 """
+import functools
 import operator
 import random
 import math
@@ -14,7 +15,7 @@ from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
 from yalix.interpreter import Primitive, Atom, InterOp, Lambda, List, \
-        Realize, Symbol, SpecialForm, Promise, __special_forms__
+    Realize, Symbol, SpecialForm, Promise, __special_forms__
 
 
 __core_libraries__ = ['core', 'hof', 'num', 'macros', 'repr', 'test']
@@ -77,7 +78,7 @@ def str_(args=None):
         return '' if x is None else str(x)
     if args is None:
         return ''
-    return reduce(lambda x, y: strnil(x) + strnil(y), args)
+    return functools.reduce(lambda x, y: strnil(x) + strnil(y), args)
 
 
 def format_(format_spec, args=None):

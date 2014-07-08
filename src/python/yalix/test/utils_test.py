@@ -22,12 +22,11 @@ class UtilsTest(unittest.TestCase):
         self.assertTrue('DONE' in out[0])
 
     def test_syntax_highligher(self):
-        import md5
+        import hashlib
         sample_code = "(define (identity x) x)"
         output = utils.highlight_syntax(sample_code)
-        m = md5.new()
-        m.update(output)
-        self.assertEquals('c267147a39718fbcb0033ae6f7b53918', m.hexdigest())
+        m = hashlib.sha224(bytes(output))
+        self.assertEquals('7ec4fce8a935c23538e701e1da3dfc6ce124ee5555cd90e7b5cd877e', m.hexdigest())
 
 if __name__ == '__main__':
     unittest.main()
