@@ -12,4 +12,4 @@ install:
 script:
   - nosetests --with-coverage --cover-package yalix -w src/python
 after_success:
-  - coveralls --base_dir src/python
+  - coveralls
