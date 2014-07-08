@@ -60,7 +60,7 @@ def doc(value):
 
 
 def source(value):
-    from yalix.utils.color import highlight_syntax
+    from yalix.utils import highlight_syntax
     from yalix.source_view import source_view
     src = source_view(value)
     if src:
@@ -109,8 +109,6 @@ def realized_QUESTION(value):
 
 def read_string(value):
     return scheme_parser().parseString(value, parseAll=True).asList()[0]
-
-
 
 
 def car(value):
@@ -185,7 +183,8 @@ def bootstrap_python_functions(env):
     env['add'] = interop(operator.add, 2)
     env['sub'] = interop(operator.sub, 2)
     env['mul'] = interop(operator.mul, 2)
-    env['div'] = interop(operator.div, 2)
+    env['div'] = interop(operator.truediv, 2)
+    env['quot'] = interop(operator.floordiv, 2)
     env['negate'] = interop(operator.neg, 1)
 
     # String / Sequence Functions

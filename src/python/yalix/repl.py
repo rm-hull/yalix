@@ -13,7 +13,7 @@ from yalix.completer import Completer
 from yalix.interpreter import Repr
 from yalix.parser import scheme_parser
 from yalix.utils import log_progress, log
-from yalix.utils.color import red, green, blue, bold, highlight_syntax
+from yalix.utils import red, green, blue, bold, highlight_syntax
 from yalix.globals import create_initial_env
 
 
@@ -111,6 +111,12 @@ def init_readline(env):
             atexit.register(readline.write_history_file, histfile)
 
 
+def input2or3(prompt):
+    try:
+        return raw_input(prompt)
+    except NameError:
+        return input(prompt)
+
 def input_with_prefill(prompt, text):
     try:
         import readline
@@ -119,9 +125,9 @@ def input_with_prefill(prompt, text):
             readline.insert_text(text)
             readline.redisplay()
         readline.set_pre_input_hook(hook)
-        return raw_input(prompt)
+        return input2or3(prompt)
     except ImportError:
-        return raw_input(prompt)
+        return input2or3(prompt)
     finally:
         readline.set_pre_input_hook()
 
@@ -207,21 +213,21 @@ def repl(print_callback=prn):
                 print("")
 
         except EOFError:
-            log(bold(blue('\nBye!')))
+            log(blue('\nBye!', style='bold'))
             break
 
         except KeyboardInterrupt:
-            log(bold(red('\nKeyboardInterrupt')))
+            log(red('\nKeyboardInterrupt', style='bold'))
 
         except EvaluationError as ex:
-            log("{0}: {1}", bold(red(type(ex).__name__)), ex)
+            log("{0}: {1}", red(type(ex).__name__, style='bold'), ex)
 
             # TODO: Show source file and column/line
 
             log(highlight_syntax(source_view(ex.primitive)))
 
         except ParseException as ex:
-            log("{0}: {1}", bold(red(type(ex).__name__)), ex)
+            log("{0}: {1}", red(type(ex).__name__, style='bold'), ex)
 
         count += 1
 
