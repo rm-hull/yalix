@@ -96,7 +96,7 @@ def init_readline(env):
     try:
         import readline
     except ImportError:
-        print "Module readline not available"
+        print("Module readline not available")
     else:
         histfile = os.path.join(os.path.expanduser("~"), ".yalix_history")
         readline.set_completer(Completer(env).complete)
@@ -166,7 +166,7 @@ def prn(input, result, count):
     secondary_prompt = ' ' * len(str(count)) + red('  ...: ')
     prompt = primary_prompt.format(count)
     for line in str(result).split('\n'):
-        print prompt + line
+        print(prompt + line)
         prompt = secondary_prompt
 
 
@@ -204,7 +204,7 @@ def repl(print_callback=prn):
                 result = Repr(result).eval(env)
                 print_callback(text, result, count)
             if text.strip() != '':
-                print
+                print("")
 
         except EOFError:
             log(bold(blue('\nBye!')))

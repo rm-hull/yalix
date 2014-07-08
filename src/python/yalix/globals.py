@@ -55,8 +55,8 @@ def interop(fun, arity, variadic=False):
 def doc(value):
     doc = getattr(value, '__docstring__', None)
     if doc:
-        print '-----------------'
-        print doc
+        print('-----------------')
+        print(doc)
 
 
 def source(value):
@@ -64,12 +64,12 @@ def source(value):
     from yalix.source_view import source_view
     src = source_view(value)
     if src:
-        print '-----------------'
-        print highlight_syntax(source_view(value))
+        print('-----------------')
+        print(highlight_syntax(source_view(value)))
 
 
 def print_(value):
-    print str_(value)
+    print(str_(value))
 
 
 def str_(args=None):
