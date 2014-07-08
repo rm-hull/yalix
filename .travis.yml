@@ -4,14 +4,12 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
-# command to install dependencies
 install:
-#  - "pip install ."
-  - "pip install -r src/python/requirements.txt"
-  - "pip install coverage"
-  - "pip install python-coveralls"
-# command to run tests
-script: 
+    #  - pip install -e . --use-mirrors
+  - pip install -r src/python/requirements.txt --use-mirrors
+  - pip install coverage --use-mirrors
+  - pip install python-coveralls --use-mirrors
+script:
   - nosetests --with-coverage --cover-package yalix -w src/python
 after_success:
-    - coveralls --base_dir src/python
+  - coveralls --base_dir src/python
