@@ -14,7 +14,7 @@ from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
 from yalix.interpreter import Primitive, Atom, InterOp, Lambda, List, \
-        Realize, Symbol, SpecialForm, __special_forms__
+        Realize, Symbol, SpecialForm, Promise, __special_forms__
 
 
 __core_libraries__ = ['core', 'hof', 'num', 'macros', 'repr', 'test']
@@ -95,12 +95,22 @@ def atom_QUESTION(value):
     return value is None or type(value) in [str, int, long, float, bool, Symbol]
 
 
+def pair_QUESTION(value):
+    return isinstance(value, tuple)
+
+
+def promise_QUESTION(value):
+    return isinstance(value, Promise)
+
+
+def realized_QUESTION(value):
+    return promise_QUESTION(value) and value.realized
+
+
 def read_string(value):
     return scheme_parser().parseString(value, parseAll=True).asList()[0]
 
 
-def pair_QUESTION(value):
-    return isinstance(value, tuple)
 
 
 def car(value):
@@ -151,7 +161,10 @@ def bootstrap_python_functions(env):
     env['*debug*'] = Atom(False)
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
+    env['atom?'] = interop(atom_QUESTION, 1)
     env['pair?'] = interop(pair_QUESTION, 1)
+    env['promise?'] = interop(promise_QUESTION, 1)
+    env['realized?'] = interop(realized_QUESTION, 1)
     env['cons'] = interop(lambda x, y: (x, y), 2)
     env['car'] = interop(car, 1)
     env['cdr'] = interop(cdr, 1)
@@ -163,7 +176,6 @@ def bootstrap_python_functions(env):
     env['source'] = interop(source, 1)
     env['print'] = interop(print_, 1, variadic=True)
     env['format'] = interop(format_, 2, variadic=True)
-    env['atom?'] = interop(atom_QUESTION, 1)
     env['str'] = interop(str_, 1, variadic=True)
     env['read-string'] = interop(read_string, 1)  # Read just one symbol
     env['error'] = interop(error, 1)
