@@ -4,6 +4,7 @@
 """
 Some predefined functions injected into an environment
 """
+import functools
 import operator
 import random
 import math
@@ -14,7 +15,7 @@ from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
 from yalix.interpreter import Primitive, Atom, InterOp, Lambda, List, \
-        Realize, Symbol, SpecialForm, Promise, __special_forms__
+    Realize, Symbol, SpecialForm, Promise, __special_forms__
 
 
 __core_libraries__ = ['core', 'hof', 'num', 'macros', 'repr', 'test']
@@ -55,21 +56,21 @@ def interop(fun, arity, variadic=False):
 def doc(value):
     doc = getattr(value, '__docstring__', None)
     if doc:
-        print '-----------------'
-        print doc
+        print('-----------------')
+        print(doc)
 
 
 def source(value):
-    from yalix.utils.color import highlight_syntax
+    from yalix.utils import highlight_syntax
     from yalix.source_view import source_view
     src = source_view(value)
     if src:
-        print '-----------------'
-        print highlight_syntax(source_view(value))
+        print('-----------------')
+        print(highlight_syntax(source_view(value)))
 
 
 def print_(value):
-    print str_(value)
+    print(str_(value))
 
 
 def str_(args=None):
@@ -77,7 +78,7 @@ def str_(args=None):
         return '' if x is None else str(x)
     if args is None:
         return ''
-    return reduce(lambda x, y: strnil(x) + strnil(y), args)
+    return functools.reduce(lambda x, y: strnil(x) + strnil(y), args)
 
 
 def format_(format_spec, args=None):
@@ -109,8 +110,6 @@ def realized_QUESTION(value):
 
 def read_string(value):
     return scheme_parser().parseString(value, parseAll=True).asList()[0]
-
-
 
 
 def car(value):
@@ -185,7 +184,8 @@ def bootstrap_python_functions(env):
     env['add'] = interop(operator.add, 2)
     env['sub'] = interop(operator.sub, 2)
     env['mul'] = interop(operator.mul, 2)
-    env['div'] = interop(operator.div, 2)
+    env['div'] = interop(operator.truediv, 2)
+    env['quot'] = interop(operator.floordiv, 2)
     env['negate'] = interop(operator.neg, 1)
 
     # String / Sequence Functions
