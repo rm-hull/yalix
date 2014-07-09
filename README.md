@@ -306,7 +306,7 @@ This returns an un-evaluated s-expression which may then be directly
 evaluated under an environment (Note: 'Call' as an object name may change):
 
 ```scheme
-In [31]: (eval (read-string "(+ 11 (* 5 6))") 
+In [31]: (eval (read-string "(+ 11 (* 5 6))"))
 Out[31]: 41
 
 In [32]: (define x '(4 5 6))
