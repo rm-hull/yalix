@@ -341,7 +341,7 @@ class BuiltinsTest(unittest.TestCase):
         atoms = [Atom(value) for value in range(10)]
         linked_list = make_linked_list(*atoms).eval(env)
         arr = Realize(linked_list).eval(env)
-        self.assertEqual(range(10), arr)
+        self.assertEqual(list(range(10)), arr)
 
     def test_realize_single_item(self):
         env = make_env()
@@ -361,7 +361,7 @@ class BuiltinsTest(unittest.TestCase):
 
         linked_list = make_linked_list(*lol).eval(env)
         arr = Realize(linked_list).eval(env)
-        expected = [range(i) for i in range(1, 10)]
+        expected = [list(range(i)) for i in range(1, 10)]
         self.assertEqual(expected, arr)
 
     def test_repr_exhaust_list__no_print_length(self):
