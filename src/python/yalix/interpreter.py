@@ -77,25 +77,25 @@ class Closure(Primitive):
     def eval(self, env):
         return self
 
-    def bind(self, env, formals, params):
+    @classmethod
+    def bind(cls, env_to_extend, formals, params, caller_env):
         """
         Extend the closure's environment by binding the
         params to the functions formals
         """
-        extended_env = self.env
         for i, bind_variable in enumerate(formals):
             if bind_variable == Lambda.VARIADIC_MARKER:  # variadic arg indicator
                 # Use the next formal as the /actual/ bind variable,
                 # evaluate the remaining arguments into a list (NOTE offset from i)
                 # and dont process any more arguments
                 bind_variable = formals[i + 1]
-                value = List.make_lazy_list(params[i:]).eval(env)
-                extended_env = extended_env.extend(bind_variable.name, value)
+                value = List.make_lazy_list(params[i:]).eval(caller_env)
+                env_to_extend = env_to_extend.extend(bind_variable.name, value)
                 break
             else:
-                value = params[i].eval(env)
-                extended_env = extended_env.extend(bind_variable.name, value)
-        return extended_env
+                value = params[i].eval(caller_env)
+                env_to_extend = env_to_extend.extend(bind_variable.name, value)
+        return env_to_extend
 
     def call(self, env, caller):
         if not self.func.has_sufficient_arity(caller.params):
@@ -112,7 +112,7 @@ class Closure(Primitive):
                                   self.func.arity(),
                                   len(caller.params))
 
-        extended_env = self.bind(env, self.func.formals, caller.params)
+        extended_env = Closure.bind(self.env, self.func.formals, caller.params, env)
         return self.func.body.eval(extended_env)
 
 
@@ -410,6 +410,7 @@ class Promise(Closure):
 
         return self.result
 
+
 class Delay(BuiltIn):
     """
     Creates a promise that when forced, evaluates the body to produce its
@@ -448,6 +449,9 @@ class Unbound(BuiltIn):
 
     def __ne__(self, other):
         return not self == other
+
+    def __hash__(self):
+        return hash('unbound') ^ hash(self.__class__)
 
 
 class Define(BuiltIn):
@@ -531,20 +535,20 @@ class Realize(Primitive):
     and returns as a nested array of arrays. Should not be used with infinite
     streams.
     """
-    def __init__(self, atom_or_list):
-        self.atom_or_list = atom_or_list
+    def __init__(self, value):
+        self.value = value
 
     def eval(self, env):
-        if List(Symbol('atom?'), self.atom_or_list).eval(env):
-            return self.atom_or_list.eval(env)
-        else:
+        if type(self.value) == tuple:
             arr = []
-            current_head = self.atom_or_list
-            while current_head is not None:
-                value = List(Symbol('first'), current_head)
+            current_head = self.value
+            while current_head:
+                value = List(Symbol('first'), Atom(current_head)).eval(env)
                 arr.append(Realize(value).eval(env))
-                current_head = List(Symbol('rest'), current_head).eval(env)
+                current_head = List(Symbol('rest'), Atom(current_head)).eval(env)
             return arr
+        else:
+            return self.value
 
 
 class Repr(Primitive):
@@ -556,20 +560,20 @@ class Repr(Primitive):
     List traversal will not extend beyond the *print-length* (if not nil).
     """
 
-    def __init__(self, atom_or_list):
-        self.atom_or_list = atom_or_list
+    def __init__(self, value):
+        self.value = value
 
-    def isatom(self, value):
-        return value is None or type(value) in [str, int, long, float, bool, Symbol]
+    def print_length(self, env):
+        if '*print-length*' in env:
+            return env['*print-length*']
 
+    # TODO: make this and Realize into one implementation
     def eval(self, env):
-        if self.isatom(self.atom_or_list):
-            return str(self.atom_or_list)
-        elif type(self.atom_or_list) == tuple:
-            current_head = self.atom_or_list
-            max_iterations = env['*print-length*']
+        if type(self.value) == tuple:
+            current_head = self.value
+            max_iterations = self.print_length(env)
             ret = '('
-            while current_head is not None and (max_iterations is None or max_iterations > 0):
+            while current_head and (max_iterations is None or max_iterations > 0):
                 value = List(Symbol('first'), Atom(current_head)).eval(env)
                 ret += Repr(value).eval(env)
                 current_head = List(Symbol('rest'), Atom(current_head)).eval(env)
@@ -584,7 +588,7 @@ class Repr(Primitive):
             ret += ')'
             return ret
         else:
-            return str(self.atom_or_list.eval(env))
+            return str(self.value)
 
 
 class Eval(BuiltIn):

@@ -13,6 +13,8 @@ def make_env():
     env['*debug*'] = Atom(False)
 
     Define(List(Symbol('cons'), Symbol('a'), Symbol('b')), InterOp(lambda a, b: (a, b), Symbol('a'), Symbol('b'))).eval(env)
+    Define(List(Symbol('first'), Symbol('a')), InterOp(lambda a: a[0], Symbol('a'))).eval(env)
+    Define(List(Symbol('rest'), Symbol('a')), InterOp(lambda a: a[1], Symbol('a'))).eval(env)
     Define(Symbol('<'), Lambda(List(Symbol('a'), Symbol('b')), InterOp(operator.lt, Symbol('a'), Symbol('b')))).eval(env)
     Define(Symbol('*'), Lambda(List(Symbol('a'), Symbol('b')), InterOp(operator.mul, Symbol('a'), Symbol('b')))).eval(env)
     Define(Symbol('+'), Lambda(List(Symbol('a'), Symbol('b')), InterOp(operator.add, Symbol('a'), Symbol('b')))).eval(env)
@@ -299,6 +301,12 @@ class BuiltinsTest(unittest.TestCase):
         self.assertNotEqual(u1, None)
         self.assertNotEqual(u1, Atom(3))
 
+    def test_unbound_hash(self):
+        u1 = Unbound()
+        u2 = Unbound()
+        self.assertEqual(hash(u1), hash(u2))
+        self.assertEquals(1, len(set([u1, u2])))
+
     def test_set_PLING_unbound(self):
         env = make_env()
         with self.assertRaises(EvaluationError) as cm:
@@ -328,6 +336,57 @@ class BuiltinsTest(unittest.TestCase):
         value = sf.call(env, caller)
         self.assertEquals(value, symbol)
 
+    def test_realize_simple_list(self):
+        env = make_env()
+        atoms = [Atom(value) for value in range(10)]
+        linked_list = make_linked_list(*atoms).eval(env)
+        arr = Realize(linked_list).eval(env)
+        self.assertEqual(range(10), arr)
+
+    def test_realize_single_item(self):
+        env = make_env()
+        atom = Atom(17)
+        value = Realize(atom.eval(env)).eval(env)
+        self.assertEqual(17, value)
+
+    def test_realize_nil(self):
+        env = make_env()
+        value = Realize(None).eval(env)
+        self.assertEqual(None, value)
+
+    def test_realize_list_of_list(self):
+        env = make_env()
+        lol = [make_linked_list(*[Atom(value) for value in range(i)])
+               for i in range(1, 10)]
+
+        linked_list = make_linked_list(*lol).eval(env)
+        arr = Realize(linked_list).eval(env)
+        expected = [range(i) for i in range(1, 10)]
+        self.assertEqual(expected, arr)
+
+    def test_repr_exhaust_list__no_print_length(self):
+        env = make_env()
+        self.assertFalse('*print-length*' in env)
+        atoms = [Atom(value) for value in range(10)]
+        linked_list = make_linked_list(*atoms).eval(env)
+        text = Repr(linked_list).eval(env)
+        self.assertEqual('(0 1 2 3 4 5 6 7 8 9)', text)
+
+    def test_repr_curtail_list(self):
+        env = make_env()
+        env['*print-length*'] = 12
+        atoms = [Atom(value) for value in range(100)]
+        linked_list = make_linked_list(*atoms).eval(env)
+        text = Repr(linked_list).eval(env)
+        self.assertEqual('(0 1 2 3 4 5 6 7 8 9 10 11 ...)', text)
+
+    def test_repr_curtail_list_same_size_as_list(self):
+        env = make_env()
+        env['*print-length*'] = 12
+        atoms = [Atom(value) for value in range(12)]
+        linked_list = make_linked_list(*atoms).eval(env)
+        text = Repr(linked_list).eval(env)
+        self.assertEqual('(0 1 2 3 4 5 6 7 8 9 10 11)', text)
 
 # Should be in globals
 #    def test_gensym(self):
