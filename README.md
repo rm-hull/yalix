@@ -14,7 +14,7 @@
 > would be some kind of potion — a couple quaffs to unleash my inner 
 > Richard Simmons, but not for too long.
 
-— _Clojure for the Brave and True_ 
+— _Clojure for the Brave and True_
 
 Yalix is a LISP interpreter written in Python. The dialect it mostly
 resembles is that of [Racket](http://racket-lang.org/) but borrows
@@ -470,6 +470,19 @@ Add the following likes to your `.vimrc` to enable syntax highlighting for *.ylx
 * http://groups.csail.mit.edu/mac/classes/6.001/abelson-sussman-lectures/
 * http://courses.cs.washington.edu/courses/cse341/11sp/
 * http://racket-lang.org/
+
+## (Y F) = (F (Y F))
+
+![screencap](https://raw.github.com/rm-hull/yalix/master/doc/costanza.png)
+
+> "... but what LISP is, is the fixed point of the process that says if I
+> knew what LISP was, and substituted it in for eval and apply and so on,
+> on the right hand side of all those recusion equations, then if it was
+> a real good LISP, it was a real one, then the left hand side would also
+> be LISP. So I made sense of that definition. Now, whether or not there's
+> an answer, isn't so obvious. I can't attack that.
+
+— _George Costanza on the nature of LISP._
 
 ## Contributing
 
