@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from pyparsing import col, lineno
+
 
 def file(primitive):
     return getattr(primitive, '__file__', None)
@@ -12,6 +14,15 @@ def source(primitive):
 
 def location(primitive):
     return getattr(primitive, '__location__', None)
+
+
+def line_col(primitive):
+    loc = location(primitive)
+    src = source(primitive)
+    if src and loc:
+        return lineno(loc, src), col(loc, src)
+    else:
+        return None, None
 
 
 def find_outer_form_bounds(primitive):
@@ -47,6 +58,7 @@ def find_outer_form_bounds(primitive):
 
     return start, end
 
+
 def source_view(primitive):
     src = source(primitive)
     if src is not None:
@@ -55,4 +67,4 @@ def source_view(primitive):
             start, end = bounds
             return src[start:end]
         else:
-            return src # [location(primitive):]
+            return src  # [location(primitive):]

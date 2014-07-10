@@ -17,10 +17,12 @@
 — _Clojure for the Brave and True_ 
 
 Yalix is a LISP interpreter written in Python. The dialect it mostly
-resembles is that of [Racket](http://racket-lang.org/) but is by far
-less feature packed. It is an experiment to (a) learn implementing parsers
-and interpreters, (b) implementing parsers and interpreters in other
-computer languages I am not familiar with.
+resembles is that of [Racket](http://racket-lang.org/) but borrows
+ideas from [Clojure](http://clojure.org/) as well. Yalix is by far
+less feature packed than both of the above; it is an experiment to 
+(a) learn about implementing parsers, interpreters, streams and macros, 
+and then (b) re-implementing those features in other computer 
+languages I am not particularly familiar with.
 
 The long term aim of this project is to firstly build a featue rich 
 implementation in Python which is easy to read, and easy to extend. 
@@ -30,8 +32,8 @@ programming langugaes, including itself!
 
 ### Current Status
 
-This project is the culmination of about a weeks worth of hacking, but
-so far presents a plausible implementation that can be used for 
+This project is the culmination of a couple of weeks worth of hacking, 
+but so far presents a plausible implementation that can be used for 
 experimentiion. There are many missing features and many (probably)
 hidden bugs.
 
@@ -52,7 +54,8 @@ developer under feature branches.
 * Some core library higher-order functions (map, fold, etc.)
 * Semi-colon comments
 * Lazy evaluation with force/delay/memoize
-* Docstring support
+* Docstring support & colorized source view
+* Quoting, Unquoting, Unquote-splicing
 
 #### Features forthcoming
 
@@ -140,7 +143,7 @@ In [8]: (cons 1 2)
 Out[8]: ; not working with (repr) presently ... <yalix.interpreter.Closure object at 0x7f9b114c4d10>
 
 In [9]: (cons 1 (cons 2 (cons 3 nil)))
-Out[9]: ; not working with (repr) presently ... <yalix.interpreter.Closure object at 0x7f9b114b8890>
+Out[9]: (1 2 3)
 
 In [10]: (first (cons 1 2))
 Out[10]: 1
@@ -160,27 +163,12 @@ Note that `...` is used to denote the list printing has been curtailed, not that
 the list ended at that point.
 
 Lists are lazily-evaluated by way of "thunks" by default, and represented by
-CONS-cells, which are "literally made out of nothing": their internal 
-structure is currently implemented as a closure as described by Gerald Sussman 
-and Harold Abelson in their MIT lecture series:
-
-```scheme
-(define (cons a b)
-  (λ (index)
-    (if index b a)))
-
-(define (car xs)
-  (if (not (nil? xs))
-    (xs 0)))
-
-(define (cdr xs)
-  (if (not (nil? xs))
-    (force (xs 1))))
-```
+CONS-cells, whose internal structure is currently implemented as a tuple.
 
 Many construction functions will utilize the `memoize` and `delay` procedures to
-automatically create lazy lists. `cdr` will automatically sense if it should force
-evaluation. However it is not mandatory that `cons` creates lazy structures.
+automatically create lazy lists. `cdr` will **NOT** automatically sense if it should 
+force evaluation, however `rest` and `next` will. It is not mandatory that `cons` 
+creates lazy structures.
 
 Access into and traversal of lists is via `car`/`cdr`, or `first`/`second`/`rest`/`next`/`nth`.
 `take` and `drop` (and variants) have also been implemented.
@@ -318,7 +306,7 @@ This returns an un-evaluated s-expression which may then be directly
 evaluated under an environment (Note: 'Call' as an object name may change):
 
 ```scheme
-In [31]: (eval (read-string "(+ 11 (* 5 6))") 
+In [31]: (eval (read-string "(+ 11 (* 5 6))"))
 Out[31]: 41
 
 In [32]: (define x '(4 5 6))
@@ -342,6 +330,21 @@ Out[37]: 6
 
 `apply` has not yet been implemented, so the circle is not yet complete.
 
+#### Macros
+
+Quoting, syntax-quoting, unquoting and unquote-splicing are all supported:
+
+```scheme
+In [38]: (define x 5)
+Out[38]: x
+
+In [39]: (define lst '(a b c))
+Out[39]: lst
+
+In [40]: `(fred x ~x lst ~lst 7 8 ~@lst)
+Out[40]: (fred x 5 lst (a b c) 7 8 a b c)
+```
+
 #### Comments
 
 The semi-colon character is used to represent a comment to the end of the
@@ -349,8 +352,8 @@ current line. Comments are stripped out by the parser and are not passed
 to the interpreter.
 
 ```scheme
-In [38]: ; this is a comment, which is ignored 
-In [39]:
+In [41]: ; this is a comment, which is ignored 
+In [42]:
 ```
 
 #### Debugging
@@ -360,13 +363,13 @@ global frame by setting `*debug*` to a truth value, and will produce lots
 of output:
 
 ```scheme
-In [40]: (define *debug* #t)
+In [43]: (define *debug* #t)
 DEBUG: repr [('x', *debug*)]
 DEBUG: atom? [('G__6', *debug*)]
 DEBUG: repr-atom [('G__7', *debug*)]
-Out[40]: *debug*
+Out[43]: *debug*
 
-In [41]: (range 3)
+In [44]: (range 3)
 DEBUG: range [('n', 3)]
 DEBUG: iterate [('f', <yalix.interpreter.Closure object at 0x7f9802c6d490>), ('x', 0)]
 DEBUG: memoize [('f', <yalix.interpreter.Closure object at 0x7f9802cb8610>)]
@@ -384,7 +387,7 @@ DEBUG: nil? [('G__0', <yalix.interpreter.Closure object at 0x7f9802c8d790>)]
 DEBUG: delayed-object [('x', <yalix.interpreter.Closure object at 0x7f9802ccb810>)]
 DEBUG: fold [('f', <yalix.interpreter.Closure object at 0x7f9802cfa090>), ('val', '(0 1 2)'), ('xs', None)]
 DEBUG: empty? [('G__0', None)]
-Out[41]: (0 1 2)
+Out[44]: (0 1 2)
 ```
 
 Of course, `*debug*` can be set inside a let binding as well, to either `#t` or `#f`,
@@ -431,7 +434,7 @@ Add the following likes to your `.vimrc` to enable syntax highlighting for *.ylx
 :autocmd BufRead,BufNewFile *.ylx setlocal filetype=scheme
 ```
 
-### Emax bindings
+### Emacs bindings
 
 ## TODO
 

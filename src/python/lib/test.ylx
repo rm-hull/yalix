@@ -1,0 +1,31 @@
+; TODO change into a macro and assert on 
+(define (assert expr message)
+  (if (not expr)   ; TODO: convert to if-not macro
+    (error (str "Assertion failed: " message))))
+
+(define (assert-equal expr1 expr2 message)
+  (if (not= expr1 expr2)   ; TODO: convert to if-not macro
+    (error (str "Assertion failed: " message))))
+
+
+;; TESTS
+;;
+;;
+(assert-equal 5 (+ 2 3) "Assert test")
+
+;(assert-equal 
+;  (read-string "(+ 11 (* 5 6))")
+;  '(+ 11 (* 5 6))
+;  "Read string")
+
+(define x '(+ 4 5 6))
+
+;(assert-equal 6 (eval 6)           "eval 6")
+;(assert-equal 6 (eval (+ 1 2 3))   "eval (+ 1 2 3)")
+;(assert-equal 6 (eval '(+ 1 2 3))  "eval '(+ 1 2 3)")
+;(assert-equal 15 (eval 'x)         "eval 'x")
+
+;(assert-equal
+;  (eval x)
+;  15
+;  "Eval check")

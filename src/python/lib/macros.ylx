@@ -1,0 +1,4 @@
+
+(define x 5)
+
+(define lst '(a b c))

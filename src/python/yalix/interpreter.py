@@ -8,12 +8,12 @@ evaluate the AST under the environment
 
 import yalix.utils as utils
 from abc import ABCMeta, abstractmethod
+from yalix.environment import Env
 from yalix.exceptions import EvaluationError
 
 
 class Primitive(object):
     __metaclass__ = ABCMeta
-    VARIADIC_MARKER = '.'
 
 #    def __repr__(self):
 #        return str(self.eval(Env()))
@@ -22,8 +22,11 @@ class Primitive(object):
     def eval(self, env):
         raise NotImplementedError()
 
-    def quoted_form(self):
-        return self
+    def call(self, env, caller):
+        raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', self)
+
+    def quoted_form(self, env):
+        return self.eval(env)
 
 
 class InterOp(Primitive):
@@ -34,7 +37,10 @@ class InterOp(Primitive):
 
     def eval(self, env):
         values = [a.eval(env) for a in self.args]
-        return self.func(*values)
+        try:
+            return self.func(*values)
+        except TypeError as ex:
+            raise EvaluationError(self, str(ex))
 
 
 class SpecialForm(Primitive):
@@ -45,6 +51,10 @@ class SpecialForm(Primitive):
 
     def eval(self, env):
         return self
+
+    def call(self, env, caller):
+        """ Don't evaluate params for special forms """
+        return self.impl(*caller.params).eval(env)
 
 
 class Atom(Primitive):
@@ -67,6 +77,44 @@ class Closure(Primitive):
     def eval(self, env):
         return self
 
+    @classmethod
+    def bind(cls, env_to_extend, formals, params, caller_env):
+        """
+        Extend the closure's environment by binding the
+        params to the functions formals
+        """
+        for i, bind_variable in enumerate(formals):
+            if bind_variable == Lambda.VARIADIC_MARKER:  # variadic arg indicator
+                # Use the next formal as the /actual/ bind variable,
+                # evaluate the remaining arguments into a list (NOTE offset from i)
+                # and dont process any more arguments
+                bind_variable = formals[i + 1]
+                value = List.make_lazy_list(params[i:]).eval(caller_env)
+                env_to_extend = env_to_extend.extend(bind_variable.name, value)
+                break
+            else:
+                value = params[i].eval(caller_env)
+                env_to_extend = env_to_extend.extend(bind_variable.name, value)
+        return env_to_extend
+
+    def call(self, env, caller):
+        if not self.func.has_sufficient_arity(caller.params):
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
+                                  caller.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  self.func.arity(),
+                                  len(caller.params))
+
+        if not self.func.is_variadic() and len(self.func.formals) != len(caller.params):
+            raise EvaluationError(self,
+                                  'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
+                                  caller.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  self.func.arity(),
+                                  len(caller.params))
+
+        extended_env = Closure.bind(self.env, self.func.formals, caller.params, env)
+        return self.func.body.eval(extended_env)
+
 
 class ForwardRef(Primitive):
     """
@@ -82,6 +130,10 @@ class ForwardRef(Primitive):
     def eval(self, env):
         return self.reference
 
+    def call(self, env, caller):
+        """ Don't evaluate params for special forms """
+        return self.reference.call(env, caller)
+
 
 # http://code.activestate.com/recipes/474088/
 class List(Primitive):
@@ -93,6 +145,9 @@ class List(Primitive):
             self.funexp = self.args[0]
             self.params = self.args[1:]
 
+    def __repr__(self):
+        return str(self.args).replace(',', '')
+
     def __len__(self):
         return len(self.args)
 
@@ -102,85 +157,39 @@ class List(Primitive):
     def __getitem__(self, index):
         return self.args.__getitem__(index)
 
-    def make_lazy_list(self, arr):
+    def index(self, value):
+        return self.args.index(value)
+
+    @classmethod
+    def make_lazy_list(cls, arr):
         t = Atom(None)
         while arr:
             t = List(Symbol('cons'), arr[-1], Delay(t))
             arr = arr[:-1]
         return t
 
-    def quoted_form(self):
-        """ Override default implementation to present as a list """
-        return self.make_lazy_list(self.args)
-
-    def extend_env(self, env, params, closure):
-        """
-        Extend the closure's environment by binding the
-        params to the functions formals
-        """
-        extended_env = closure.env
-        for i, bind_variable in enumerate(closure.func.formals):
-            if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
-                # Use the next formal as the /actual/ bind variable,
-                # evaluate the remaining arguments into a list (NOTE offset from i)
-                # and dont process any more arguments
-                bind_variable = closure.func.formals[i + 1]
-                value = self.make_lazy_list(params[i:]).eval(env)
-                extended_env = extended_env.extend(bind_variable, value)
-                break
+    def splice_args(self, args, env):
+        for arg in args:
+            if isinstance(arg, UnquoteSplice):
+                for elem in self.splice_args(arg.eval(env), env):
+                    yield elem
             else:
-                value = params[i].eval(env)
-                extended_env = extended_env.extend(bind_variable, value)
-        return extended_env
+                yield arg
 
-    def dispatch(self, env, value):
-        tbl = {
-            ForwardRef: self.handle_forward_ref,
-            Closure: self.handle_closure,
-            SpecialForm: self.handle_special_form
-        }
-
-        fn = tbl.get(type(value), self.default_handler)
-        return fn(env, value)
-
-    def handle_forward_ref(self, env, forward_ref):
-        return self.dispatch(env, forward_ref.reference)
-
-    def handle_closure(self, env, closure):
-        if not closure.func.has_sufficient_arity(self.params):
-            raise EvaluationError(self,
-                                  'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
-                                  self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                  closure.func.arity(),
-                                  len(self.params))
-
-        if not closure.func.is_variadic() and len(closure.func.formals) != len(self.params):
-            raise EvaluationError(self,
-                                  'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
-                                  self.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
-                                  closure.func.arity(),
-                                  len(self.params))
-
-        extended_env = self.extend_env(env, self.params, closure)
-        if extended_env['*debug*']:
-            utils.debug('{0} {1}', self.funexp.name, extended_env.local_stack)
-
-        return closure.func.body.eval(extended_env)
-
-    def handle_special_form(self, env, special_form):
-        """ Don't evaluate params for special forms """
-        if env['*debug*']:
-            utils.debug('{0} {1}', self.funexp.name, self.params)
-
-        return special_form.impl(*self.params).eval(env)
-
-    def default_handler(self, env, value):
-        raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', value)
+    def quoted_form(self, env):
+        """ Override default implementation to present as a list """
+        quote = SyntaxQuote if SyntaxQuote.ID in env else Quote
+        return List.make_lazy_list([quote(a) for a in self.splice_args(self.args, env)]).eval(env)
 
     def eval(self, env):
         if self.args:
             value = self.funexp.eval(env)
-            return self.dispatch(env, value)
+            if env['*debug*']:
+                utils.debug('{0} {1}', self.funexp.name, self.params)
+            try:
+                return value.call(env, self)
+            except AttributeError:
+                raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', value)
 
 
 class BuiltIn(Primitive):
@@ -199,8 +208,11 @@ class Symbol(BuiltIn):
     def __repr__(self):
         return str(self.name)
 
+    def __hash__(self):
+        return hash('symbol') ^ hash(self.name)
+
     def __eq__(self, other):
-        return type(other) == Symbol and self.name == other.name
+        return isinstance(other, Symbol) and self.name == other.name
 
     def __ne__(self, other):
         return not self == other
@@ -211,6 +223,14 @@ class Symbol(BuiltIn):
         except ValueError as ex:
             raise EvaluationError(self, str(ex))
 
+    def quoted_form(self, env):
+        if self.name.endswith('#') and SyntaxQuote.ID in env:
+            unique_id = env[SyntaxQuote.ID]
+            name = "{0}__{1}__auto__".format(self.name[:-1], unique_id)
+            return Symbol(name)
+        else:
+            return self
+
 
 class Quote(BuiltIn):
     """ Makes no effort to call the supplied expression when evaluated """
@@ -219,10 +239,42 @@ class Quote(BuiltIn):
         self.expr = expr
 
     def eval(self, env):
-        return self.expr.quoted_form()
+        return self.expr.quoted_form(env)
 
-    def quoted_form(self):
+    def quoted_form(self, env):
         return self.expr
+
+
+class SyntaxQuote(Quote):
+
+    ID = 'G__syntax_quote_id'
+
+    def eval(self, env):
+        if SyntaxQuote.ID not in env:
+            env = env.extend(SyntaxQuote.ID, Env.next_id())
+        return self.expr.quoted_form(env)
+
+
+class Unquote(BuiltIn):
+
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self, env):
+        value = self.expr.eval(env)
+        if isinstance(value, List):
+            value = value.eval(env)
+        return value
+
+
+class UnquoteSplice(BuiltIn):
+
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self, env):
+        list_ = self.expr.eval(env)
+        return Realize(list_).eval(env)
 
 
 class Body(BuiltIn):
@@ -286,17 +338,17 @@ class LetRec(BuiltIn):
         forward_refs = {}
         for symbol, _ in self.bindings:
 
-            if symbol.name in forward_refs:
+            if symbol in forward_refs:
                 # bindings are NOT shadowed in letrec
-                raise EvaluationError(self, "'{0}' is not distinct in letrec", symbol.name)
+                raise EvaluationError(self, "'{0}' is not distinct in letrec", symbol)
 
             ref = ForwardRef()
-            forward_refs[symbol.name] = ref
+            forward_refs[symbol] = ref
             extended_env = extended_env.extend(symbol.name, ref)
 
         # Then the binding expressions are evaluated and set in the fwd-refs
         for symbol, expr in self.bindings:
-            forward_refs[symbol.name].reference = expr.eval(extended_env)
+            forward_refs[symbol].reference = expr.eval(extended_env)
 
         return self.body.eval(extended_env)
 
@@ -304,41 +356,73 @@ class LetRec(BuiltIn):
 class Lambda(BuiltIn):
     """ A recursive n-argument anonymous function """
 
+    VARIADIC_MARKER = Symbol('.')
+
     def __init__(self, formals, *body):
-        self.formals = [f.name for f in formals]
+        self.formals = formals
         self.body = Body(*body)
 
     def arity(self):
         if self.is_variadic():
-            return self.formals.index(Primitive.VARIADIC_MARKER)
+            return self.formals.index(Lambda.VARIADIC_MARKER)
         else:
             return len(self.formals)
 
     def is_variadic(self):
-        return Primitive.VARIADIC_MARKER in self.formals
+        return Lambda.VARIADIC_MARKER in self.formals
 
     def has_sufficient_arity(self, args):
         try:
             # Must be at least n args (where n is the variadic marker position)
-            return len(args) >= self.formals.index(Primitive.VARIADIC_MARKER)
+            return len(args) >= self.formals.index(Lambda.VARIADIC_MARKER)
         except ValueError:
             # no. args must match exactly
             return len(args) == len(self.formals)
 
     def eval(self, env):
+        if self.is_variadic():
+            if sum(1 for f in self.formals if f == Lambda.VARIADIC_MARKER) > 1:
+                raise EvaluationError(self, 'Invalid variadic argument spec: {0}', self.formals)
+
+            if self.formals.index(Lambda.VARIADIC_MARKER) != len(self.formals)-2:
+                raise EvaluationError(self, 'Only one variadic argument is allowed: {0}', self.formals)
+
         if len(self.formals) != len(set(self.formals)):
-            raise EvaluationError(self, 'formals are not distinct: {0}', self.formals)
+            raise EvaluationError(self, 'Formals are not distinct: {0}', self.formals)
 
         return Closure(env, self)
 
 
-class Delay(BuiltIn):
+class Promise(Closure):
 
-    def __init__(self, expr):
-        self.expr = expr
+    def __init__(self, closure):
+        self.closure = closure
+        self.realized = False
+        self.result = None
 
     def eval(self, env):
-        return Lambda(List(), self.expr).eval(env)
+        return self
+
+    def call(self, env, caller):
+        if not self.realized:
+            self.result = self.closure.call(env, caller)
+            self.realized = True
+
+        return self.result
+
+
+class Delay(BuiltIn):
+    """
+    Creates a promise that when forced, evaluates the body to produce its
+    value. The result is then cached so that further uses of force produces
+    the cached value immediately.
+    """
+
+    def __init__(self, *body):
+        self.body = body
+
+    def eval(self, env):
+        return Promise(Lambda(List(), *self.body).eval(env))
 
 
 class If(BuiltIn):
@@ -356,13 +440,26 @@ class If(BuiltIn):
             return self.else_expr.eval(env)
 
 
+class Unbound(BuiltIn):
+    def eval(self, env):
+        return self
+
+    def __eq__(self, other):
+        return isinstance(other, Unbound)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash('unbound') ^ hash(self.__class__)
+
+
 class Define(BuiltIn):
     """ Updates entries in the Global Symbol Table """
 
     def __init__(self, *args):
         if len(args) == 0:
             raise EvaluationError(self, "Too few arguments supplied to define")
-
         self.args = args
 
     def name(self):
@@ -401,10 +498,13 @@ class Define(BuiltIn):
             obj = Lambda(List(*formals), *self.body()).eval(env)
         else:
             body = self.body()
-            if len(body) > 1:
+            body_size = len(body)
+            if body_size > 1:
                 raise EvaluationError(self, "Too many arguments supplied to define")
-
-            obj = body[0].eval(env)
+            elif body_size == 0:
+                obj = Unbound()
+            else:
+                obj = body[0].eval(env)
 
         self.set_docstring_on(obj)
         self.set_source_on(obj)
@@ -435,20 +535,20 @@ class Realize(Primitive):
     and returns as a nested array of arrays. Should not be used with infinite
     streams.
     """
-    def __init__(self, atom_or_list):
-        self.atom_or_list = atom_or_list
+    def __init__(self, value):
+        self.value = value
 
     def eval(self, env):
-        if List(Symbol('atom?'), self.atom_or_list).eval(env):
-            return self.atom_or_list.eval(env)
-        else:
+        if type(self.value) == tuple:
             arr = []
-            current_head = self.atom_or_list
-            while current_head is not None:
-                value = List(Symbol('first'), current_head)
+            current_head = self.value
+            while current_head:
+                value = List(Symbol('first'), Atom(current_head)).eval(env)
                 arr.append(Realize(value).eval(env))
-                current_head = List(Symbol('rest'), current_head).eval(env)
+                current_head = List(Symbol('rest'), Atom(current_head)).eval(env)
             return arr
+        else:
+            return self.value
 
 
 class Repr(Primitive):
@@ -460,22 +560,23 @@ class Repr(Primitive):
     List traversal will not extend beyond the *print-length* (if not nil).
     """
 
-    def __init__(self, atom_or_list):
-        self.atom_or_list = atom_or_list
+    def __init__(self, value):
+        self.value = value
 
+    def print_length(self, env):
+        if '*print-length*' in env:
+            return env['*print-length*']
+
+    # TODO: make this and Realize into one implementation
     def eval(self, env):
-        if self.atom_or_list is None or type(self.atom_or_list) in [str, int, long, float, bool, Symbol]:
-            return str(self.atom_or_list)
-        elif List(Symbol('atom?'), self.atom_or_list).eval(env):
-            return str(self.atom_or_list.eval(env))
-        else:
-            current_head = self.atom_or_list
-            max_iterations = env['*print-length*']
+        if type(self.value) == tuple:
+            current_head = self.value
+            max_iterations = self.print_length(env)
             ret = '('
-            while current_head is not None and (max_iterations is None or max_iterations > 0):
-                value = List(Symbol('first'), current_head)
+            while current_head and (max_iterations is None or max_iterations > 0):
+                value = List(Symbol('first'), Atom(current_head)).eval(env)
                 ret += Repr(value).eval(env)
-                current_head = List(Symbol('rest'), current_head).eval(env)
+                current_head = List(Symbol('rest'), Atom(current_head)).eval(env)
                 if max_iterations is not None:
                     max_iterations -= 1
                 if current_head is not None:
@@ -486,6 +587,8 @@ class Repr(Primitive):
 
             ret += ')'
             return ret
+        else:
+            return str(self.value)
 
 
 class Eval(BuiltIn):
@@ -494,7 +597,7 @@ class Eval(BuiltIn):
         self.expr = expr
 
     def eval(self, env):
-        return self.expr.quoted_form().eval(env)
+        return self.expr.quoted_form(env).eval(env)
 
 
 __special_forms__ = {

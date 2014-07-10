@@ -3,9 +3,8 @@
 (define (iterate f x)
   (cons
     x
-    (memoize 
-      (delay 
-        (iterate f (f x))))))
+    (delay 
+      (iterate f (f x)))))
 
 (define (range n)
   (take n (iterate inc 0)))
@@ -15,9 +14,8 @@
     nil
     (cons
       low
-      (memoize
-        (delay
-          (sequence (+ low stride) high stride))))))
+      (delay
+        (sequence (+ low stride) high stride)))))
 
 
 (define (constantly x)
@@ -33,19 +31,16 @@
                       (rest l)
                       (cons
                         (first l)
-                        (memoize (delay a))))))))
+                        (delay a)))))))
     (aux xs nil)))
 
 (define (concat xs ys)
-  (letrec ((aux (λ (xs ys)
-                  (if (nil? xs)
-                    ys
-                    (aux
-                      (rest xs)
-                      (cons
-                        (first xs)
-                        (memoize (delay ys))))))))
-    (aux (reverse xs) ys)))
+  (if (empty? xs)
+    ys
+    (cons
+      (first xs)
+      (delay
+        (concat (rest xs) ys)))))
 
 (define (map f xs)
   ;^ Maps a function over a list
@@ -53,16 +48,15 @@
     nil
     (cons
       (f (first xs))
-      (memoize 
-        (delay 
-          (map f (rest xs)))))))
+      (delay 
+        (map f (rest xs))))))
 
 (define (filter pred xs)
   (if (empty? xs)
     nil
     (let* ((fst (first xs)))
       (if (pred fst)
-        (cons fst (memoize (delay (filter pred (rest xs)))) )
+        (cons fst (delay (filter pred (rest xs))))
         (filter pred (rest xs))))))  ; Needs tail recursion
 
 (define (fold f val xs)
@@ -76,18 +70,16 @@
 (define (reductions f val xs)
   (cons 
     val
-    (memoize
-      (delay
-        (if (not (empty? xs))
-          (reductions f (f val (first xs)) (rest xs)))))))
+    (delay
+      (if (not (empty? xs))
+        (reductions f (f val (first xs)) (rest xs))))))
 
 (define (take n xs)
   (if (pos? n)
     (cons 
       (first xs)
-      (memoize 
-        (delay 
-          (take (dec n) (rest xs)))))))
+      (delay 
+        (take (dec n) (rest xs))))))
 
 (define (drop n xs)
   (letrec ((step (λ (n xs)

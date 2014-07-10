@@ -4,22 +4,21 @@
 """
 Some predefined functions injected into an environment
 """
+import functools
 import operator
 import random
 import math
-import threading
+import time
 
 from yalix.utils import log_progress
 from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
 from yalix.interpreter import Primitive, Atom, InterOp, Lambda, List, \
-        Realize, Symbol, SpecialForm, __special_forms__
+    Realize, Symbol, SpecialForm, Promise, __special_forms__
 
-__core_libraries__ =  ['core', 'hof', 'num', 'repr']
 
-gensym_nextID = 0
-gensym_lock = threading.Lock()
+__core_libraries__ = ['core', 'hof', 'num', 'macros', 'repr', 'test']
 
 
 def create_initial_env():
@@ -36,12 +35,7 @@ def create_initial_env():
 
 
 def gensym(prefix='G__'):
-    global gensym_nextID
-    global gensym_lock
-    with gensym_lock:
-        old = gensym_nextID
-        gensym_nextID += 1
-    return Symbol(prefix + str(old))
+    return Symbol(prefix + str(Env.next_id()))
 
 
 def interop(fun, arity, variadic=False):
@@ -51,7 +45,7 @@ def interop(fun, arity, variadic=False):
     if variadic:
         # Insert the variadic marker at the last-but one position
         formals = list(bind_variables)
-        formals.insert(-1, Symbol(Primitive.VARIADIC_MARKER))
+        formals.insert(-1, Lambda.VARIADIC_MARKER)
         bind_variables[-1] = Realize(bind_variables[-1])
     else:
         formals = bind_variables
@@ -62,21 +56,21 @@ def interop(fun, arity, variadic=False):
 def doc(value):
     doc = getattr(value, '__docstring__', None)
     if doc:
-        print '-----------------'
-        print doc
+        print('-----------------')
+        print(doc)
 
 
 def source(value):
-    from yalix.utils.color import highlight_syntax
+    from yalix.utils import highlight_syntax
     from yalix.source_view import source_view
     src = source_view(value)
     if src:
-        print '-----------------'
-        print highlight_syntax(source_view(value))
+        print('-----------------')
+        print(highlight_syntax(source_view(value)))
 
 
 def print_(value):
-    print str_(value)
+    print(str_(value))
 
 
 def str_(args=None):
@@ -84,7 +78,7 @@ def str_(args=None):
         return '' if x is None else str(x)
     if args is None:
         return ''
-    return reduce(lambda x, y: strnil(x) + strnil(y), args)
+    return functools.reduce(lambda x, y: strnil(x) + strnil(y), args)
 
 
 def format_(format_spec, args=None):
@@ -102,8 +96,38 @@ def atom_QUESTION(value):
     return value is None or type(value) in [str, int, long, float, bool, Symbol]
 
 
+def pair_QUESTION(value):
+    return isinstance(value, tuple)
+
+
+def promise_QUESTION(value):
+    return isinstance(value, Promise)
+
+
+def realized_QUESTION(value):
+    return promise_QUESTION(value) and value.realized
+
+
 def read_string(value):
     return scheme_parser().parseString(value, parseAll=True).asList()[0]
+
+
+def car(value):
+    if value is None:
+        return None
+    elif isinstance(value, tuple):
+        return value[0]
+    else:
+        raise EvaluationError(value, "Cannot car on non-cons cell: '{0}'", value)
+
+
+def cdr(value):
+    if value is None:
+        return None
+    elif isinstance(value, tuple):
+        return value[1]
+    else:
+        raise EvaluationError(value, "Cannot cdr on non-cons cell: '{0}'", value)
 
 
 def bootstrap_lisp_functions(env, from_file):
@@ -136,6 +160,13 @@ def bootstrap_python_functions(env):
     env['*debug*'] = Atom(False)
     env['nil'] = Atom(None)
     env['nil?'] = interop(lambda x: x is None, 1)
+    env['atom?'] = interop(atom_QUESTION, 1)
+    env['pair?'] = interop(pair_QUESTION, 1)
+    env['promise?'] = interop(promise_QUESTION, 1)
+    env['realized?'] = interop(realized_QUESTION, 1)
+    env['cons'] = interop(lambda x, y: (x, y), 2)
+    env['car'] = interop(car, 1)
+    env['cdr'] = interop(cdr, 1)
     env['gensym'] = interop(gensym, 0)
     env['symbol'] = interop(lambda x: Symbol(x), 1)
     env['symbol?'] = interop(lambda x: isinstance(x, Symbol), 1)
@@ -144,16 +175,17 @@ def bootstrap_python_functions(env):
     env['source'] = interop(source, 1)
     env['print'] = interop(print_, 1, variadic=True)
     env['format'] = interop(format_, 2, variadic=True)
-    env['atom?'] = interop(atom_QUESTION, 1)
     env['str'] = interop(str_, 1, variadic=True)
     env['read-string'] = interop(read_string, 1)  # Read just one symbol
     env['error'] = interop(error, 1)
+    env['epoch-time'] = interop(time.time, 0)
 
     # Basic Arithmetic Functions
     env['add'] = interop(operator.add, 2)
     env['sub'] = interop(operator.sub, 2)
     env['mul'] = interop(operator.mul, 2)
-    env['div'] = interop(operator.div, 2)
+    env['div'] = interop(operator.truediv, 2)
+    env['quot'] = interop(operator.floordiv, 2)
     env['negate'] = interop(operator.neg, 1)
 
     # String / Sequence Functions
