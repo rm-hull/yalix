@@ -168,12 +168,22 @@ class BuiltinsTest(unittest.TestCase):
         self.assertEqual('fred', repr(s))
 
     def test_symbol_equality(self):
-        env = make_env().extend('fred', 45)
         s1 = Symbol('fred')
         s2 = Symbol('fred')
         s3 = Symbol('jim')
         self.assertEqual(s1, s2)
         self.assertNotEqual(s1, s3)
+
+    def test_symbol_hash(self):
+        s1 = Symbol('fred')
+        s2 = Symbol('fred')
+        s3 = Symbol('jim')
+        self.assertEqual(hash(s1), hash(s2))
+        self.assertNotEqual(hash(s1), hash(s3))
+        self.assertNotEqual(hash(s1), hash('fred'))
+        self.assertNotEqual(hash(s2), hash('fred'))
+        self.assertNotEqual(hash(s2), hash('jim'))
+        self.assertEquals(2, len(set([s1, s2, s3])))
 
     def test_quote_atom(self):
         env = make_env()

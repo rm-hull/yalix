@@ -14,7 +14,6 @@ from yalix.exceptions import EvaluationError
 
 class Primitive(object):
     __metaclass__ = ABCMeta
-    VARIADIC_MARKER = '.'
 
 #    def __repr__(self):
 #        return str(self.eval(Env()))
@@ -78,24 +77,24 @@ class Closure(Primitive):
     def eval(self, env):
         return self
 
-    def extend_env(self, env, params):
+    def bind(self, env, formals, params):
         """
         Extend the closure's environment by binding the
         params to the functions formals
         """
         extended_env = self.env
-        for i, bind_variable in enumerate(self.func.formals):
-            if bind_variable == Primitive.VARIADIC_MARKER:  # variadic arg indicator
+        for i, bind_variable in enumerate(formals):
+            if bind_variable == Lambda.VARIADIC_MARKER:  # variadic arg indicator
                 # Use the next formal as the /actual/ bind variable,
                 # evaluate the remaining arguments into a list (NOTE offset from i)
                 # and dont process any more arguments
-                bind_variable = self.func.formals[i + 1]
+                bind_variable = formals[i + 1]
                 value = List.make_lazy_list(params[i:]).eval(env)
-                extended_env = extended_env.extend(bind_variable, value)
+                extended_env = extended_env.extend(bind_variable.name, value)
                 break
             else:
                 value = params[i].eval(env)
-                extended_env = extended_env.extend(bind_variable, value)
+                extended_env = extended_env.extend(bind_variable.name, value)
         return extended_env
 
     def call(self, env, caller):
@@ -113,7 +112,7 @@ class Closure(Primitive):
                                   self.func.arity(),
                                   len(caller.params))
 
-        extended_env = self.extend_env(env, caller.params)
+        extended_env = self.bind(env, self.func.formals, caller.params)
         return self.func.body.eval(extended_env)
 
 
@@ -154,6 +153,9 @@ class List(Primitive):
 
     def __getitem__(self, index):
         return self.args.__getitem__(index)
+
+    def index(self, value):
+        return self.args.index(value)
 
     @classmethod
     def make_lazy_list(cls, arr):
@@ -202,6 +204,9 @@ class Symbol(BuiltIn):
 
     def __repr__(self):
         return str(self.name)
+
+    def __hash__(self):
+        return hash('symbol') ^ hash(self.name)
 
     def __eq__(self, other):
         return isinstance(other, Symbol) and self.name == other.name
@@ -348,33 +353,35 @@ class LetRec(BuiltIn):
 class Lambda(BuiltIn):
     """ A recursive n-argument anonymous function """
 
+    VARIADIC_MARKER = Symbol('.')
+
     def __init__(self, formals, *body):
-        self.formals = [f.name for f in formals]
+        self.formals = formals
         self.body = Body(*body)
 
     def arity(self):
         if self.is_variadic():
-            return self.formals.index(Primitive.VARIADIC_MARKER)
+            return self.formals.index(Lambda.VARIADIC_MARKER)
         else:
             return len(self.formals)
 
     def is_variadic(self):
-        return Primitive.VARIADIC_MARKER in self.formals
+        return Lambda.VARIADIC_MARKER in self.formals
 
     def has_sufficient_arity(self, args):
         try:
             # Must be at least n args (where n is the variadic marker position)
-            return len(args) >= self.formals.index(Primitive.VARIADIC_MARKER)
+            return len(args) >= self.formals.index(Lambda.VARIADIC_MARKER)
         except ValueError:
             # no. args must match exactly
             return len(args) == len(self.formals)
 
     def eval(self, env):
         if self.is_variadic():
-            if sum(1 for f in self.formals if f == Primitive.VARIADIC_MARKER) > 1:
+            if sum(1 for f in self.formals if f == Lambda.VARIADIC_MARKER) > 1:
                 raise EvaluationError(self, 'invalid variadic argument spec: {0}', self.formals)
 
-            if self.formals.index(Primitive.VARIADIC_MARKER) != len(self.formals)-2:
+            if self.formals.index(Lambda.VARIADIC_MARKER) != len(self.formals)-2:
                 raise EvaluationError(self, 'only one variadic argument is allowed: {0}', self.formals)
 
         if len(self.formals) != len(set(self.formals)):

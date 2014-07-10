@@ -45,7 +45,7 @@ def interop(fun, arity, variadic=False):
     if variadic:
         # Insert the variadic marker at the last-but one position
         formals = list(bind_variables)
-        formals.insert(-1, Symbol(Primitive.VARIADIC_MARKER))
+        formals.insert(-1, Lambda.VARIADIC_MARKER)
         bind_variables[-1] = Realize(bind_variables[-1])
     else:
         formals = bind_variables
