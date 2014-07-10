@@ -145,6 +145,9 @@ class List(Primitive):
             self.funexp = self.args[0]
             self.params = self.args[1:]
 
+    def __repr__(self):
+        return str(self.args).replace(',', '')
+
     def __len__(self):
         return len(self.args)
 
@@ -335,17 +338,17 @@ class LetRec(BuiltIn):
         forward_refs = {}
         for symbol, _ in self.bindings:
 
-            if symbol.name in forward_refs:
+            if symbol in forward_refs:
                 # bindings are NOT shadowed in letrec
-                raise EvaluationError(self, "'{0}' is not distinct in letrec", symbol.name)
+                raise EvaluationError(self, "'{0}' is not distinct in letrec", symbol)
 
             ref = ForwardRef()
-            forward_refs[symbol.name] = ref
+            forward_refs[symbol] = ref
             extended_env = extended_env.extend(symbol.name, ref)
 
         # Then the binding expressions are evaluated and set in the fwd-refs
         for symbol, expr in self.bindings:
-            forward_refs[symbol.name].reference = expr.eval(extended_env)
+            forward_refs[symbol].reference = expr.eval(extended_env)
 
         return self.body.eval(extended_env)
 
@@ -379,13 +382,13 @@ class Lambda(BuiltIn):
     def eval(self, env):
         if self.is_variadic():
             if sum(1 for f in self.formals if f == Lambda.VARIADIC_MARKER) > 1:
-                raise EvaluationError(self, 'invalid variadic argument spec: {0}', self.formals)
+                raise EvaluationError(self, 'Invalid variadic argument spec: {0}', self.formals)
 
             if self.formals.index(Lambda.VARIADIC_MARKER) != len(self.formals)-2:
-                raise EvaluationError(self, 'only one variadic argument is allowed: {0}', self.formals)
+                raise EvaluationError(self, 'Only one variadic argument is allowed: {0}', self.formals)
 
         if len(self.formals) != len(set(self.formals)):
-            raise EvaluationError(self, 'formals are not distinct: {0}', self.formals)
+            raise EvaluationError(self, 'Formals are not distinct: {0}', self.formals)
 
         return Closure(env, self)
 

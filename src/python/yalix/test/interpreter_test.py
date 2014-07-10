@@ -83,6 +83,15 @@ class BuiltinsTest(unittest.TestCase):
         value = List(Symbol('sum'), Atom(45)).eval(env)
         self.assertEqual(990, value)
 
+    def test_letrec_distinct_bindings(self):
+        env = make_env()
+        with self.assertRaises(EvaluationError) as cm:
+            LetRec(List(List(Symbol('a'), Atom(5)),
+                        List(Symbol('b'), Atom(7)),
+                        List(Symbol('a'), Atom(8))),
+                   List(Symbol('+'), Symbol('a'), Symbol('b'))).eval(env)
+        self.assertEqual('\'a\' is not distinct in letrec', cm.exception.message)
+
     def test_lambda(self):
         env = make_env()
         value = Let(List(Symbol('identity'), Lambda(List(Symbol('x')), Symbol('x'))),  # <-- anonymous fn
@@ -91,8 +100,9 @@ class BuiltinsTest(unittest.TestCase):
 
     def test_lambda_duplicated_formals(self):
         env = make_env()
-        with self.assertRaises(EvaluationError):
+        with self.assertRaises(EvaluationError) as cm:
             Lambda(List(Symbol('x'), Symbol('y'), Symbol('x'), Symbol('z')), Symbol('x')).eval(env)
+        self.assertEqual('Formals are not distinct: (x y x z)', cm.exception.message)
 
     def test_lambda_variadic(self):
         env = make_env()
@@ -109,13 +119,15 @@ class BuiltinsTest(unittest.TestCase):
 
     def test_lambda_only_one_variadic_arg(self):
         env = make_env()
-        with self.assertRaises(EvaluationError):
+        with self.assertRaises(EvaluationError) as cm:
             Define(List(Symbol('list*'), Symbol('.'), Symbol('xs'), Symbol('ys')), Symbol('xs')).eval(env)
+        self.assertEqual('Only one variadic argument is allowed: (. xs ys)', cm.exception.message)
 
     def test_lambda_invalid_variadic_spec(self):
         env = make_env()
-        with self.assertRaises(EvaluationError):
+        with self.assertRaises(EvaluationError) as cm:
             Define(List(Symbol('list*'), Symbol('.'), Symbol('xs'), Symbol('.')), Symbol('xs')).eval(env)
+        self.assertEqual('Invalid variadic argument spec: (. xs .)', cm.exception.message)
 
     def test_interop(self):
         # InterOp, i.e. using Python functions
@@ -147,19 +159,22 @@ class BuiltinsTest(unittest.TestCase):
         env = make_env()
         Define(Symbol('barf'), Atom('barf')).eval(env)
 
-        with self.assertRaises(EvaluationError):
+        with self.assertRaises(EvaluationError) as cm:
             List(Symbol('barf'), Atom(3)).eval(env)
+        self.assertEqual('Cannot invoke with: \'barf\'', cm.exception.message)
 
     def test_call_wrong_arity(self):
         env = make_env()
 
         # Porridge is too cold
-        with self.assertRaises(EvaluationError):
+        with self.assertRaises(EvaluationError) as cm:
             List(Symbol('+'), Atom(3)).eval(env)
+        self.assertEqual('Call to \'+\' applied with insufficient arity: 2 args expected, 1 supplied', cm.exception.message)
 
         # Porridge is too hot
-        with self.assertRaises(EvaluationError):
+        with self.assertRaises(EvaluationError) as cm:
             List(Symbol('+'), Atom(3), Atom(4), Atom(5)).eval(env)
+        self.assertEqual('Call to \'+\' applied with insufficient arity: 2 args expected, 3 supplied', cm.exception.message)
 
     def test_symbol(self):
         env = make_env().extend('fred', 45)
@@ -258,13 +273,15 @@ class BuiltinsTest(unittest.TestCase):
 
     def test_define_too_many_args(self):
         env = make_env()
-        with self.assertRaises(EvaluationError):
+        with self.assertRaises(EvaluationError) as cm:
             Define(Symbol('err'), Atom('atom1'), Atom(3)).eval(env)
+        self.assertEqual('Too many arguments supplied to define', cm.exception.message)
 
     def test_define_too_few_args(self):
         env = make_env()
-        with self.assertRaises(EvaluationError):
+        with self.assertRaises(EvaluationError) as cm:
             Define().eval(env)
+        self.assertEqual('Too few arguments supplied to define', cm.exception.message)
 
     def test_define_no_args(self):
         env = make_env()
@@ -284,8 +301,9 @@ class BuiltinsTest(unittest.TestCase):
 
     def test_set_PLING_unbound(self):
         env = make_env()
-        with self.assertRaises(EvaluationError):
+        with self.assertRaises(EvaluationError) as cm:
             Set_PLING(Symbol('froobe'), Atom(91)).eval(env)
+        self.assertEqual('Assignment disallowed: \'froobe\' is unbound in local environment', cm.exception.message)
 
     def test_set_PLING_bound(self):
         # (let (froobe 43)
