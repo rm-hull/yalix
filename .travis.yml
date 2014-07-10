@@ -1,9 +1,10 @@
 language: python
 python:
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
+  - 2.7
+  - pypy
+  - 3.2
+  - 3.3
+  - 3.4
 install:
     #  - pip install -e . --use-mirrors
   - pip install -r src/python/requirements.txt --use-mirrors
