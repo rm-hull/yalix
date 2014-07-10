@@ -188,7 +188,14 @@ def left_margin(text):
 
 
 def repl(print_callback=prn):
-    env = create_initial_env()
+
+    try:
+        env = create_initial_env()
+    except EvaluationError as ex:
+        log("{0}: {1}", red(type(ex).__name__, style='bold'), ex)
+        log(highlight_syntax(source_view(ex.primitive)))
+        sys.exit()
+
     env['copyright'] = left_margin(copyright())
     env['license'] = left_margin(license())
     env['help'] = left_margin(help())
@@ -221,9 +228,6 @@ def repl(print_callback=prn):
 
         except EvaluationError as ex:
             log("{0}: {1}", red(type(ex).__name__, style='bold'), ex)
-
-            # TODO: Show source file and column/line
-
             log(highlight_syntax(source_view(ex.primitive)))
 
         except ParseException as ex:

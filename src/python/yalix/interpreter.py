@@ -549,8 +549,8 @@ class Repr(Primitive):
     def __init__(self, atom_or_list):
         self.atom_or_list = atom_or_list
 
-    def isatom(self, atom_or_list):
-        return self.atom_or_list is None or type(self.atom_or_list) in [str, int, long, float, bool, Symbol]
+    def isatom(self, value):
+        return value is None or type(value) in [str, int, long, float, bool, Symbol]
 
     def eval(self, env):
         if self.isatom(self.atom_or_list):
