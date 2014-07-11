@@ -13,10 +13,8 @@ def send_inputs(*args):
         try:
             cmd = args[count - 1]
             if isinstance(cmd, str):
-                print 'yield', cmd
                 yield cmd
             else:
-                print 'raise', cmd
                 raise cmd
         except IndexError:
             raise EOFError()
@@ -60,7 +58,6 @@ class ReplTests(unittest.TestCase):
         with utils.capture() as out:
             repl.repl(inprompt=commands, outprompt=collector)
 
-        print results
         self.assertEqual('10', results[1])
         self.assertEqual('(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 ...)', results[2])
         self.assertTrue('KeyboardInterrupt' in out[0])

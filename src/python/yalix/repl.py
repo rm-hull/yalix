@@ -192,7 +192,7 @@ def repl(inprompt=stdin_read, outprompt=stdout_prn):
     count = 1
     while True:
         try:
-            text = inprompt(count).next()
+            text = next(inprompt(count))
             for ast in parser.parseString(text, parseAll=True).asList():
                 result = ast.eval(env)
                 # Evaluate lazy list representations
