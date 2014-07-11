@@ -542,11 +542,13 @@ class Realize(Primitive):
         if type(self.value) == tuple:
             arr = []
             current_head = self.value
-            while current_head:
+            while current_head is not None:
                 value = List(Symbol('first'), Atom(current_head)).eval(env)
                 arr.append(Realize(value).eval(env))
                 current_head = List(Symbol('rest'), Atom(current_head)).eval(env)
             return arr
+        elif isinstance(self.value, Primitive):
+            return self.value.eval(env)
         else:
             return self.value
 
@@ -587,6 +589,8 @@ class Repr(Primitive):
 
             ret += ')'
             return ret
+        elif isinstance(self.value, Primitive):
+            return self.value.eval(env)
         else:
             return str(self.value)
 
