@@ -49,7 +49,7 @@ class ReplTests(unittest.TestCase):
             repl.init_readline({})
 
         self.assertTrue('Reading history' in out[0])
-        self.assertTrue('DONE' in out[0])
+        self.assertTrue('DONE' in out[0] or 'FAILED' in out[0])
 
     def test_repl_starts_OK(self):
         commands = send_inputs("(+ 1 2 3 4)", "(iterate inc 0)",
