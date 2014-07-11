@@ -4,6 +4,7 @@
 import unittest
 import yalix.utils as utils
 
+
 class UtilsTest(unittest.TestCase):
 
     def test_log_progress_reports_FAILED(self):
@@ -29,6 +30,24 @@ class UtilsTest(unittest.TestCase):
             # Pygments in action
             m = hashlib.sha224(output.encode('utf-8'))
             self.assertEquals('7ec4fce8a935c23538e701e1da3dfc6ce124ee5555cd90e7b5cd877e', m.hexdigest())
+
+    def test_balance_empty(self):
+        self.assertEqual(0, utils.balance(''))
+
+    def test_balance_single_parens(self):
+        self.assertEqual(0, utils.balance('()'))
+        self.assertEqual(-1, utils.balance(')('))
+        self.assertEqual(0, utils.balance('  ( )   '))
+        self.assertEqual(0, utils.balance('(sfs sfsfs sdf) sfs'))
+
+    def test_balance_unbalanced_parens(self):
+        self.assertEqual(1, utils.balance('(sfs sfsfs sdf sfs'))
+        self.assertEqual(-1, utils.balance('sfs sfsfs sdf sfs)'))
+
+    def test_balance_nested_parens(self):
+        self.assertEqual(0, utils.balance('(sfs (sfsfs) (sdf (sfs)))'))
+        self.assertEqual(0, utils.balance('(sfs (sfsfs (sdf (sfs))))'))
+        self.assertEqual(0, utils.balance('(((((sfs) sfsfs) sdf) sfs))'))
 
 if __name__ == '__main__':
     unittest.main()

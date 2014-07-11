@@ -12,7 +12,7 @@ from yalix.exceptions import EvaluationError
 from yalix.completer import Completer
 from yalix.interpreter import Repr
 from yalix.parser import scheme_parser
-from yalix.utils import log_progress, log
+from yalix.utils import log_progress, log, balance
 from yalix.utils import red, green, blue, bold, highlight_syntax
 from yalix.globals import create_initial_env
 
@@ -84,7 +84,7 @@ source):
 
     (source map)
 
-See https://github.com/rm-hull/yalex/ for further information."""
+See https://github.com/rm-hull/yalix/ for further information."""
 
 
 def credits():
@@ -117,6 +117,7 @@ def input2or3(prompt):
     except NameError:
         return input(prompt)
 
+
 def input_with_prefill(prompt, text):
     try:
         import readline
@@ -132,28 +133,11 @@ def input_with_prefill(prompt, text):
         readline.set_pre_input_hook()
 
 
-def balance(text, bal=0):
-    """
-    Checks whether the parens in the text are balanced:
-        - zero: balanced
-        - negative: too many right parens
-        - positive: too many left parens
-    """
-    if text == '':
-        return bal
-    elif text[0] == '(' and bal >= 0:
-        return balance(text[1:], bal + 1)
-    elif text[0] == ')':
-        return balance(text[1:], bal - 1)
-    else:
-        return balance(text[1:], bal)
-
-
-def read(count):
+def stdin_read(count):
     primary_prompt = '\001' + green('\002In [\001') + green('\002{0}\001', style='bold') + green('\002]: \001') + '\002'
     secondary_prompt = ' ' * len(str(count)) + '\001' + green('\002  ...: \001') + '\002'
-
     prompt = primary_prompt.format(count)
+
     prefill = ''
     entry = ''
 
@@ -161,13 +145,13 @@ def read(count):
         entry += input_with_prefill(prompt, prefill) + '\n'
         prompt = secondary_prompt
         parens_count = balance(entry)
-        if parens_count == 0:
-            return entry
-        elif parens_count > 0:
+        if parens_count > 0:
             prefill = '  ' * parens_count
+        else:
+            yield entry
 
 
-def prn(input, result, count):
+def stdout_prn(result, count):
     primary_prompt = red('Out[') + red('{0}', style='bold') + red(']: ')
     secondary_prompt = ' ' * len(str(count)) + red('  ...: ')
     prompt = primary_prompt.format(count)
@@ -187,7 +171,7 @@ def left_margin(text):
     return text.replace('\n', '\n\r        \r')
 
 
-def repl(print_callback=prn):
+def repl(inprompt=stdin_read, outprompt=stdout_prn):
 
     try:
         env = create_initial_env()
@@ -208,16 +192,15 @@ def repl(print_callback=prn):
     count = 1
     while True:
         try:
-            text = read(count)
+            text = inprompt(count).next()
             for ast in parser.parseString(text, parseAll=True).asList():
-
                 result = ast.eval(env)
-
                 # Evaluate lazy list representations
                 result = Repr(result).eval(env)
-                print_callback(text, result, count)
+                outprompt(result, count)
+
             if text.strip() != '':
-                print("")
+                print()
 
         except EOFError:
             log(blue('\nBye!', style='bold'))
