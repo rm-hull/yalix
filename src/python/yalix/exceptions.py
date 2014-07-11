@@ -3,6 +3,7 @@
 
 import yalix.source_view as source_view
 
+
 class EvaluationError(Exception):
     """ Evaluation specific error handling """
 

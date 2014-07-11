@@ -78,6 +78,7 @@ def log(message='', *args):
 def debug(message='', *args):
     log(faint('DEBUG: ' + message), *args)
 
+
 def balance(text, bal=0):
     """
     Checks whether the parens in the text are balanced:
@@ -93,4 +94,3 @@ def balance(text, bal=0):
         return balance(text[1:], bal - 1)
     else:
         return balance(text[1:], bal)
-

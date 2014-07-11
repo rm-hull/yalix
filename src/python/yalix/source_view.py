@@ -32,7 +32,7 @@ def find_outer_form_bounds(primitive):
         return None
 
     n = len(src)
-    while loc > 0 and src[loc-1:loc+1] != '\n(':
+    while loc > 0 and src[loc - 1:loc + 1] != '\n(':
         loc -= 1
 
     start = loc
@@ -44,7 +44,7 @@ def find_outer_form_bounds(primitive):
         c = src[loc]
         if in_string:
             if c == '"':
-                in_string = src[loc-1] == '\\'
+                in_string = src[loc - 1] == '\\'
         else:
             if c == '(':
                 count_parens += 1

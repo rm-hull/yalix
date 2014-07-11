@@ -64,17 +64,17 @@ def scheme_parser(debug=False):
 
     # Parse actions
     for name, var, fn in [
-            ('integer',             integer,            _atom(int)),
-            ('real number',         real,               _atom(float)),
-            ('hex',                 hex_,               _atom(lambda x: int(x, 0))),
-            ('boolean',             boolean,            _atom(lambda x: x == '#t')),
-            ('string',              dblQuotedString,    _atom(lambda x: x[1:-1])),
-            ('symbol',              symbol,             _specialForm(Symbol)),
-            ('quote',               quote,              _specialForm(Quote)),
-            ('synatx-quote',        syntaxQuote,        _specialForm(SyntaxQuote)),
-            ('unquote',             unquote,            _specialForm(Unquote)),
-            ('unquote-splice',      unquoteSplice,      _specialForm(UnquoteSplice)),
-            ('S-expression',        sexp,               _specialForm(List))]:
+            ('integer', integer, _atom(int)),
+            ('real number', real, _atom(float)),
+            ('hex', hex_, _atom(lambda x: int(x, 0))),
+            ('boolean', boolean, _atom(lambda x: x == '#t')),
+            ('string', dblQuotedString, _atom(lambda x: x[1:-1])),
+            ('symbol', symbol, _specialForm(Symbol)),
+            ('quote', quote, _specialForm(Quote)),
+            ('synatx-quote', syntaxQuote, _specialForm(SyntaxQuote)),
+            ('unquote', unquote, _specialForm(Unquote)),
+            ('unquote-splice', unquoteSplice, _specialForm(UnquoteSplice)),
+            ('S-expression', sexp, _specialForm(List))]:
         var.setParseAction(fn)
         var.setName(name)
 

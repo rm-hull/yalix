@@ -384,7 +384,7 @@ class Lambda(BuiltIn):
             if sum(1 for f in self.formals if f == Lambda.VARIADIC_MARKER) > 1:
                 raise EvaluationError(self, 'Invalid variadic argument spec: {0}', self.formals)
 
-            if self.formals.index(Lambda.VARIADIC_MARKER) != len(self.formals)-2:
+            if self.formals.index(Lambda.VARIADIC_MARKER) != len(self.formals) - 2:
                 raise EvaluationError(self, 'Only one variadic argument is allowed: {0}', self.formals)
 
         if len(self.formals) != len(set(self.formals)):
