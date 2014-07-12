@@ -100,6 +100,8 @@ def init_readline(env):
     else:
         histfile = os.path.join(os.path.expanduser("~"), ".yalix_history")
         readline.set_completer(Completer(env).complete)
+        readline.set_completer_delims('() ')
+        readline.parse_and_bind("set blink-matching-paren on")
         readline.parse_and_bind("tab: complete")
         if hasattr(readline, "read_history_file"):
             try:
