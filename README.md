@@ -165,8 +165,8 @@ the list ended at that point.
 Lists are lazily-evaluated by way of "thunks" by default, and represented by
 CONS-cells, whose internal structure is currently implemented as a tuple.
 
-Many construction functions will utilize the `memoize` and `delay` procedures to
-automatically create lazy lists. `cdr` will **NOT** automatically sense if it should 
+Many construction functions will utilize the `delay` procedure to automatically 
+create memoized lazy lists. `cdr` will **NOT** automatically sense if it should 
 force evaluation, however `rest` and `next` will. It is not mandatory that `cons` 
 creates lazy structures.
 
@@ -456,13 +456,15 @@ Add the following likes to your `.vimrc` to enable syntax highlighting for *.ylx
 * Macro implementations for `and`, `or`, `cond`, etc.
 * ~~Convert list syntactic sugar from built-in to use variadic definition.~~
 * Continue implementation of HOF's: `filter`, `remove`, `take`, `drop`, etc.
-* Implementation of common predicates: `odd?`, `even?`, `zero?`, `pos?`, `neg?`
+* ~~Implementation of common predicates: `odd?`, `even?`, `zero?`, `pos?`, `neg?`~~
 * File I/O interop
 
 #### Other
-* Make it work with PyPy
+* Use [code.InteractiveConsole](https://docs.python.org/2/library/code.html#code.InteractiveConsole)
+* ~~Make it work with PyPy~~
 * ~~Unit testing~~
 * ~~Travis CI integration~~
+* ~~PEP8 conformance~~
 
 ## References
 
