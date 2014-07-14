@@ -202,7 +202,7 @@ def repl(inprompt=stdin_read, outprompt=stdout_prn):
                 outprompt(result, count)
 
             if text.strip() != '':
-                print()
+                print('')
 
         except EOFError:
             log(blue('\nBye!', style='bold'))
