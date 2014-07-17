@@ -3,6 +3,7 @@
 
 import unittest
 from yalix.exceptions import EvaluationError
+from yalix.interpreter import Symbol, List
 import yalix.utils as utils
 import yalix.globals as glob
 
@@ -65,6 +66,35 @@ class GlobalsTest(unittest.TestCase):
         with self.assertRaises(EvaluationError) as cm:
             glob.error("A message")
         self.assertEqual("A message", cm.exception.message)
+
+    def test_atom_QUESTION(self):
+        self.assertTrue(glob.atom_QUESTION(None))
+        self.assertTrue(glob.atom_QUESTION(2))
+        self.assertTrue(glob.atom_QUESTION(2.5))
+        self.assertTrue(glob.atom_QUESTION('Hello'))
+        self.assertTrue(glob.atom_QUESTION(Symbol('Hello')))
+        self.assertFalse(glob.atom_QUESTION(List(1, 2, 3)))
+
+    def test_pair_QUESTION(self):
+        self.assertFalse(glob.pair_QUESTION(None))
+        self.assertFalse(glob.pair_QUESTION(2))
+        self.assertFalse(glob.pair_QUESTION(List(1, 2, 3)))
+        self.assertTrue(glob.pair_QUESTION((1, 2)))
+
+    def test_car(self):
+        self.assertEquals(None, glob.car(None))
+        self.assertEquals(1, glob.car((1, 2)))
+        with self.assertRaises(EvaluationError) as cm:
+            glob.car(43)
+        self.assertEquals("Cannot car on non-cons cell: '43'", cm.exception.message)
+
+    def test_cdr(self):
+        self.assertEquals(None, glob.cdr(None))
+        self.assertEquals(2, glob.cdr((1, 2)))
+        with self.assertRaises(EvaluationError) as cm:
+            glob.cdr(43)
+        self.assertEquals("Cannot cdr on non-cons cell: '43'", cm.exception.message)
+
 
 if __name__ == '__main__':
     unittest.main()

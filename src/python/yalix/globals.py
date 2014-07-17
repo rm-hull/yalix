@@ -10,11 +10,12 @@ import random
 import math
 import time
 
+from yalix.py3_compat import long_t
 from yalix.utils import log_progress
 from yalix.parser import scheme_parser
 from yalix.environment import Env
 from yalix.exceptions import EvaluationError
-from yalix.interpreter import Primitive, Atom, InterOp, Lambda, List, \
+from yalix.interpreter import Atom, InterOp, Lambda, List, \
     Realize, Symbol, SpecialForm, Promise, __special_forms__
 
 
@@ -93,7 +94,7 @@ def error(msg):
 
 def atom_QUESTION(value):
     """ Checks if the supplied value is an atom """
-    return value is None or type(value) in [str, int, long, float, bool, Symbol]
+    return value is None or type(value) in [str, int, long_t, float, bool, Symbol]
 
 
 def pair_QUESTION(value):
@@ -140,9 +141,6 @@ class EvalWrapper(object):
 
     def __init__(self, env):
         self.env = env
-
-    def __getitem__(self, name):
-        return self.env[name]
 
     def __setitem__(self, name, primitive):
         self.env[name] = primitive.eval(self.env)
