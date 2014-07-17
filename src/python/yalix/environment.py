@@ -13,6 +13,7 @@ class Env(object):
         self.local_stack = local_stack if local_stack else list()
         self.global_frame = global_frame if global_frame else dict()
         self.lvar = set(name for name, _ in self.local_stack)
+        self.stack_depth = 0
 
     def extend(self, name, value):
         """

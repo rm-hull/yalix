@@ -66,6 +66,9 @@ class Atom(Primitive):
     def eval(self, env):
         return self.value
 
+    def __repr__(self):
+        return repr(self.value)
+
 
 class Closure(Primitive):
     """ A closure is not in 'source' programs; it is what functions evaluate to """
@@ -113,6 +116,7 @@ class Closure(Primitive):
                                   len(caller.params))
 
         extended_env = Closure.bind(self.env, self.func.formals, caller.params, env)
+        extended_env.stack_depth = env.stack_depth + 1
         return self.func.body.eval(extended_env)
 
 
@@ -185,7 +189,7 @@ class List(Primitive):
         if self.args:
             value = self.funexp.eval(env)
             if env['*debug*']:
-                utils.debug('{0} {1}', self.funexp.name, self.params)
+                utils.debug('{0}{1} {2}', '  ' * env.stack_depth, self.funexp.name, self.params)
             try:
                 return value.call(env, self)
             except AttributeError:
@@ -304,6 +308,7 @@ class Let(BuiltIn):
     def eval(self, env):
         value = self.expr.eval(env)
         extended_env = env.extend(self.binding_form.name, value)
+        extended_env.stack_depth = env.stack_depth + 1
         return self.body.eval(extended_env)
 
 
@@ -320,6 +325,7 @@ class Let_STAR(BuiltIn):
             value = expr.eval(extended_env)
             extended_env = extended_env.extend(symbol.name, value)
 
+        extended_env.stack_depth = env.stack_depth + 1
         return self.body.eval(extended_env)
 
 
@@ -350,6 +356,7 @@ class LetRec(BuiltIn):
         for symbol, expr in self.bindings:
             forward_refs[symbol].reference = expr.eval(extended_env)
 
+        extended_env.stack_depth = env.stack_depth + 1
         return self.body.eval(extended_env)
 
 
@@ -509,7 +516,7 @@ class Define(BuiltIn):
         self.set_docstring_on(obj)
         self.set_source_on(obj)
 
-        env[repr(symbol)] = obj
+        env[symbol.name] = obj
         return symbol
 
 
@@ -592,7 +599,7 @@ class Repr(Primitive):
         elif isinstance(self.value, Primitive):
             return self.value.eval(env)
         else:
-            return str(self.value)
+            return repr(self.value)
 
 
 class Eval(BuiltIn):
