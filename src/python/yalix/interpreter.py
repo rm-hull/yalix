@@ -22,7 +22,7 @@ class Primitive(object):
     def eval(self, env):
         raise NotImplementedError()
 
-    def call(self, env, caller):
+    def apply(self, env, caller):
         raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', self)
 
     def quoted_form(self, env):
@@ -52,7 +52,7 @@ class SpecialForm(Primitive):
     def eval(self, env):
         return self
 
-    def call(self, env, caller):
+    def apply(self, env, caller):
         """ Don't evaluate params for special forms """
         return self.impl(*caller.params).eval(env)
 
@@ -100,7 +100,7 @@ class Closure(Primitive):
                 env_to_extend = env_to_extend.extend(bind_variable.name, value)
         return env_to_extend
 
-    def call(self, env, caller):
+    def apply(self, env, caller):
         if not self.func.has_sufficient_arity(caller.params):
             raise EvaluationError(self,
                                   'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
@@ -134,9 +134,9 @@ class ForwardRef(Primitive):
     def eval(self, env):
         return self.reference
 
-    def call(self, env, caller):
+    def apply(self, env, caller):
         """ Don't evaluate params for special forms """
-        return self.reference.call(env, caller)
+        return self.reference.apply(env, caller)
 
 
 # http://code.activestate.com/recipes/474088/
@@ -191,7 +191,7 @@ class List(Primitive):
             if env['*debug*']:
                 utils.debug('{0}{1} {2}', '  ' * env.stack_depth, self.funexp.name, self.params)
             try:
-                return value.call(env, self)
+                return value.apply(env, self)
             except AttributeError:
                 raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', value)
 
@@ -410,9 +410,9 @@ class Promise(Closure):
     def eval(self, env):
         return self
 
-    def call(self, env, caller):
+    def apply(self, env, caller):
         if not self.realized:
-            self.result = self.closure.call(env, caller)
+            self.result = self.closure.apply(env, caller)
             self.realized = True
 
         return self.result

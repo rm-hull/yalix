@@ -112,11 +112,11 @@ class BuiltinsTest(unittest.TestCase):
         values = List(Symbol('list*'), Atom(1), Atom(2), Atom(3)).eval(env)
         caller = Caller('n/a')
         self.assertEqual(1, values[0])
-        values = values[1].call(env, caller)
+        values = values[1].apply(env, caller)
         self.assertEqual(2, values[0])
-        values = values[1].call(env, caller)
+        values = values[1].apply(env, caller)
         self.assertEqual(3, values[0])
-        values = values[1].call(env, caller)
+        values = values[1].apply(env, caller)
         self.assertEqual(None, values)
 
     def test_lambda_only_one_variadic_arg(self):
@@ -153,7 +153,7 @@ class BuiltinsTest(unittest.TestCase):
         self.assertAlmostEqual(pi, Symbol('π').eval(env))
         self.assertAlmostEqual(rho, Symbol('ϕ').eval(env))
 
-    def test_call(self):
+    def test_apply(self):
         env = make_env()
         self.assertEqual(154, List(Symbol('+'), Atom(99), Atom(55)).eval(env))
 
@@ -240,7 +240,7 @@ class BuiltinsTest(unittest.TestCase):
         env = make_env()
         value = Delay(Atom(5)).eval(env)
         self.assertIsInstance(value, Closure)
-        self.assertEqual(5, value.call(env, Caller('n/a')))
+        self.assertEqual(5, value.apply(env, Caller('n/a')))
 
     def test_function_defn(self):
         # Equivalent to:
@@ -328,12 +328,12 @@ class BuiltinsTest(unittest.TestCase):
         sf = SpecialForm('quote')
         self.assertEquals(sf, sf.eval(env))
 
-    def test_special_form_call(self):
+    def test_special_form_apply(self):
         env = make_env()
         symbol = Symbol('test')
         caller = Caller("unused", symbol)
         sf = SpecialForm('quote')
-        value = sf.call(env, caller)
+        value = sf.apply(env, caller)
         self.assertEquals(value, symbol)
 
     def test_realize_simple_list(self):
