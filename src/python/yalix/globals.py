@@ -19,16 +19,20 @@ from yalix.interpreter import Atom, InterOp, Lambda, List, \
     Realize, Symbol, SpecialForm, Promise, __special_forms__
 
 
-__core_libraries__ = ['core', 'hof', 'num', 'macros', 'repr', 'test']
+__core_libraries__ = ['core', 'hof', 'num', 'macros', 'repr']
 
 
-def create_initial_env():
+def create_initial_env(additional_libs=None):
+
+    if additional_libs is None:
+        additional_libs = []
+
     env = Env()
     with log_progress("Creating initial environment"):
         bootstrap_special_forms(env)
         bootstrap_python_functions(env)
 
-    for lib in __core_libraries__:
+    for lib in __core_libraries__ + additional_libs:
         with log_progress("Loading library: " + lib):
             bootstrap_lisp_functions(env, "lib/{0}.ylx".format(lib))
 

@@ -5,7 +5,7 @@
 
 (define (assert-equal expr1 expr2 message)
   (if (not= expr1 expr2)   ; TODO: convert to if-not macro
-    (error (str "Assertion failed: " message))))
+    (error (str "Assertion failed: "  message))))
 
 
 ;; TESTS
@@ -29,3 +29,8 @@
 ;  (eval x)
 ;  15
 ;  "Eval check")
+;
+
+(define x 5)
+
+(define lst '(a b c))

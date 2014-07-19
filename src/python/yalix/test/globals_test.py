@@ -58,6 +58,11 @@ class GlobalsTest(unittest.TestCase):
         self.assertTrue(len(env.global_frame) > 0)
         self.assertTrue('Creating initial environment' in out[0])
 
+    def test_yalix_tests(self):
+        with utils.capture() as out:
+            env = glob.create_initial_env(['test'])
+        self.assertTrue('FAILED' not in out[0])
+
     def test_format(self):
         self.assertEqual("format_no_args", glob.format_("format_no_args"))
         self.assertEqual("format_arg1_arg2", glob.format_("format_{0}_{1}", ["arg1", "arg2"]))
