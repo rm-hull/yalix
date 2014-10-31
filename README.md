@@ -472,6 +472,7 @@ Add the following likes to your `.vimrc` to enable syntax highlighting for *.ylx
 * http://groups.csail.mit.edu/mac/classes/6.001/abelson-sussman-lectures/
 * http://courses.cs.washington.edu/courses/cse341/11sp/
 * http://racket-lang.org/
+* http://www.buildyourownlisp.com/
 
 ## (Y F) = (F (Y F))
 
