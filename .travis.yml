@@ -7,9 +7,9 @@ python:
   - 3.4
 install:
     #  - pip install -e . --use-mirrors
-  - pip install -r src/python/requirements.txt
+  - pip install -r python/requirements.txt
   - pip install coverage python-coveralls pep8
 script:
-  - nosetests --with-coverage --cover-package yalix -w src/python
+  - nosetests --with-coverage --cover-package yalix -w python/src
 after_success:
   - coveralls

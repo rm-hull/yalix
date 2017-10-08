@@ -30,7 +30,7 @@ def create_initial_env():
 
     for lib in __core_libraries__:
         with log_progress("Loading library: " + lib):
-            bootstrap_lisp_functions(env, "lib/{0}.ylx".format(lib))
+            bootstrap_lisp_functions(env, "../../core/{0}.ylx".format(lib))
 
     return env
 
