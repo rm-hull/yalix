@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from yalix.source_view import *
+from yalix.source_view import source, source_view
 
 
 class TestPrimitive(object):
@@ -44,7 +44,8 @@ class SourceViewTests(unittest.TestCase):
 """
         prim = TestPrimitive(src, 27)
         self.assertEqual(src, source(prim))
-        self.assertEqual('(define x "Something\\\" here :-)")', source_view(prim))
+        self.assertEqual('(define x "Something\\\" here :-)")',
+                         source_view(prim))
 
     def test_find_outer_form_bounds__location_not_in_parens(self):
         src = """

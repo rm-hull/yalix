@@ -3,8 +3,9 @@
 
 """ Takes a stream of characters and produces an Abstract Syntax Tree"""
 
-from pyparsing import *
-from .interpreter import *
+from pyparsing import ParserElement, Suppress, Regex, Optional, Keyword, Combine, WordStart, Word, \
+    alphas, alphanums, dblQuotedString, Forward, ZeroOrMore
+from .interpreter import Atom, Symbol, Quote, SyntaxQuote, Unquote, UnquoteSplice, List
 
 ParserElement.enablePackrat()
 

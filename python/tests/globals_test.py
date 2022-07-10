@@ -60,7 +60,8 @@ class GlobalsTest(unittest.TestCase):
 
     def test_format(self):
         self.assertEqual("format_no_args", glob.format_("format_no_args"))
-        self.assertEqual("format_arg1_arg2", glob.format_("format_{0}_{1}", ["arg1", "arg2"]))
+        self.assertEqual("format_arg1_arg2", glob.format_(
+            "format_{0}_{1}", ["arg1", "arg2"]))
 
     def test_error(self):
         with self.assertRaises(EvaluationError) as cm:
@@ -86,14 +87,16 @@ class GlobalsTest(unittest.TestCase):
         self.assertEquals(1, glob.car((1, 2)))
         with self.assertRaises(EvaluationError) as cm:
             glob.car(43)
-        self.assertEquals("Cannot car on non-cons cell: '43'", cm.exception.message)
+        self.assertEquals("Cannot car on non-cons cell: '43'",
+                          cm.exception.message)
 
     def test_cdr(self):
         self.assertEquals(None, glob.cdr(None))
         self.assertEquals(2, glob.cdr((1, 2)))
         with self.assertRaises(EvaluationError) as cm:
             glob.cdr(43)
-        self.assertEquals("Cannot cdr on non-cons cell: '43'", cm.exception.message)
+        self.assertEquals("Cannot cdr on non-cons cell: '43'",
+                          cm.exception.message)
 
 
 if __name__ == '__main__':

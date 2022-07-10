@@ -29,7 +29,8 @@ class UtilsTest(unittest.TestCase):
         if output != sample_code:
             # Pygments in action
             m = hashlib.sha224(output.encode('utf-8'))
-            self.assertEquals('a1d31477532d54019ac8ef9289a450faaf6127ad3e5246aef3b9353d', m.hexdigest())
+            self.assertEquals(
+                'a1d31477532d54019ac8ef9289a450faaf6127ad3e5246aef3b9353d', m.hexdigest())
 
     def test_balance_empty(self):
         self.assertEqual(0, utils.balance(''))
@@ -48,6 +49,7 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(0, utils.balance('(sfs (sfsfs) (sdf (sfs)))'))
         self.assertEqual(0, utils.balance('(sfs (sfsfs (sdf (sfs))))'))
         self.assertEqual(0, utils.balance('(((((sfs) sfsfs) sdf) sfs))'))
+
 
 if __name__ == '__main__':
     unittest.main()

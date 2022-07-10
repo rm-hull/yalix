@@ -16,7 +16,7 @@ faint = identity
 bold = identity
 
 try:
-    from colors import red, green, blue, faint, bold
+    from colors import red, green, faint, bold
 except ImportError:
     pass
 

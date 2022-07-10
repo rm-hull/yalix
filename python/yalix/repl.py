@@ -170,7 +170,7 @@ def left_margin(text):
     return text.replace('\n', '\n\r        \r')
 
 
-def repl(inprompt=stdin_read, outprompt=stdout_prn):
+def repl(inprompt=stdin_read, outprompt=stdout_prn):  # noqa: C901
 
     try:
         env = create_initial_env()
@@ -216,6 +216,3 @@ def repl(inprompt=stdin_read, outprompt=stdout_prn):
             log("{0}: {1}", red(type(ex).__name__, style='bold'), ex)
 
         count += 1
-
-
-

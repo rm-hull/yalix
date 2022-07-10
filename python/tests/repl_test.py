@@ -59,9 +59,11 @@ class ReplTests(unittest.TestCase):
             repl.repl(inprompt=commands, outprompt=collector)
 
         self.assertEqual('10', results[1])
-        self.assertEqual('(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 ...)', results[2])
+        self.assertEqual(
+            '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 ...)', results[2])
         self.assertTrue('KeyboardInterrupt' in out[0])
         self.assertTrue('Bye!' in out[0])
+
 
 if __name__ == '__main__':
     unittest.main()

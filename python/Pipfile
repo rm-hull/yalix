@@ -4,12 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pyparsing = ">=2.0.2"
-ansicolors = ">=1.0.2"
-pygments = ">=1.6"
+pyparsing = ">=3.0.9"
+ansicolors = ">=1.1.8"
+pygments = ">=2.12.0"
 
 [dev-packages]
 flake8 = "*"
+autopep8 = "*"
 
 [requires]
 python_version = "3.9"

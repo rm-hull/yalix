@@ -75,7 +75,7 @@ class LocalStackTests(unittest.TestCase):
         env = env.extend('b', 55)
         env = env.extend('c', 12)
 
-        self.assertEqual(3,  env['a'])
+        self.assertEqual(3, env['a'])
         self.assertEqual(55, env['b'])
         self.assertEqual(12, env['c'])
 
@@ -97,7 +97,8 @@ class LocalStackTests(unittest.TestCase):
         self.assertEqual(12, env['a'])
         self.assertEqual(16, extended_env['a'])
 
-        # Now update global 'a' in original env - check it doesnt bleed into extended
+        # Now update global 'a' in original env - check it
+        # doesnt bleed into extended
         env['a'] = 50
         self.assertEqual(50, env['a'])
         self.assertEqual(16, extended_env['a'])
@@ -130,6 +131,7 @@ class CounterTests(unittest.TestCase):
         last_counter = env1.next_id()
         self.assertEqual(next_counter, start_counter + 1)
         self.assertEqual(last_counter, start_counter + 2)
+
 
 if __name__ == '__main__':
     unittest.main()
