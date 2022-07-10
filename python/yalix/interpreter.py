@@ -614,6 +614,8 @@ class Repr(Primitive):
             return ret
         elif isinstance(self.value, Primitive):
             return self.value.eval(env)
+        elif isinstance(self.value, str):
+            return self.value
         else:
             return repr(self.value)
 

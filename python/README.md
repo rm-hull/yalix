@@ -43,7 +43,7 @@ $ git clone https://github.com/rm-hull/yalix.git
 $ cd yalix/python
 $ pipenv install -d
 $ pipenv shell
-$ python yalix/repl.py
+$ python main.py
 ```
 and the REPL should hopefully present:
 

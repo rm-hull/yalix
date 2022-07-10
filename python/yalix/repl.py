@@ -218,6 +218,4 @@ def repl(inprompt=stdin_read, outprompt=stdout_prn):
         count += 1
 
 
-if __name__ == '__main__':
-    repl()
-    sys.exit()
+
