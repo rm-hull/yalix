@@ -41,6 +41,7 @@ Go to a command line, ensure you have a working python installation, and
 ```console
 $ git clone https://github.com/rm-hull/yalix.git
 $ cd yalix/python
+$ pipenv install
 $ pipenv install -d
 $ pipenv shell
 $ python main.py

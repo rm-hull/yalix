@@ -9,7 +9,7 @@ ansicolors = ">=1.0.2"
 pygments = ">=1.6"
 
 [dev-packages]
-pep8 = "*"
+flake8 = "*"
 
 [requires]
 python_version = "3.9"
