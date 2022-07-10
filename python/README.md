@@ -38,33 +38,33 @@ developer under feature branches.
 
 Go to a command line, ensure you have a working python installation, and
 
-    $ git clone https://github.com/rm-hull/yalix.git
-    $ cd yalix/python/src
-    $ export PYTHONPATH=.:$PYTHONPATH
-    $ python yalix/repl.py
-
+```console
+$ git clone https://github.com/rm-hull/yalix.git
+$ cd yalix/python
+$ pipenv install -d
+$ pipenv shell
+$ python yalix/repl.py
+```
 and the REPL should hopefully present:
 
     Creating initial environment ... DONE
+    Loading library: core ... DONE
+    Loading library: hof ... DONE
+    Loading library: num ... DONE
+    Loading library: macros ... DONE
+    Loading library: repr ... DONE
+    Loading library: test ... DONE
     Reading history ... DONE
-
-    Yalix [0.0.1] on Python 2.7.6 (default, Mar 22 2014, 22:59:56)
-    [GCC 4.8.2] linux2
+    Yalix [0.0.1] on Python 3.9.13 (main, May 24 2022, 21:13:51) 
+    [Clang 13.1.6 (clang-1316.0.21.2)] darwin
     Type "help", "copyright", "credits" or "license" for more information.
-    In [1]:
+    In [1]: 
 
 To exit from the REPL, use _CTRL_-D, to abort the current input, use _CTRL_-C.
 If installed, GNU readline is used to allow history and simple editing.
 keyword completion is avaible by pressing _TAB_.
 
-If [ansicolors](https://pypi.python.org/pypi/ansicolors/1.0.2) is installed,
-then the Yalix REPL will make use of color if supported by the terminal:
-
 ![screenshot](https://raw.github.com/rm-hull/yalix/master/doc/python-screenshot.png)
-
-Install ansicolors with:
-
-    $ sudo pip install ansicolors
 
 ### Language Features
 

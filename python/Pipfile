@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pyparsing = ">=2.0.2"
+ansicolors = ">=1.0.2"
+pygments = ">=1.6"
+
+[dev-packages]
+pep8 = "*"
+
+[requires]
+python_version = "3.9"

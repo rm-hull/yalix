@@ -4,7 +4,7 @@
 """ Takes a stream of characters and produces an Abstract Syntax Tree"""
 
 from pyparsing import *
-from yalix.interpreter import *
+from .interpreter import *
 
 ParserElement.enablePackrat()
 
@@ -44,7 +44,8 @@ def scheme_parser(debug=False):
     hex_ = Regex(r"0x[0-9a-fA-F]+")
     real = Regex(r"[+-]?\d+\.\d*([eE][+-]?\d+)?")
     boolean = (Keyword("#t") | Keyword("#f"))
-    symbol = Combine(WordStart(alphas + punc) + Word(alphanums + punc) + Optional(Word('#'))) | Keyword('λ')
+    symbol = Combine(WordStart(alphas + punc) + Word(alphanums +
+                     punc) + Optional(Word('#'))) | Keyword('λ')
 
     atom = real | hex_ | integer | boolean | dblQuotedString | symbol
 

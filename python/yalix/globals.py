@@ -10,12 +10,11 @@ import random
 import math
 import time
 
-from yalix.py3_compat import long_t
-from yalix.utils import log_progress
-from yalix.parser import scheme_parser
-from yalix.environment import Env
-from yalix.exceptions import EvaluationError
-from yalix.interpreter import Atom, InterOp, Lambda, List, \
+from .utils import log_progress
+from .parser import scheme_parser
+from .environment import Env
+from .exceptions import EvaluationError
+from .interpreter import Atom, InterOp, Lambda, List, \
     Realize, Symbol, SpecialForm, Promise, __special_forms__
 
 
@@ -30,7 +29,7 @@ def create_initial_env():
 
     for lib in __core_libraries__:
         with log_progress("Loading library: " + lib):
-            bootstrap_lisp_functions(env, "../../core/{0}.ylx".format(lib))
+            bootstrap_lisp_functions(env, "../core/{0}.ylx".format(lib))
 
     return env
 
@@ -94,7 +93,7 @@ def error(msg):
 
 def atom_QUESTION(value):
     """ Checks if the supplied value is an atom """
-    return value is None or type(value) in [str, int, long_t, float, bool, Symbol]
+    return value is None or type(value) in [str, int, float, bool, Symbol]
 
 
 def pair_QUESTION(value):
@@ -119,7 +118,8 @@ def car(value):
     elif isinstance(value, tuple):
         return value[0]
     else:
-        raise EvaluationError(value, "Cannot car on non-cons cell: '{0}'", value)
+        raise EvaluationError(
+            value, "Cannot car on non-cons cell: '{0}'", value)
 
 
 def cdr(value):
@@ -128,7 +128,8 @@ def cdr(value):
     elif isinstance(value, tuple):
         return value[1]
     else:
-        raise EvaluationError(value, "Cannot cdr on non-cons cell: '{0}'", value)
+        raise EvaluationError(
+            value, "Cannot cdr on non-cons cell: '{0}'", value)
 
 
 def bootstrap_lisp_functions(env, from_file):

@@ -29,7 +29,7 @@ class UtilsTest(unittest.TestCase):
         if output != sample_code:
             # Pygments in action
             m = hashlib.sha224(output.encode('utf-8'))
-            self.assertEquals('505d8372212855be0fc387e2367b1a82ff322e2dcdf07a7a83ebc8f6', m.hexdigest())
+            self.assertEquals('a1d31477532d54019ac8ef9289a450faaf6127ad3e5246aef3b9353d', m.hexdigest())
 
     def test_balance_empty(self):
         self.assertEqual(0, utils.balance(''))

@@ -8,6 +8,7 @@ import contextlib
 def identity(x, **kwargs):
     return x
 
+
 red = identity
 green = identity
 blue = identity
@@ -38,10 +39,7 @@ def highlight_syntax(code, outfile=None):
 @contextlib.contextmanager
 def capture():
     import sys
-    try:
-        from cStringIO import StringIO
-    except ImportError:
-        from io import StringIO
+    from io import StringIO
 
     oldout, olderr = sys.stdout, sys.stderr
     try:

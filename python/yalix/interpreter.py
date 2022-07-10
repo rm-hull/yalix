@@ -6,10 +6,10 @@ Takes an AST (abstract syntax tree) and an environment in order to
 evaluate the AST under the environment
 """
 
-import yalix.utils as utils
+from . import utils
 from abc import ABCMeta, abstractmethod
-from yalix.environment import Env
-from yalix.exceptions import EvaluationError
+from .environment import Env
+from .exceptions import EvaluationError
 
 
 class Primitive(object):
@@ -31,6 +31,7 @@ class Primitive(object):
 
 class InterOp(Primitive):
     """ Helper class for wrapping Python functions """
+
     def __init__(self, func, *args):
         self.func = func
         self.args = args
@@ -104,18 +105,21 @@ class Closure(Primitive):
         if not self.func.has_sufficient_arity(caller.params):
             raise EvaluationError(self,
                                   'Call to \'{0}\' applied with insufficient arity: {1} args expected, {2} supplied',
-                                  caller.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  caller.funexp.name,
                                   self.func.arity(),
                                   len(caller.params))
 
         if not self.func.is_variadic() and len(self.func.formals) != len(caller.params):
             raise EvaluationError(self,
                                   'Call to \'{0}\' applied with excessive arity: {1} args expected, {2} supplied',
-                                  caller.funexp.name,  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  # FIXME: probably ought rely on __repr__ of symbol here....
+                                  caller.funexp.name,
                                   self.func.arity(),
                                   len(caller.params))
 
-        extended_env = Closure.bind(self.env, self.func.formals, caller.params, env)
+        extended_env = Closure.bind(
+            self.env, self.func.formals, caller.params, env)
         extended_env.stack_depth = env.stack_depth + 1
         return self.func.body.eval(extended_env)
 
@@ -189,11 +193,13 @@ class List(Primitive):
         if self.args:
             value = self.funexp.eval(env)
             if env['*debug*']:
-                utils.debug('{0}{1} {2}', '  ' * env.stack_depth, self.funexp.name, self.params)
+                utils.debug('{0}{1} {2}', '  ' * env.stack_depth,
+                            self.funexp.name, self.params)
             try:
                 return value.apply(env, self)
             except AttributeError:
-                raise EvaluationError(self, 'Cannot invoke with: \'{0}\'', value)
+                raise EvaluationError(
+                    self, 'Cannot invoke with: \'{0}\'', value)
 
 
 class BuiltIn(Primitive):
@@ -346,7 +352,8 @@ class LetRec(BuiltIn):
 
             if symbol in forward_refs:
                 # bindings are NOT shadowed in letrec
-                raise EvaluationError(self, "'{0}' is not distinct in letrec", symbol)
+                raise EvaluationError(
+                    self, "'{0}' is not distinct in letrec", symbol)
 
             ref = ForwardRef()
             forward_refs[symbol] = ref
@@ -389,13 +396,16 @@ class Lambda(BuiltIn):
     def eval(self, env):
         if self.is_variadic():
             if sum(1 for f in self.formals if f == Lambda.VARIADIC_MARKER) > 1:
-                raise EvaluationError(self, 'Invalid variadic argument spec: {0}', self.formals)
+                raise EvaluationError(
+                    self, 'Invalid variadic argument spec: {0}', self.formals)
 
             if self.formals.index(Lambda.VARIADIC_MARKER) != len(self.formals) - 2:
-                raise EvaluationError(self, 'Only one variadic argument is allowed: {0}', self.formals)
+                raise EvaluationError(
+                    self, 'Only one variadic argument is allowed: {0}', self.formals)
 
         if len(self.formals) != len(set(self.formals)):
-            raise EvaluationError(self, 'Formals are not distinct: {0}', self.formals)
+            raise EvaluationError(
+                self, 'Formals are not distinct: {0}', self.formals)
 
         return Closure(env, self)
 
@@ -485,11 +495,13 @@ class Define(BuiltIn):
     def set_docstring_on(self, obj):
         params = ''
         if isinstance(obj, Closure) and obj.func.formals:
-            params = ' ' + str(obj.func.formals).replace(',', '').replace('\'', '')
+            params = ' ' + str(obj.func.formals).replace(',',
+                                                         '').replace('\'', '')
 
         if self.docstring():
             tidied = [repr(self.name()) + params] + \
-                     ['  ' + x.replace(';^', '  ').strip() for x in self.docstring()]
+                     ['  ' + x.replace(';^', '  ').strip()
+                      for x in self.docstring()]
             setattr(obj, '__docstring__', '\n'.join(tidied))
 
     def set_source_on(self, obj):
@@ -507,7 +519,8 @@ class Define(BuiltIn):
             body = self.body()
             body_size = len(body)
             if body_size > 1:
-                raise EvaluationError(self, "Too many arguments supplied to define")
+                raise EvaluationError(
+                    self, "Too many arguments supplied to define")
             elif body_size == 0:
                 obj = Unbound()
             else:
@@ -542,6 +555,7 @@ class Realize(Primitive):
     and returns as a nested array of arrays. Should not be used with infinite
     streams.
     """
+
     def __init__(self, value):
         self.value = value
 
@@ -552,7 +566,8 @@ class Realize(Primitive):
             while current_head is not None:
                 value = List(Symbol('first'), Atom(current_head)).eval(env)
                 arr.append(Realize(value).eval(env))
-                current_head = List(Symbol('rest'), Atom(current_head)).eval(env)
+                current_head = List(
+                    Symbol('rest'), Atom(current_head)).eval(env)
             return arr
         elif isinstance(self.value, Primitive):
             return self.value.eval(env)
@@ -585,7 +600,8 @@ class Repr(Primitive):
             while current_head and (max_iterations is None or max_iterations > 0):
                 value = List(Symbol('first'), Atom(current_head)).eval(env)
                 ret += Repr(value).eval(env)
-                current_head = List(Symbol('rest'), Atom(current_head)).eval(env)
+                current_head = List(
+                    Symbol('rest'), Atom(current_head)).eval(env)
                 if max_iterations is not None:
                     max_iterations -= 1
                 if current_head is not None:

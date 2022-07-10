@@ -7,14 +7,14 @@ import sys
 from datetime import datetime
 
 from pyparsing import ParseException
-from yalix.source_view import source_view
-from yalix.exceptions import EvaluationError
-from yalix.completer import Completer
-from yalix.interpreter import Repr
-from yalix.parser import scheme_parser
-from yalix.utils import log_progress, log, balance
-from yalix.utils import red, green, blue, bold, highlight_syntax
-from yalix.globals import create_initial_env
+from . import source_view
+from .exceptions import EvaluationError
+from .completer import Completer
+from .interpreter import Repr
+from .parser import scheme_parser
+from .utils import log_progress, log, balance
+from .utils import red, green, blue, bold, highlight_syntax
+from .globals import create_initial_env
 
 
 def version():
@@ -113,13 +113,6 @@ def init_readline(env):
             atexit.register(readline.write_history_file, histfile)
 
 
-def input2or3(prompt):
-    try:
-        return raw_input(prompt)
-    except NameError:
-        return input(prompt)
-
-
 def input_with_prefill(prompt, text):
     try:
         import readline
@@ -128,16 +121,19 @@ def input_with_prefill(prompt, text):
             readline.insert_text(text)
             readline.redisplay()
         readline.set_pre_input_hook(hook)
-        return input2or3(prompt)
+        return input(prompt)
     except ImportError:
-        return input2or3(prompt)
+        return input(prompt)
     finally:
         readline.set_pre_input_hook()
 
 
 def stdin_read(count):
-    primary_prompt = '\001' + green('\002In [\001') + green('\002{0}\001', style='bold') + green('\002]: \001') + '\002'
-    secondary_prompt = ' ' * len(str(count)) + '\001' + green('\002  ...: \001') + '\002'
+    primary_prompt = '\001' + \
+        green('\002In [\001') + green('\002{0}\001',
+                                      style='bold') + green('\002]: \001') + '\002'
+    secondary_prompt = ' ' * len(str(count)) + \
+        '\001' + green('\002  ...: \001') + '\002'
     prompt = primary_prompt.format(count)
 
     prefill = ''
@@ -164,7 +160,8 @@ def stdout_prn(result, count):
 
 def ready():
     log()
-    log(bold('Yalix [{0}]') + ' on Python {1} {2}', version(), sys.version, sys.platform)
+    log(bold('Yalix [{0}]') + ' on Python {1} {2}',
+        version(), sys.version, sys.platform)
     log('Type "help", "copyright", "credits" or "license" for more information.')
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import yalix.source_view as source_view
+from . import source_view
 
 
 class EvaluationError(Exception):
