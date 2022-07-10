@@ -1,5 +1,4 @@
-# Yalix [![Build Status](https://secure.travis-ci.org/rm-hull/yalix.svg)](http://travis-ci.org/rm-hull/yalix) [![Coverage Status](https://img.shields.io/coveralls/rm-hull/yalix.svg)](https://coveralls.io/r/rm-hull/yalix)
-
+# Yalix
 
 > One night, around 3am, I was watching an infomercial for a product
 > claiming to restore men's hair. As I watched the story of one
