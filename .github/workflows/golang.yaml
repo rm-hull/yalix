@@ -1,0 +1,39 @@
+name: Golang test
+
+on:
+  push:
+    paths:
+      - "golang/**"
+      - ".github/workflows/golang.yaml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ["1.18"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Golang ${{ matrix.go }}
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: golang
+      - name: Test
+        working-directory: golang
+        run: go test -v -race -covermode=atomic -coverprofile=coverage.out ./cmd/...
+      - name: Convert coverage to lcov
+        uses: jandelgado/gcov2lcov-action@v1
+        with:
+          working-directory: golang
+      - name: Coveralls
+        uses: coverallsapp/github-action@v1.1.2
+        with:
+          github-token: ${{ secrets.github_token }}
+          path-to-lcov: golang/coverage.lcov
+          parallel: true
+          flag-name: golang-${{ matrix.go }}
