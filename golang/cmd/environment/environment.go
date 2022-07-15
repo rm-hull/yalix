@@ -60,3 +60,15 @@ func (env Env[T]) Get(name string) (T, error) {
 
 	return value, nil
 }
+
+// Traverses the local stack and sets the first instance of name with value
+func (env Env[T]) SetLocal(name string, value T) error {
+	last := len(env.localStack) - 1
+	for idx := range env.localStack {
+		if env.localStack[last-idx].name == name {
+			env.localStack[last-idx].value = value
+			return nil
+		}
+	}
+	return errors.Errorf("Assignment disallowed: '%s' is unbound in local environment", name)
+}

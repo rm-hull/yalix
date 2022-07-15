@@ -73,4 +73,60 @@ func Test_LocalStack(t *testing.T) {
 
 		require.Equal(t, 3, len(env.localStack))
 	})
+
+	t.Run("Non-existent SetLocal", func(t *testing.T) {
+		env := MakeEnv[any]()
+
+		result, err := env.Get("a")
+		require.Nil(t, result)
+		require.EqualError(t, err, "'a' is unbound in environment")
+
+		err = env.SetLocal("a", 5)
+		require.EqualError(t, err, "Assignment disallowed: 'a' is unbound in local environment")
+	})
+
+	t.Run("SetLocal doesnt bleed", func(t *testing.T) {
+		env := MakeEnv[any]()
+		env.SetGlobal("a", 12) // Global frame
+
+		extendedEnv := env.Extend("a", 16) // Local shadowing
+
+		result, err := env.Get("a")
+		require.Equal(t, 12, result)
+		require.Nil(t, err)
+
+		result, err = extendedEnv.Get("a")
+		require.Equal(t, 16, result)
+		require.Nil(t, err)
+
+		// Now update global 'a' in original env - check it doesnt bleed into extended
+		env.SetGlobal("a", 50)
+
+		result, err = env.Get("a")
+		require.Equal(t, 50, result)
+		require.Nil(t, err)
+
+		result, err = extendedEnv.Get("a")
+		require.Equal(t, 16, result)
+		require.Nil(t, err)
+
+		// Update 'a' in extended env, check no bleeding again
+		err = extendedEnv.SetLocal("a", 46)
+		require.Nil(t, err)
+
+		result, err = env.Get("a")
+		require.Equal(t, 50, result)
+		require.Nil(t, err)
+
+		result, err = extendedEnv.Get("a")
+		require.Equal(t, 46, result)
+		require.Nil(t, err)
+	})
 }
+
+// def test_contains(self):
+// env = Env()
+// self.assertFalse('a' in env)
+// extended_env = env.extend('a', 16)
+// self.assertFalse('a' in env)
+// self.assertTrue('a' in extended_env)
