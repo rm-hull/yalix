@@ -1,7 +1,6 @@
 package environment
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -72,7 +71,6 @@ func Test_LocalStack(t *testing.T) {
 		require.Equal(t, 12, result)
 		require.Nil(t, err)
 
-		fmt.Printf("Localstack: %+v\n", env.localStack)
 		require.Equal(t, 3, len(env.localStack))
 	})
 }
