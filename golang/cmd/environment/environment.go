@@ -70,5 +70,19 @@ func (env Env[T]) SetLocal(name string, value T) error {
 			return nil
 		}
 	}
-	return errors.Errorf("Assignment disallowed: '%s' is unbound in local environment", name)
+	return errors.Errorf("assignment disallowed: '%s' is unbound in local environment", name)
+}
+
+func (env Env[T]) Includes(name string) bool {
+	if _, ok := env.globalFrame[name]; ok {
+		return true
+	}
+
+	for _, stackEntry := range env.localStack {
+		if stackEntry.name == name {
+			return true
+		}
+	}
+
+	return false
 }

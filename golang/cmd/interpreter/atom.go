@@ -1,16 +1,27 @@
 package interpreter
 
-import "yalix/cmd/environment"
+import (
+	"errors"
+	"yalix/cmd/environment"
+)
 
-type atom[T any] struct {
-	Primitive[T]
-	value T
+type atom struct {
+	Primitive[any]
+	value any
 }
 
-func Atom[T any](value T) atom[T] {
-	return atom[T]{value: value}
+func Atom[T any](value T) atom {
+	return atom{value: value}
 }
 
-func (a atom[T]) Eval(env environment.Env[T]) (T, error) {
+func (a atom) Eval(env environment.Env[any]) (any, error) {
 	return a.value, nil
+}
+
+func (a atom) Apply(env environment.Env[any], caller Caller[any]) (any, error) {
+	return nil, errors.New("cannot invoke with: 'Quote'")
+}
+
+func (a atom) QuotedForm(env environment.Env[any]) (any, error) {
+	return a.Eval(env)
 }

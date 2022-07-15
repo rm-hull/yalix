@@ -10,8 +10,8 @@ import (
 
 func Test_Atom(t *testing.T) {
 	env := environment.MakeEnv[any]()
-	atom := Atom[any](56)
+	atom := Atom(56)
 	result, err := atom.Eval(env)
-	require.Equal(t, 56, result)
 	require.Nil(t, err)
+	require.Equal(t, 56, result)
 }
