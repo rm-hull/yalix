@@ -1,6 +1,8 @@
 package environment
 
 import (
+	"sync/atomic"
+
 	"github.com/pkg/errors"
 )
 
@@ -92,4 +94,10 @@ func (env Env[T]) Includes(name string) bool {
 
 func (env Env[T]) StackDepth() int {
 	return env.stackDepth
+}
+
+var id uint32
+
+func NextId() uint {
+	return uint(atomic.AddUint32(&id, 1))
 }

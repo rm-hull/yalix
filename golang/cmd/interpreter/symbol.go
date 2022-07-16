@@ -41,3 +41,7 @@ func (s symbol) QuotedForm(env environment.Env[any]) (any, error) {
 func Symbol(name string) symbol {
 	return symbol{name: name}
 }
+
+func GenSym() symbol {
+	return Symbol(fmt.Sprintf("G__%d", environment.NextId()))
+}
