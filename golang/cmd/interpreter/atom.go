@@ -19,7 +19,7 @@ func (a atom) Eval(env environment.Env[any]) (any, error) {
 }
 
 func (a atom) Apply(env environment.Env[any], caller Caller[any]) (any, error) {
-	return nil, errors.New("cannot invoke with: 'Quote'")
+	return nil, errors.New("cannot invoke with: 'Atom'")
 }
 
 func (a atom) QuotedForm(env environment.Env[any]) (any, error) {
