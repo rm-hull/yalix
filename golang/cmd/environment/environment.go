@@ -12,12 +12,14 @@ type stackEntry[T any] struct {
 type Env[T any] struct {
 	localStack  []stackEntry[T]
 	globalFrame map[string]T
+	stackDepth  int
 }
 
 func MakeEnv[T any]() Env[T] {
 	return Env[T]{
 		localStack:  make([]stackEntry[T], 0),
 		globalFrame: make(map[string]T),
+		stackDepth:  0,
 	}
 }
 
@@ -36,6 +38,7 @@ func (env Env[T]) Extend(name string, value T) Env[T] {
 	return Env[T]{
 		localStack:  newStack,
 		globalFrame: env.globalFrame,
+		stackDepth:  env.stackDepth,
 	}
 }
 
@@ -85,4 +88,8 @@ func (env Env[T]) Includes(name string) bool {
 	}
 
 	return false
+}
+
+func (env Env[T]) StackDepth() int {
+	return env.stackDepth
 }
