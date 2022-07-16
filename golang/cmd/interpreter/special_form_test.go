@@ -22,7 +22,7 @@ func Test_SpecialForm(t *testing.T) {
 
 	t.Run("Apply", func(t *testing.T) {
 		symbol := Symbol("test")
-		caller := MakeCaller[any]("unused", symbol)
+		caller := MakeCaller[any](Symbol("unused"), symbol)
 		result, err := sf.Apply(env, caller)
 		require.Nil(t, err)
 		require.Equal(t, symbol, result)
