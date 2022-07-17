@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-var SPECIAL_FORMS = map[string]func(params ...any) Primitive[any]{
-	"symbol": func(params ...any) Primitive[any] {
+var SPECIAL_FORMS = map[string]func(params ...Primitive[any]) Primitive[any]{
+	"symbol": func(params ...Primitive[any]) Primitive[any] {
 		return Symbol(fmt.Sprint(params[0]))
 	},
-	"quote": func(params ...any) Primitive[any] {
-		return Quote(params[0].(Primitive[any]))
+	"quote": func(params ...Primitive[any]) Primitive[any] {
+		return Quote(params[0])
 	},
 }
 
@@ -35,7 +35,7 @@ var SPECIAL_FORMS = map[string]func(params ...any) Primitive[any]{
 type specialForm struct {
 	Primitive[any]
 	name string
-	impl func(params ...any) Primitive[any]
+	impl func(params ...Primitive[any]) Primitive[any]
 }
 
 // A proxy for other built-in types
@@ -50,7 +50,7 @@ func (sf specialForm) Eval(env environment.Env[any]) (any, error) {
 	return sf, nil
 }
 
-func (sf specialForm) Apply(env environment.Env[any], caller Caller[any]) (any, error) {
+func (sf specialForm) Apply(env environment.Env[any], caller Caller) (any, error) {
 	if sf.impl == nil {
 		return nil, errors.Errorf("Unknown special form: '%s'", sf.name)
 	}

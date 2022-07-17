@@ -14,7 +14,7 @@ func (q quote) Eval(env environment.Env[any]) (any, error) {
 	return q.expr.QuotedForm(env)
 }
 
-func (q quote) Apply(env environment.Env[any], caller Caller[any]) (any, error) {
+func (q quote) Apply(env environment.Env[any], caller Caller) (any, error) {
 	return nil, errors.New("Cannot invoke with: 'Quote'")
 }
 

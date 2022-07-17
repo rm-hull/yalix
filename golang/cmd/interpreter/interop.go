@@ -2,26 +2,15 @@ package interpreter
 
 import "yalix/cmd/environment"
 
-// class InterOp(Primitive):
-//     """ Helper class for wrapping Python functions """
-
-//     def __init__(self, func, *args):
-//         self.func = func
-//         self.args = args
-
-//     def eval(self, env):
-//         values = [a.eval(env) for a in self.args]
-//         try:
-//             return self.func(*values)
-//         except TypeError as ex:
-//             raise EvaluationError(self, str(ex))
+type interOpFunc func(args ...any) (any, error)
 
 type interOp struct {
-	fn   func(args ...any) (any, error)
+	Primitive[any]
+	fn   interOpFunc
 	args []Primitive[any]
 }
 
-func InterOp(fn func(args ...any) (any, error), args ...Primitive[any]) interOp {
+func InterOp(fn interOpFunc, args ...Primitive[any]) interOp {
 	return interOp{
 		fn:   fn,
 		args: args,
@@ -39,3 +28,16 @@ func (i interOp) Eval(env environment.Env[any]) (any, error) {
 	}
 	return i.fn(values...)
 }
+
+func MakeHandler(fn interOpFunc, arity uint) lambda {
+
+	bindVariables := make([]Primitive[any], arity)
+	for i := range bindVariables {
+		bindVariables[i] = GenSym()
+	}
+	formals := bindVariables
+
+	return Lambda(List(formals...), InterOp(fn, bindVariables...))
+}
+
+// TODO: handle variadic interop

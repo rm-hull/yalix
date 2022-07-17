@@ -18,7 +18,7 @@ func (a atom) Eval(env environment.Env[any]) (any, error) {
 	return a.value, nil
 }
 
-func (a atom) Apply(env environment.Env[any], caller Caller[any]) (any, error) {
+func (a atom) Apply(env environment.Env[any], caller Caller) (any, error) {
 	return nil, errors.New("cannot invoke with: 'Atom'")
 }
 

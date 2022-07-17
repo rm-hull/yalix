@@ -66,28 +66,31 @@ import (
 
 type list struct {
 	Primitive[any]
-	Caller[any]
-	funexp Primitive[any]
-	params []any
+	items []Primitive[any]
 }
 
 func (l list) Eval(env environment.Env[any]) (any, error) {
-	if l.funexp != nil {
-		value, err := l.funexp.Eval(env)
+	if len(l.items) > 0 {
+		funexp := l.items[0]
+		params := l.items[1:]
+		value, err := funexp.Eval(env)
 		if err != nil {
 			return nil, err
 		}
 		if debug, err := env.Get("*debug*"); err == nil && debug.(bool) {
-			fmt.Printf("%s%s %s\n", strings.Repeat(" ", env.StackDepth()), l.funexp, l.params)
+			fmt.Printf("%s%s %s\n", strings.Repeat(" ", env.StackDepth()), funexp, params)
 		}
-		return value.(Primitive[any]).Apply(env, MakeCaller(l.funexp, l.params...))
+		return value.(Primitive[any]).Apply(env, MakeCaller(l.items...))
 	}
 	return nil, nil
 }
 
-func List(args ...any) list {
+func (l list) Len() int {
+	return len(l.items)
+}
+
+func List(args ...Primitive[any]) list {
 	return list{
-		funexp: args[0].(Primitive[any]),
-		params: args[1:],
+		items: args,
 	}
 }
