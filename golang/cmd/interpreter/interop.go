@@ -29,7 +29,7 @@ func (i interOp) Eval(env environment.Env[any]) (any, error) {
 	return i.fn(values...)
 }
 
-func MakeHandler(fn interOpFunc, arity uint) lambda {
+func MakeGoFuncHandler(fn interOpFunc, arity uint) lambda {
 
 	bindVariables := make([]Primitive[any], arity)
 	for i := range bindVariables {

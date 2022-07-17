@@ -5,14 +5,14 @@ import "yalix/cmd/environment"
 type lambda struct {
 	Primitive[any]
 	formals list
-	// body: body
+	body    body
 }
 
 // A recursive n-argument anonymous function
 func Lambda(formals list, body ...Primitive[any]) lambda {
 	return lambda{
 		formals: formals,
-		// body: Body(body...)
+		body:    Body(body...),
 	}
 }
 

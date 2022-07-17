@@ -45,12 +45,12 @@ func (env Env[T]) Extend(name string, value T) Env[T] {
 }
 
 // Adds a new global definition, and evaluates it according to self
-func (env Env[T]) SetGlobal(name string, value T) {
+func (env *Env[T]) SetGlobal(name string, value T) {
 	env.globalFrame[name] = value
 }
 
 // Look in the local stack first for the named item, then try the global frame
-func (env Env[T]) Get(name string) (T, error) {
+func (env *Env[T]) Get(name string) (T, error) {
 	last := len(env.localStack) - 1
 	for idx := range env.localStack {
 		if env.localStack[last-idx].name == name {
@@ -67,7 +67,7 @@ func (env Env[T]) Get(name string) (T, error) {
 }
 
 // Traverses the local stack and sets the first instance of name with value
-func (env Env[T]) SetLocal(name string, value T) error {
+func (env *Env[T]) SetLocal(name string, value T) error {
 	last := len(env.localStack) - 1
 	for idx := range env.localStack {
 		if env.localStack[last-idx].name == name {
@@ -78,7 +78,7 @@ func (env Env[T]) SetLocal(name string, value T) error {
 	return errors.Errorf("assignment disallowed: '%s' is unbound in local environment", name)
 }
 
-func (env Env[T]) Includes(name string) bool {
+func (env *Env[T]) Includes(name string) bool {
 	if _, ok := env.globalFrame[name]; ok {
 		return true
 	}
@@ -92,8 +92,12 @@ func (env Env[T]) Includes(name string) bool {
 	return false
 }
 
-func (env Env[T]) StackDepth() int {
+func (env *Env[T]) StackDepth() int {
 	return env.stackDepth
+}
+
+func (env *Env[T]) IncreaseStackDepth() {
+	env.stackDepth += 1
 }
 
 var id uint32
