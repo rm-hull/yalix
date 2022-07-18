@@ -20,6 +20,10 @@ func (s symbol) Apply(env environment.Env[any], caller Caller) (any, error) {
 	return nil, errors.New("cannot invoke with: 'Symbol'")
 }
 
+func (s symbol) String() string {
+	return s.name
+}
+
 func (s symbol) Repr() string {
 	return s.name
 }

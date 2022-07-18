@@ -7,6 +7,7 @@ import (
 )
 
 type quote struct {
+	Primitive[any]
 	expr Primitive[any]
 }
 

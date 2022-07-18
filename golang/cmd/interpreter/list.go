@@ -71,16 +71,17 @@ type list struct {
 
 func (l list) Eval(env environment.Env[any]) (any, error) {
 	if len(l.items) > 0 {
-		funexp := l.items[0]
-		params := l.items[1:]
-		value, err := funexp.Eval(env)
+		caller := MakeCaller(l.items...)
+		if debug, err := env.Get("*debug*"); err == nil && debug.(bool) {
+			fmt.Printf("%s%s\n", strings.Repeat("  ", env.StackDepth()), caller)
+		}
+
+		value, err := caller.funexp.Eval(env)
 		if err != nil {
 			return nil, err
 		}
-		if debug, err := env.Get("*debug*"); err == nil && debug.(bool) {
-			fmt.Printf("%s%s %s\n", strings.Repeat(" ", env.StackDepth()), funexp, params)
-		}
-		return value.(Primitive[any]).Apply(env, MakeCaller(l.items...))
+
+		return value.(Primitive[any]).Apply(env, caller)
 	}
 	return nil, nil
 }

@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"errors"
+	"fmt"
 	"yalix/cmd/environment"
 )
 
@@ -24,4 +25,8 @@ func (a atom) Apply(env environment.Env[any], caller Caller) (any, error) {
 
 func (a atom) QuotedForm(env environment.Env[any]) (any, error) {
 	return a.Eval(env)
+}
+
+func (a atom) String() string {
+	return fmt.Sprint(a.value)
 }

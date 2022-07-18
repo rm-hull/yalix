@@ -28,6 +28,7 @@ func Test_List(t *testing.T) {
 		t.Error(err)
 	}
 	env.SetGlobal("+", closure)
+	env.SetGlobal("*debug*", true)
 
 	result, err := List(Symbol("+"), Atom(15), Atom(12)).Eval(env)
 	require.Nil(t, err)
