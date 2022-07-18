@@ -35,5 +35,5 @@ jobs:
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: golang/coverage.lcov
-          parallel: true
-          flag-name: golang-${{ matrix.go }}
+          # parallel: true
+          # flag-name: golang-${{ matrix.go }}
