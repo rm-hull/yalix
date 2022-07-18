@@ -1,6 +1,8 @@
 package interpreter
 
-import "yalix/cmd/environment"
+import (
+	"yalix/cmd/environment"
+)
 
 type interOpFunc func(args ...any) (any, error)
 
@@ -29,15 +31,25 @@ func (i interOp) Eval(env environment.Env[any]) (any, error) {
 	return i.fn(values...)
 }
 
-func MakeGoFuncHandler(fn interOpFunc, arity uint) lambda {
+func MakeGoFuncHandler(fn interOpFunc, arity uint, variadic bool) lambda {
+
+	// if variadic && arity < 1 {
+	// 	return lambda{}, errors.New("must be at least arity-1 when variadic == true")
+	// }
 
 	bindVariables := make([]Primitive[any], arity)
 	for i := range bindVariables {
 		bindVariables[i] = GenSym()
 	}
-	formals := bindVariables
+
+	var formals = bindVariables
+	if variadic {
+		// # Insert the variadic marker at the last-but one position
+		index := len(bindVariables) - 1
+		formals = append(formals[:index+1], formals[index:]...)
+		formals[index] = VARIADIC_MARKER
+		// TODO: Realize
+	}
 
 	return Lambda(List(formals...), InterOp(fn, bindVariables...))
 }
-
-// TODO: handle variadic interop

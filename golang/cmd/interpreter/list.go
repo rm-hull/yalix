@@ -90,6 +90,19 @@ func (l list) Len() int {
 	return len(l.items)
 }
 
+func (l list) Includes(item Primitive[any]) bool {
+	return l.Index(item) >= 0
+}
+
+func (l list) Index(item Primitive[any]) int {
+	for index, elem := range l.items {
+		if item == elem {
+			return index
+		}
+	}
+	return -1
+}
+
 func List(args ...Primitive[any]) list {
 	return list{
 		items: args,

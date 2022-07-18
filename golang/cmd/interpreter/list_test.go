@@ -23,7 +23,7 @@ func add(args ...any) (any, error) {
 
 func Test_List(t *testing.T) {
 	env := environment.MakeEnv[any]()
-	closure, err := MakeGoFuncHandler(add, 2).Eval(env)
+	closure, err := MakeGoFuncHandler(add, 2, false).Eval(env)
 	if err != nil {
 		t.Error(err)
 	}
@@ -42,13 +42,13 @@ func Test_List(t *testing.T) {
 		require.EqualError(t, err, "cannot invoke with: 'barf'", err)
 		require.Nil(t, result)
 	})
-	
+
 	t.Run("Wrong arity", func(t *testing.T) {
 		// Porridge is too cold
 		result, err := List(Symbol("+"), Atom(3)).Eval(env)
 		require.EqualError(t, err, "call to '+' applied with insufficient arity: 2 args expected, 1 supplied", err)
 		require.Nil(t, result)
-		
+
 		// # Porridge is too hot
 		result, err = List(Symbol("+"), Atom(3), Atom(4), Atom(5)).Eval(env)
 		require.EqualError(t, err, "call to '+' applied with insufficient arity: 2 args expected, 3 supplied", err)
