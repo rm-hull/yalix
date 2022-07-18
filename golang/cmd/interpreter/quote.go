@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"fmt"
 	"yalix/cmd/environment"
 
 	"github.com/pkg/errors"
@@ -16,7 +17,7 @@ func (q quote) Eval(env environment.Env[any]) (any, error) {
 }
 
 func (q quote) Apply(env environment.Env[any], caller Caller) (any, error) {
-	return nil, errors.New("Cannot invoke with: 'Quote'")
+	return nil, errors.Errorf("cannot invoke with: '%s'", q)
 }
 
 func (q quote) QuotedForm(env environment.Env[any]) (any, error) {
@@ -25,6 +26,10 @@ func (q quote) QuotedForm(env environment.Env[any]) (any, error) {
 
 func (q quote) Repr() string {
 	return q.expr.Repr()
+}
+
+func (q quote) String() string {
+	return fmt.Sprint(q.expr)
 }
 
 // Makes no effort to call the supplied expression when evaluated

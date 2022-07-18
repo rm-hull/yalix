@@ -1,9 +1,10 @@
 package interpreter
 
 import (
-	"errors"
 	"fmt"
 	"yalix/cmd/environment"
+
+	"github.com/pkg/errors"
 )
 
 type atom struct {
@@ -20,7 +21,7 @@ func (a atom) Eval(env environment.Env[any]) (any, error) {
 }
 
 func (a atom) Apply(env environment.Env[any], caller Caller) (any, error) {
-	return nil, errors.New("cannot invoke with: 'Atom'")
+	return nil, errors.Errorf("cannot invoke with: '%s'", a)
 }
 
 func (a atom) QuotedForm(env environment.Env[any]) (any, error) {

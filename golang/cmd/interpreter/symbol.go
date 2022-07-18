@@ -1,10 +1,11 @@
 package interpreter
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"yalix/cmd/environment"
+
+	"github.com/pkg/errors"
 )
 
 type symbol struct {
@@ -17,7 +18,7 @@ func (s symbol) Eval(env environment.Env[any]) (any, error) {
 }
 
 func (s symbol) Apply(env environment.Env[any], caller Caller) (any, error) {
-	return nil, errors.New("cannot invoke with: 'Symbol'")
+	return nil, errors.Errorf("cannot invoke with: '%s'", s)
 }
 
 func (s symbol) String() string {

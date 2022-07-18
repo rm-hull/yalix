@@ -30,7 +30,28 @@ func Test_List(t *testing.T) {
 	env.SetGlobal("+", closure)
 	env.SetGlobal("*debug*", true)
 
-	result, err := List(Symbol("+"), Atom(15), Atom(12)).Eval(env)
-	require.Nil(t, err)
-	require.Equal(t, 27, result)
+	t.Run("Apply", func(t *testing.T) {
+		result, err := List(Symbol("+"), Atom(15), Atom(11)).Eval(env)
+		require.Nil(t, err)
+		require.Equal(t, 26, result)
+	})
+
+	t.Run("Call non-closure", func(t *testing.T) {
+		extendedEnv := env.Extend("barf", Atom("barf"))
+		result, err := List(Symbol("barf"), Atom(3)).Eval(extendedEnv)
+		require.EqualError(t, err, "cannot invoke with: 'barf'", err)
+		require.Nil(t, result)
+	})
+	
+	t.Run("Wrong arity", func(t *testing.T) {
+		// Porridge is too cold
+		result, err := List(Symbol("+"), Atom(3)).Eval(env)
+		require.EqualError(t, err, "call to '+' applied with insufficient arity: 2 args expected, 1 supplied", err)
+		require.Nil(t, result)
+		
+		// # Porridge is too hot
+		result, err = List(Symbol("+"), Atom(3), Atom(4), Atom(5)).Eval(env)
+		require.EqualError(t, err, "call to '+' applied with insufficient arity: 2 args expected, 3 supplied", err)
+		require.Nil(t, result)
+	})
 }

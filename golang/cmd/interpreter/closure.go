@@ -25,7 +25,7 @@ func (c closure) Eval(env environment.Env[any]) (any, error) {
 
 func (c closure) Apply(env environment.Env[any], caller Caller) (any, error) {
 	if !c.lambda.HasSufficientArity(caller.params) {
-		return nil, errors.Errorf("Call to '%s' applied with insufficient arity: %d args expected, %d supplied",
+		return nil, errors.Errorf("call to '%s' applied with insufficient arity: %d args expected, %d supplied",
 			// # FIXME: probably ought rely on __repr__ of symbol here....
 			caller.funexp,
 			c.lambda.Arity(),
@@ -33,7 +33,7 @@ func (c closure) Apply(env environment.Env[any], caller Caller) (any, error) {
 	}
 
 	if c.lambda.formals.Len() != len(caller.params) {
-		return nil, errors.Errorf("Call to '%s' applied with excessive arity: %d args expected, %d supplied",
+		return nil, errors.Errorf("call to '%s' applied with excessive arity: %d args expected, %d supplied",
 			// # FIXME: probably ought rely on __repr__ of symbol here....
 			caller.funexp,
 			c.lambda.Arity(),
