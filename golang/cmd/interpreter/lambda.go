@@ -1,6 +1,10 @@
 package interpreter
 
-import "yalix/cmd/environment"
+import (
+	"yalix/cmd/environment"
+
+	"github.com/pkg/errors"
+)
 
 var VARIADIC_MARKER = Symbol(".")
 
@@ -32,18 +36,16 @@ func (l lambda) HasSufficientArity(args []Primitive[any]) bool {
 }
 
 func (l lambda) Eval(env environment.Env[any]) (any, error) {
+	if l.isVariadic {
+		if l.formals.Count(VARIADIC_MARKER) > 1 {
+			return nil, errors.Errorf("invalid variadic argument spec: %s", l.formals)
+		}
+		if l.formals.Index(VARIADIC_MARKER) != l.formals.Len()-2 {
+			return nil, errors.Errorf("only one variadic argument is allowed: %s", l.formals)
+		}
+	}
 	return Closure(env, l), nil
 }
-
-// def eval(self, env):
-// if self.is_variadic():
-// 		if sum(1 for f in self.formals if f == Lambda.VARIADIC_MARKER) > 1:
-// 				raise EvaluationError(
-// 						self, 'Invalid variadic argument spec: {0}', self.formals)
-
-// 		if self.formals.index(Lambda.VARIADIC_MARKER) != len(self.formals) - 2:
-// 				raise EvaluationError(
-// 						self, 'Only one variadic argument is allowed: {0}', self.formals)
 
 // if len(self.formals) != len(set(self.formals)):
 // 		raise EvaluationError(

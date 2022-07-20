@@ -103,6 +103,29 @@ func (l list) Index(item Primitive[any]) int {
 	return -1
 }
 
+func (l list) Count(item Primitive[any]) int {
+	var count = 0
+	for _, elem := range l.items {
+		if item == elem {
+			count++
+		}
+	}
+	return count
+}
+
+func (l list) String() string {
+	var sb strings.Builder
+	sb.WriteByte('[')
+	for index, item := range l.items {
+		sb.WriteString(fmt.Sprint(item))
+		if index < l.Len()-1 {
+			sb.WriteByte(' ')
+		}
+	}
+	sb.WriteByte(']')
+	return sb.String()
+}
+
 func List(args ...Primitive[any]) list {
 	return list{
 		items: args,
