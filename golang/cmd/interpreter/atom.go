@@ -12,7 +12,9 @@ type atom struct {
 	value any
 }
 
-func Atom[T any](value T) atom {
+var NIL = Atom(nil)
+
+func Atom(value any) atom {
 	return atom{value: value}
 }
 

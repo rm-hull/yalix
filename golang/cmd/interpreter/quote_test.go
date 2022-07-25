@@ -12,7 +12,7 @@ func Test_Quote(t *testing.T) {
 	env := environment.MakeEnv[any]()
 
 	t.Run("Atom", func(t *testing.T) {
-		q, err := Quote(Atom[any](5)).Eval(env)
+		q, err := Quote(Atom(5)).Eval(env)
 		require.Nil(t, err)
 		require.Equal(t, 5, q)
 	})
