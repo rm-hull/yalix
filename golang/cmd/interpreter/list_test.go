@@ -54,4 +54,10 @@ func Test_List(t *testing.T) {
 		require.EqualError(t, err, "call to '+' applied with insufficient arity: 2 args expected, 3 supplied", err)
 		require.Nil(t, result)
 	})
+
+	t.Run("Wrong type", func(t *testing.T) {
+		result, err := List(Symbol("+"), Atom(3), Atom("tomato")).Eval(env)
+		require.EqualError(t, err, "cannot convert value 'tomato' to int", err)
+		require.Nil(t, result)
+	})
 }

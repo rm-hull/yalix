@@ -38,4 +38,10 @@ func Test_Lambda(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, 38, result)
 	})
+
+	t.Run("Wrong type", func(t *testing.T) {
+		result, err := List(Symbol("+"), Atom(15), Atom("tomato"), Atom(9), Atom(3)).Eval(env)
+		require.EqualError(t, err, "cannot convert 'tomato' to int")
+		require.Nil(t, result)
+	})
 }
