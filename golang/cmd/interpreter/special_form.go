@@ -14,6 +14,21 @@ var SPECIAL_FORMS = map[string]func(params ...Primitive[any]) Primitive[any]{
 	"quote": func(params ...Primitive[any]) Primitive[any] {
 		return Quote(params[0])
 	},
+	"lambda": func(params ...Primitive[any]) Primitive[any] {
+		return Lambda(params[0].(list), params[1:]...)
+	},
+	"begin": func(params ...Primitive[any]) Primitive[any] {
+		return Body(params...)
+	},
+	"if": func(params ...Primitive[any]) Primitive[any] {
+		if len(params) == 2 {
+			return If(params[0], params[1], NIL)
+		}
+		return If(params[0], params[1], params[2])
+	},
+	"let": func(params ...Primitive[any]) Primitive[any] {
+		return Let(params[0].(list), params[1:]...)
+	},
 }
 
 // __special_forms__ = {

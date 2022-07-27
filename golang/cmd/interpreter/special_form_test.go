@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_SpecialForm(t *testing.T) {
+func Test_SpecialForm_Quote(t *testing.T) {
 	env := environment.MakeEnv[any]()
 
 	sf := SpecialForm("quote")
