@@ -22,5 +22,4 @@ func Test_If(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, nil, result)
 	})
-
 }
