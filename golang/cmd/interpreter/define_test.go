@@ -3,42 +3,35 @@ package interpreter
 import (
 	"testing"
 	"yalix/cmd/environment"
+	"yalix/cmd/operator"
 
 	"github.com/stretchr/testify/require"
 )
 
-// def test_function_defn(self):
-// # Equivalent to:
-// #   (define factorial
-// #     (lambda (x)
-// #       (if (zero? x)
-// #         1
-// #         (* x (factorial (- x 1))))))
-// #
-// env = make_env()
+func _fact_body(name string) Primitive[any] {
+	return If(List(Symbol("zero?"), Symbol("x")),
+		Atom(1),
+		List(Symbol("*"),
+			Symbol("x"),
+			List(Symbol(name),
+				List(Symbol("-"),
+					Symbol("x"),
+					Atom(1)))))
+}
 
-// def body(name):
-// 		return If(List(Symbol('zero?'), Symbol('x')),
-// 							Atom(1),
-// 							List(Symbol('*'),
-// 									 Symbol('x'),
-// 									 List(Symbol(name),
-// 												List(Symbol('-'),
-// 														 Symbol('x'),
-// 														 Atom(1)))))
+func _makeExtendedEnv() environment.Env[any] {
+	env := environment.MakeEnv[any]()
+	env.SetGlobal("*debug*", false)
 
-// # Two variants - define/lambda vs. syntactic sugar version
-// Define(Symbol('factorial1'), Lambda(
-// 		List(Symbol('x')), body('factorial1'))).eval(env)
-// Define(List(Symbol('factorial2'), Symbol('x')),
-// 			 body('factorial2')).eval(env)
+	Define(Symbol("*"), MakeGoFuncHandler(operator.Mult, 1, true)).Eval(env)
+	Define(Symbol("+"), MakeGoFuncHandler(operator.Add, 1, true)).Eval(env)
+	Define(Symbol("-"), MakeGoFuncHandler(operator.Sub, 1, true)).Eval(env)
+	Define(Symbol("="), MakeGoFuncHandler(operator.Eq, 1, true)).Eval(env)
+	Define(Symbol("zero?"), Lambda(List(Symbol("n")), List(
+		Symbol("="), Symbol("n"), Atom(0)))).Eval(env)
 
-// # (factorial 10)
-// value1 = List(Symbol('factorial1'), Atom(10)).eval(env)
-// self.assertEquals(3628800, value1)
-
-// value2 = List(Symbol('factorial2'), Atom(10)).eval(env)
-// self.assertEquals(3628800, value2)
+	return env
+}
 
 func Test_Define(t *testing.T) {
 	env := environment.MakeEnv[any]()
@@ -73,5 +66,32 @@ func Test_Define(t *testing.T) {
 		result, err = Symbol("five").Eval(env)
 		require.Nil(t, err)
 		require.Equal(t, 5, result)
+	})
+
+	t.Run("Function definition", func(t *testing.T) {
+		// Equivalent to:
+		//    (define factorial
+		//      (lambda (x)
+		//        (if (zero? x)
+		//          1
+		//          (* x (factorial (- x 1))))))
+
+		extendedEnv := _makeExtendedEnv()
+
+		// Two variants - define/lambda vs. syntactic sugar version
+		_, err := Define(Symbol("factorial1"), Lambda(List(Symbol("x")), _fact_body("factorial1"))).Eval(extendedEnv)
+		require.Nil(t, err)
+
+		_, err = Define(List(Symbol("factorial2"), Symbol("x")), _fact_body("factorial2")).Eval(extendedEnv)
+		require.Nil(t, err)
+
+		// (factorial 10)
+		result1, err := List(Symbol("factorial1"), Atom(10)).Eval(extendedEnv)
+		require.Nil(t, err)
+		require.Equal(t, 3628800, result1)
+
+		result2, err := List(Symbol("factorial2"), Atom(10)).Eval(extendedEnv)
+		require.Nil(t, err)
+		require.Equal(t, 3628800, result2)
 	})
 }
