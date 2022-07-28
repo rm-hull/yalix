@@ -7,7 +7,7 @@ import (
 )
 
 func Eq(args ...any) (any, error) {
-	list, err := util.Parse[[]any](args[0])
+	list, err := util.CastAs[[]any](args[0])
 	if err != nil {
 		return nil, err
 	}

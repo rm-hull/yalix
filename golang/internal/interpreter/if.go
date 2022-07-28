@@ -18,7 +18,7 @@ func (i _if) Eval(env environment.Env[any]) (any, error) {
 		return nil, err
 	}
 
-	result, err := util.Parse[bool](test)
+	result, err := util.CastAs[bool](test)
 	if err != nil {
 		return nil, err
 	}

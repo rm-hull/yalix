@@ -12,7 +12,7 @@ import (
 func _arity2add(args ...any) (any, error) {
 	var total = 0
 	for _, value := range args {
-		intValue, err := util.Parse[int](value)
+		intValue, err := util.CastAs[int](value)
 		if err != nil {
 			return nil, err
 		}

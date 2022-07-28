@@ -4,12 +4,12 @@ import "yalix/internal/util"
 
 func Add(args ...any) (any, error) {
 	var total = 0
-	list, err := util.Parse[[]any](args[0])
+	list, err := util.CastAs[[]any](args[0])
 	if err != nil {
 		return nil, err
 	}
 	for _, value := range list {
-		intValue, err := util.Parse[int](value)
+		intValue, err := util.CastAs[int](value)
 		if err != nil {
 			return nil, err
 		}
@@ -19,7 +19,7 @@ func Add(args ...any) (any, error) {
 }
 
 func Sub(args ...any) (any, error) {
-	list, err := util.Parse[[]any](args[0])
+	list, err := util.CastAs[[]any](args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -29,20 +29,20 @@ func Sub(args ...any) (any, error) {
 		return 0, nil
 
 	case 1:
-		intValue, err := util.Parse[int](list[0])
+		intValue, err := util.CastAs[int](list[0])
 		if err != nil {
 			return nil, err
 		}
 		return -intValue, nil
 
 	default:
-		total, err := util.Parse[int](list[0])
+		total, err := util.CastAs[int](list[0])
 		if err != nil {
 			return nil, err
 		}
 
 		for _, value := range list[1:] {
-			intValue, err := util.Parse[int](value)
+			intValue, err := util.CastAs[int](value)
 			if err != nil {
 				return nil, err
 			}
@@ -53,14 +53,14 @@ func Sub(args ...any) (any, error) {
 }
 
 func Mult(args ...any) (any, error) {
-	list, err := util.Parse[[]any](args[0])
+	list, err := util.CastAs[[]any](args[0])
 	if err != nil {
 		return nil, err
 	}
 
 	var total = 1
 	for _, value := range list {
-		intValue, err := util.Parse[int](value)
+		intValue, err := util.CastAs[int](value)
 		if err != nil {
 			return nil, err
 		}
