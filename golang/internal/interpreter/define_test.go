@@ -19,18 +19,33 @@ func _fact_body(name string) Primitive[any] {
 					Atom(1)))))
 }
 
-func _makeExtendedEnv() environment.Env[any] {
+func _makeExtendedEnv() (*environment.Env[any], error) {
 	env := environment.MakeEnv[any]()
 	env.SetGlobal("*debug*", false)
 
-	Define(Symbol("*"), MakeGoFuncHandler(operator.Mult, 1, true)).Eval(env)
-	Define(Symbol("+"), MakeGoFuncHandler(operator.Add, 1, true)).Eval(env)
-	Define(Symbol("-"), MakeGoFuncHandler(operator.Sub, 1, true)).Eval(env)
-	Define(Symbol("="), MakeGoFuncHandler(operator.Eq, 1, true)).Eval(env)
-	Define(Symbol("zero?"), Lambda(List(Symbol("n")), List(
+	_, err := Define(Symbol("*"), MakeGoFuncHandler(operator.Mult, 1, true)).Eval(env)
+	if err != nil {
+		return nil, err
+	}
+	_, err = Define(Symbol("+"), MakeGoFuncHandler(operator.Add, 1, true)).Eval(env)
+	if err != nil {
+		return nil, err
+	}
+	_, err = Define(Symbol("-"), MakeGoFuncHandler(operator.Sub, 1, true)).Eval(env)
+	if err != nil {
+		return nil, err
+	}
+	_, err = Define(Symbol("="), MakeGoFuncHandler(operator.Eq, 1, true)).Eval(env)
+	if err != nil {
+		return nil, err
+	}
+	_, err = Define(Symbol("zero?"), Lambda(List(Symbol("n")), List(
 		Symbol("="), Symbol("n"), Atom(0)))).Eval(env)
+	if err != nil {
+		return nil, err
+	}
 
-	return env
+	return &env, nil
 }
 
 func Test_Define(t *testing.T) {
@@ -76,21 +91,24 @@ func Test_Define(t *testing.T) {
 		//          1
 		//          (* x (factorial (- x 1))))))
 
-		extendedEnv := _makeExtendedEnv()
+		extendedEnv, err := _makeExtendedEnv()
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		// Two variants - define/lambda vs. syntactic sugar version
-		_, err := Define(Symbol("factorial1"), Lambda(List(Symbol("x")), _fact_body("factorial1"))).Eval(extendedEnv)
+		_, err = Define(Symbol("factorial1"), Lambda(List(Symbol("x")), _fact_body("factorial1"))).Eval(*extendedEnv)
 		require.Nil(t, err)
 
-		_, err = Define(List(Symbol("factorial2"), Symbol("x")), _fact_body("factorial2")).Eval(extendedEnv)
+		_, err = Define(List(Symbol("factorial2"), Symbol("x")), _fact_body("factorial2")).Eval(*extendedEnv)
 		require.Nil(t, err)
 
 		// (factorial 10)
-		result1, err := List(Symbol("factorial1"), Atom(10)).Eval(extendedEnv)
+		result1, err := List(Symbol("factorial1"), Atom(10)).Eval(*extendedEnv)
 		require.Nil(t, err)
 		require.Equal(t, 3628800, result1)
 
-		result2, err := List(Symbol("factorial2"), Atom(10)).Eval(extendedEnv)
+		result2, err := List(Symbol("factorial2"), Atom(10)).Eval(*extendedEnv)
 		require.Nil(t, err)
 		require.Equal(t, 3628800, result2)
 	})
