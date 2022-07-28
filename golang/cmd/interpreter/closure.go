@@ -57,7 +57,7 @@ func bind(envToExtend environment.Env[any], formals list, params []Primitive[any
 			for _, item := range params[i:] {
 				value, err := item.Eval(callerEnv)
 				if err != nil {
-					return environment.Env[any]{}, errors.Errorf("unable to eval '%s'", item)
+					return environment.Env[any]{}, err
 				}
 				values = append(values, value)
 			}
@@ -67,7 +67,7 @@ func bind(envToExtend environment.Env[any], formals list, params []Primitive[any
 		} else {
 			value, err := params[i].Eval(callerEnv)
 			if err != nil {
-				return environment.Env[any]{}, errors.Errorf("unable to eval '%s'", params[i])
+				return environment.Env[any]{}, err
 			}
 			envToExtend = envToExtend.Extend(bindVariable.Repr(), value)
 		}
