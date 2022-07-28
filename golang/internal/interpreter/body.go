@@ -1,7 +1,7 @@
 package interpreter
 
 import (
-	"yalix/cmd/environment"
+	"yalix/internal/environment"
 )
 
 type body struct {

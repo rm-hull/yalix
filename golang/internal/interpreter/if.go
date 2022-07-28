@@ -1,8 +1,8 @@
 package interpreter
 
 import (
-	"yalix/cmd/environment"
-	"yalix/cmd/util"
+	"yalix/internal/environment"
+	"yalix/internal/util"
 )
 
 type _if struct {

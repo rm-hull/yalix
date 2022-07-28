@@ -1,6 +1,6 @@
 package interpreter
 
-import "yalix/cmd/environment"
+import "yalix/internal/environment"
 
 type Primitive[T any] interface {
 	Eval(env environment.Env[T]) (any, error)

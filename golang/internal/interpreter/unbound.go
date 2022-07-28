@@ -1,6 +1,6 @@
 package interpreter
 
-import "yalix/cmd/environment"
+import "yalix/internal/environment"
 
 type unbound struct {
 	BuiltIn[any]

@@ -1,6 +1,6 @@
 package operator
 
-import "yalix/cmd/util"
+import "yalix/internal/util"
 
 func Add(args ...any) (any, error) {
 	var total = 0

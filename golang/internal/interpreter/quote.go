@@ -2,7 +2,7 @@ package interpreter
 
 import (
 	"fmt"
-	"yalix/cmd/environment"
+	"yalix/internal/environment"
 
 	"github.com/pkg/errors"
 )

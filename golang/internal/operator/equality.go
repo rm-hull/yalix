@@ -1,7 +1,7 @@
 package operator
 
 import (
-	"yalix/cmd/util"
+	"yalix/internal/util"
 
 	"github.com/pkg/errors"
 )

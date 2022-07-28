@@ -3,7 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"strings"
-	"yalix/cmd/environment"
+	"yalix/internal/environment"
 )
 
 // # http://code.activestate.com/recipes/474088/
@@ -71,11 +71,11 @@ type list struct {
 
 func (l list) Eval(env environment.Env[any]) (any, error) {
 	if len(l.items) > 0 {
-		caller := MakeCaller(l.items...)
 		if debug, err := env.Get("*debug*"); err == nil && debug.(bool) {
-			fmt.Printf("%s%s\n", strings.Repeat("  ", env.StackDepth()), caller)
+			fmt.Printf("%s%s\n", strings.Repeat("  ", env.StackDepth()), l)
 		}
 
+		caller := MakeCaller(l.items...)
 		value, err := caller.funexp.Eval(env)
 		if err != nil {
 			return nil, err

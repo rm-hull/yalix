@@ -2,8 +2,8 @@ package interpreter
 
 import (
 	"testing"
-	"yalix/cmd/environment"
-	"yalix/cmd/operator"
+	"yalix/internal/environment"
+	"yalix/internal/operator"
 
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ func Test_Lambda(t *testing.T) {
 
 	t.Run("Wrong type", func(t *testing.T) {
 		result, err := List(Symbol("+"), Atom(15), Atom("tomato"), Atom(9), Atom(3)).Eval(env)
-		require.EqualError(t, err, "cannot convert 'tomato' to int")
+		require.EqualError(t, err, "cannot convert 'tomato' (string) to int")
 		require.Nil(t, result)
 	})
 }

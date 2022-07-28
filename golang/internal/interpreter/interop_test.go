@@ -3,8 +3,8 @@ package interpreter
 import (
 	"testing"
 
-	"yalix/cmd/environment"
-	"yalix/cmd/operator"
+	"yalix/internal/environment"
+	"yalix/internal/operator"
 
 	"github.com/stretchr/testify/require"
 )

@@ -2,7 +2,7 @@ package interpreter
 
 import (
 	"errors"
-	"yalix/cmd/environment"
+	"yalix/internal/environment"
 )
 
 type define struct {
