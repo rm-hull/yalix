@@ -25,7 +25,7 @@ jobs:
           working-directory: golang
       - name: Test
         working-directory: golang
-        run: go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
+        run: go test -v -race -covermode=atomic -coverprofile=coverage.out -coverpkg=./... ./...
       - name: Convert coverage to lcov
         uses: jandelgado/gcov2lcov-action@v1
         with:
