@@ -115,14 +115,14 @@ func (l list) Count(item Primitive[any]) int {
 
 func (l list) String() string {
 	var sb strings.Builder
-	sb.WriteByte('[')
+	sb.WriteByte('(')
 	for index, item := range l.items {
 		sb.WriteString(fmt.Sprint(item))
 		if index < l.Len()-1 {
 			sb.WriteByte(' ')
 		}
 	}
-	sb.WriteByte(']')
+	sb.WriteByte(')')
 	return sb.String()
 }
 
