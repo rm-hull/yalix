@@ -1,22 +1,8 @@
-// class If(BuiltIn):
-//     """ If """
-
-//     def __init__(self, test_expr, then_expr, else_expr=Atom(None)):
-//         self.test_expr = test_expr
-//         self.then_expr = then_expr
-//         self.else_expr = else_expr
-
-//     def eval(self, env):
-//         if self.test_expr.eval(env):
-//             return self.then_expr.eval(env)
-//         else:
-//             return self.else_expr.eval(env)
 package interpreter
 
 import (
 	"yalix/cmd/environment"
-
-	"github.com/pkg/errors"
+	"yalix/cmd/util"
 )
 
 type _if struct {
@@ -32,9 +18,9 @@ func (i _if) Eval(env environment.Env[any]) (any, error) {
 		return nil, err
 	}
 
-	result, ok := test.(bool)
-	if !ok {
-		return nil, errors.Errorf("Cannot convert '%s' to bool", test)
+	result, err := util.Parse[bool](test)
+	if err != nil {
+		return nil, err
 	}
 
 	if result {

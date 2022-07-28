@@ -4,17 +4,17 @@ import (
 	"testing"
 
 	"yalix/cmd/environment"
+	"yalix/cmd/util"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
-func add(args ...any) (any, error) {
+func _arity2add(args ...any) (any, error) {
 	var total = 0
 	for _, value := range args {
-		intValue, ok := value.(int)
-		if !ok {
-			return nil, errors.Errorf("cannot convert value '%s' to int", value)
+		intValue, err := util.Parse[int](value)
+		if err != nil {
+			return nil, err
 		}
 		total += intValue
 	}
@@ -23,7 +23,7 @@ func add(args ...any) (any, error) {
 
 func Test_List(t *testing.T) {
 	env := environment.MakeEnv[any]()
-	closure, err := MakeGoFuncHandler(add, 2, false).Eval(env)
+	closure, err := MakeGoFuncHandler(_arity2add, 2, false).Eval(env)
 	if err != nil {
 		t.Error(err)
 	}
@@ -57,7 +57,7 @@ func Test_List(t *testing.T) {
 
 	t.Run("Wrong type", func(t *testing.T) {
 		result, err := List(Symbol("+"), Atom(3), Atom("tomato")).Eval(env)
-		require.EqualError(t, err, "cannot convert value 'tomato' to int", err)
+		require.EqualError(t, err, "cannot convert 'tomato' (string) to int", err)
 		require.Nil(t, result)
 	})
 }

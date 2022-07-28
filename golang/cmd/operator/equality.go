@@ -1,9 +1,13 @@
 package operator
 
-import "github.com/pkg/errors"
+import (
+	"yalix/cmd/util"
+
+	"github.com/pkg/errors"
+)
 
 func Eq(args ...any) (any, error) {
-	list, err := parseList(args[0])
+	list, err := util.Parse[[]any](args[0])
 	if err != nil {
 		return nil, err
 	}

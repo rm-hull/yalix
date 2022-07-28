@@ -4,21 +4,13 @@ import (
 	"testing"
 
 	"yalix/cmd/environment"
+	"yalix/cmd/operator"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
 func tmp_add(args ...any) (any, error) {
-	var total = 0
-	for _, value := range args {
-		intValue, ok := value.(int)
-		if !ok {
-			return nil, errors.Errorf("cannot convert value '%s' to int", value)
-		}
-		total += intValue
-	}
-	return total, nil
+	return operator.Add(args)
 }
 
 func Test_InterOp(t *testing.T) {

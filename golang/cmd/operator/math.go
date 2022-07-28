@@ -1,13 +1,15 @@
 package operator
 
+import "yalix/cmd/util"
+
 func Add(args ...any) (any, error) {
 	var total = 0
-	list, err := parseList(args[0])
+	list, err := util.Parse[[]any](args[0])
 	if err != nil {
 		return nil, err
 	}
 	for _, value := range list {
-		intValue, err := parseNumber[int](value)
+		intValue, err := util.Parse[int](value)
 		if err != nil {
 			return nil, err
 		}
@@ -17,7 +19,7 @@ func Add(args ...any) (any, error) {
 }
 
 func Sub(args ...any) (any, error) {
-	list, err := parseList(args[0])
+	list, err := util.Parse[[]any](args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -27,20 +29,20 @@ func Sub(args ...any) (any, error) {
 		return 0, nil
 
 	case 1:
-		intValue, err := parseNumber[int](list[0])
+		intValue, err := util.Parse[int](list[0])
 		if err != nil {
 			return nil, err
 		}
 		return -intValue, nil
 
 	default:
-		total, err := parseNumber[int](list[0])
+		total, err := util.Parse[int](list[0])
 		if err != nil {
 			return nil, err
 		}
 
 		for _, value := range list[1:] {
-			intValue, err := parseNumber[int](value)
+			intValue, err := util.Parse[int](value)
 			if err != nil {
 				return nil, err
 			}
@@ -51,14 +53,14 @@ func Sub(args ...any) (any, error) {
 }
 
 func Mult(args ...any) (any, error) {
-	list, err := parseList(args[0])
+	list, err := util.Parse[[]any](args[0])
 	if err != nil {
 		return nil, err
 	}
 
 	var total = 1
 	for _, value := range list {
-		intValue, err := parseNumber[int](value)
+		intValue, err := util.Parse[int](value)
 		if err != nil {
 			return nil, err
 		}
