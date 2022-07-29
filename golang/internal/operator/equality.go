@@ -1,6 +1,7 @@
 package operator
 
 import (
+	"reflect"
 	"yalix/internal/util"
 
 	"github.com/pkg/errors"
@@ -21,7 +22,7 @@ func Eq(args ...any) (any, error) {
 	default:
 		var prev any = list[0]
 		for _, value := range list[1:] {
-			if prev != value {
+			if !reflect.DeepEqual(prev, value) {
 				return false, nil
 			}
 			prev = value
