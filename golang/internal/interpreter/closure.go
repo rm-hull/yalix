@@ -7,23 +7,23 @@ import (
 )
 
 type closure struct {
-	Primitive[any]
-	env    environment.Env[any]
+	Primitive
+	env    environment.Env
 	lambda lambda
 }
 
-func Closure(env environment.Env[any], lambda lambda) closure {
+func Closure(env environment.Env, lambda lambda) closure {
 	return closure{
 		env:    env,
 		lambda: lambda,
 	}
 }
 
-func (c closure) Eval(env environment.Env[any]) (any, error) {
+func (c closure) Eval(env environment.Env) (any, error) {
 	return c, nil
 }
 
-func (c closure) Apply(env environment.Env[any], caller Caller) (any, error) {
+func (c closure) Apply(env environment.Env, caller Caller) (any, error) {
 	if !c.lambda.HasSufficientArity(caller.params) {
 		return nil, errors.Errorf("call to '%s' applied with insufficient arity: %d args expected, %d supplied",
 			// # FIXME: probably ought rely on __repr__ of symbol here....
@@ -47,7 +47,7 @@ func (c closure) Apply(env environment.Env[any], caller Caller) (any, error) {
 	return c.lambda.body.Eval(extendedEnv)
 }
 
-func bind(envToExtend environment.Env[any], formals list, params []Primitive[any], callerEnv environment.Env[any]) (environment.Env[any], error) {
+func bind(envToExtend environment.Env, formals list, params []Primitive, callerEnv environment.Env) (environment.Env, error) {
 	for i, bindVariable := range formals.items {
 		if bindVariable == VARIADIC_MARKER { // variadic arg indicator
 			// Use the next formal as the _actual_ bind variable,
@@ -57,7 +57,7 @@ func bind(envToExtend environment.Env[any], formals list, params []Primitive[any
 			for _, item := range params[i:] {
 				value, err := item.Eval(callerEnv)
 				if err != nil {
-					return environment.Env[any]{}, err
+					return environment.Env{}, err
 				}
 				values = append(values, value)
 			}
@@ -67,7 +67,7 @@ func bind(envToExtend environment.Env[any], formals list, params []Primitive[any
 		} else {
 			value, err := params[i].Eval(callerEnv)
 			if err != nil {
-				return environment.Env[any]{}, err
+				return environment.Env{}, err
 			}
 			envToExtend = envToExtend.Extend(bindVariable.Repr(), value)
 		}

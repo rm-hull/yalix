@@ -5,17 +5,17 @@ import (
 )
 
 type body struct {
-	BuiltIn[any]
-	exprs []Primitive[any]
+	BuiltIn
+	exprs []Primitive
 }
 
-func Body(exprs ...Primitive[any]) body {
+func Body(exprs ...Primitive) body {
 	return body{
 		exprs: exprs,
 	}
 }
 
-func (b body) Eval(env environment.Env[any]) (any, error) {
+func (b body) Eval(env environment.Env) (any, error) {
 	var result any
 	var err error
 	for _, expr := range b.exprs {

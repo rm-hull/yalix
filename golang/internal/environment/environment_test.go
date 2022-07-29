@@ -9,7 +9,7 @@ import (
 func Test_LocalStack(t *testing.T) {
 
 	t.Run("Extend", func(t *testing.T) {
-		env := MakeEnv[any]()
+		env := MakeEnv()
 		env.SetGlobal("a", 1)
 		newEnv := env.Extend("x", 2)
 
@@ -31,7 +31,7 @@ func Test_LocalStack(t *testing.T) {
 	})
 
 	t.Run("Shadowing", func(t *testing.T) {
-		env := MakeEnv[any]()
+		env := MakeEnv()
 		newEnvA := env.Extend("x", 2)
 		newEnvB := newEnvA.Extend("x", 5)
 
@@ -49,7 +49,7 @@ func Test_LocalStack(t *testing.T) {
 	})
 
 	t.Run("Freevars", func(t *testing.T) {
-		var env = MakeEnv[any]()
+		var env = MakeEnv()
 		env = env.Extend("a", 3)
 		env = env.Extend("b", 17)
 		env = env.Extend("c", 6)
@@ -75,7 +75,7 @@ func Test_LocalStack(t *testing.T) {
 	})
 
 	t.Run("Non-existent SetLocal", func(t *testing.T) {
-		env := MakeEnv[any]()
+		env := MakeEnv()
 
 		result, err := env.Get("a")
 		require.EqualError(t, err, "'a' is unbound in environment")
@@ -86,7 +86,7 @@ func Test_LocalStack(t *testing.T) {
 	})
 
 	t.Run("SetLocal doesnt bleed", func(t *testing.T) {
-		env := MakeEnv[any]()
+		env := MakeEnv()
 		env.SetGlobal("a", 12) // Global frame
 
 		extendedEnv := env.Extend("a", 16) // Local shadowing
@@ -124,7 +124,7 @@ func Test_LocalStack(t *testing.T) {
 	})
 
 	t.Run("Includes", func(t *testing.T) {
-		env := MakeEnv[any]()
+		env := MakeEnv()
 		env.SetGlobal("a", 29)
 		extendedEnv := env.Extend("b", 16)
 

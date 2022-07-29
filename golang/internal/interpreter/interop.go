@@ -7,19 +7,19 @@ import (
 type interOpFunc func(args ...any) (any, error)
 
 type interOp struct {
-	Primitive[any]
+	Primitive
 	fn   interOpFunc
-	args []Primitive[any]
+	args []Primitive
 }
 
-func InterOp(fn interOpFunc, args ...Primitive[any]) interOp {
+func InterOp(fn interOpFunc, args ...Primitive) interOp {
 	return interOp{
 		fn:   fn,
 		args: args,
 	}
 }
 
-func (i interOp) Eval(env environment.Env[any]) (any, error) {
+func (i interOp) Eval(env environment.Env) (any, error) {
 	var values = []any{}
 	for _, arg := range i.args {
 		value, err := arg.Eval(env)
@@ -37,7 +37,7 @@ func MakeGoFuncHandler(fn interOpFunc, arity uint, variadic bool) lambda {
 	// 	return lambda{}, errors.New("must be at least arity-1 when variadic == true")
 	// }
 
-	bindVariables := make([]Primitive[any], arity)
+	bindVariables := make([]Primitive, arity)
 	for i := range bindVariables {
 		bindVariables[i] = GenSym()
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 func Test_Quote(t *testing.T) {
-	env := environment.MakeEnv[any]()
+	env := environment.MakeEnv()
 
 	t.Run("Atom", func(t *testing.T) {
 		q, err := Quote(Atom(5)).Eval(env)

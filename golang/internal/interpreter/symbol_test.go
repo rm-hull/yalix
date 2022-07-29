@@ -9,7 +9,7 @@ import (
 )
 
 func Test_Symbol(t *testing.T) {
-	env := environment.MakeEnv[any]().Extend("fred", 45)
+	env := environment.MakeEnv().Extend("fred", 45)
 	symbol := Symbol("fred")
 	result, err := symbol.Eval(env)
 	require.Nil(t, err)

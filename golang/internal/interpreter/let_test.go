@@ -9,7 +9,7 @@ import (
 )
 
 func Test_Let(t *testing.T) {
-	env := environment.MakeEnv[any]()
+	env := environment.MakeEnv()
 	closure, err := MakeGoFuncHandler(func(args ...any) (any, error) { return args[0], nil }, 1, true).Eval(env)
 	if err != nil {
 		t.Error(err)

@@ -6,38 +6,38 @@ import (
 	"github.com/pkg/errors"
 )
 
-type stackEntry[T any] struct {
+type stackEntry struct {
 	name  string
-	value T
+	value any
 }
 
-type Env[T any] struct {
-	localStack  []stackEntry[T]
-	globalFrame map[string]T
+type Env struct {
+	localStack  []stackEntry
+	globalFrame map[string]any
 	stackDepth  int
 }
 
-func MakeEnv[T any]() Env[T] {
-	return Env[T]{
-		localStack:  make([]stackEntry[T], 0),
-		globalFrame: make(map[string]T),
+func MakeEnv() Env {
+	return Env{
+		localStack:  make([]stackEntry, 0),
+		globalFrame: make(map[string]any),
 		stackDepth:  0,
 	}
 }
 
 // Extend the local stack with the given name/value.
 // Note 2: global frame is shared across extended environments.
-func (env Env[T]) Extend(name string, value T) Env[T] {
+func (env Env) Extend(name string, value any) Env {
 	// Prune any shadow bindings, before pushing new name/value
-	var newStack = make([]stackEntry[T], 0)
+	var newStack = make([]stackEntry, 0)
 	for _, entry := range env.localStack {
 		if entry.name != name {
 			newStack = append(newStack, entry)
 		}
 	}
-	newStack = append(newStack, stackEntry[T]{name, value})
+	newStack = append(newStack, stackEntry{name, value})
 
-	return Env[T]{
+	return Env{
 		localStack:  newStack,
 		globalFrame: env.globalFrame,
 		stackDepth:  env.stackDepth,
@@ -45,12 +45,12 @@ func (env Env[T]) Extend(name string, value T) Env[T] {
 }
 
 // Adds a new global definition, and evaluates it according to self
-func (env *Env[T]) SetGlobal(name string, value T) {
+func (env *Env) SetGlobal(name string, value any) {
 	env.globalFrame[name] = value
 }
 
 // Look in the local stack first for the named item, then try the global frame
-func (env *Env[T]) Get(name string) (T, error) {
+func (env *Env) Get(name string) (any, error) {
 	last := len(env.localStack) - 1
 	for idx := range env.localStack {
 		if env.localStack[last-idx].name == name {
@@ -67,7 +67,7 @@ func (env *Env[T]) Get(name string) (T, error) {
 }
 
 // Traverses the local stack and sets the first instance of name with value
-func (env *Env[T]) SetLocal(name string, value T) error {
+func (env *Env) SetLocal(name string, value any) error {
 	last := len(env.localStack) - 1
 	for idx := range env.localStack {
 		if env.localStack[last-idx].name == name {
@@ -78,7 +78,7 @@ func (env *Env[T]) SetLocal(name string, value T) error {
 	return errors.Errorf("assignment disallowed: '%s' is unbound in local environment", name)
 }
 
-func (env *Env[T]) Includes(name string) bool {
+func (env *Env) Includes(name string) bool {
 	if _, ok := env.globalFrame[name]; ok {
 		return true
 	}
@@ -92,11 +92,11 @@ func (env *Env[T]) Includes(name string) bool {
 	return false
 }
 
-func (env *Env[T]) StackDepth() int {
+func (env *Env) StackDepth() int {
 	return env.stackDepth
 }
 
-func (env *Env[T]) IncreaseStackDepth() {
+func (env *Env) IncreaseStackDepth() {
 	env.stackDepth += 1
 }
 

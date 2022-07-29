@@ -1,11 +1,11 @@
 package interpreter
 
 type Caller struct {
-	funexp Primitive[any]
-	params []Primitive[any]
+	funexp Primitive
+	params []Primitive
 }
 
-func MakeCaller(items ...Primitive[any]) Caller {
+func MakeCaller(items ...Primitive) Caller {
 	return Caller{
 		funexp: items[0],
 		params: items[1:],

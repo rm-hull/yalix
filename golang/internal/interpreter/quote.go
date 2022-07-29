@@ -8,19 +8,19 @@ import (
 )
 
 type quote struct {
-	Primitive[any]
-	expr Primitive[any]
+	Primitive
+	expr Primitive
 }
 
-func (q quote) Eval(env environment.Env[any]) (any, error) {
+func (q quote) Eval(env environment.Env) (any, error) {
 	return q.expr.QuotedForm(env)
 }
 
-func (q quote) Apply(env environment.Env[any], caller Caller) (any, error) {
+func (q quote) Apply(env environment.Env, caller Caller) (any, error) {
 	return nil, errors.Errorf("cannot invoke with: '%s'", q)
 }
 
-func (q quote) QuotedForm(env environment.Env[any]) (any, error) {
+func (q quote) QuotedForm(env environment.Env) (any, error) {
 	return q.expr, nil
 }
 
@@ -33,6 +33,6 @@ func (q quote) String() string {
 }
 
 // Makes no effort to call the supplied expression when evaluated
-func Quote(expr Primitive[any]) quote {
+func Quote(expr Primitive) quote {
 	return quote{expr: expr}
 }

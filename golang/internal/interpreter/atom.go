@@ -8,7 +8,7 @@ import (
 )
 
 type atom struct {
-	Primitive[any]
+	Primitive
 	value any
 }
 
@@ -18,15 +18,15 @@ func Atom(value any) atom {
 	return atom{value: value}
 }
 
-func (a atom) Eval(env environment.Env[any]) (any, error) {
+func (a atom) Eval(env environment.Env) (any, error) {
 	return a.value, nil
 }
 
-func (a atom) Apply(env environment.Env[any], caller Caller) (any, error) {
+func (a atom) Apply(env environment.Env, caller Caller) (any, error) {
 	return nil, errors.Errorf("cannot invoke with: '%s'", a)
 }
 
-func (a atom) QuotedForm(env environment.Env[any]) (any, error) {
+func (a atom) QuotedForm(env environment.Env) (any, error) {
 	return a.Eval(env)
 }
 

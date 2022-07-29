@@ -14,7 +14,7 @@ func tmp_add(args ...any) (any, error) {
 }
 
 func Test_InterOp(t *testing.T) {
-	env := environment.MakeEnv[any]()
+	env := environment.MakeEnv()
 
 	result, err := InterOp(tmp_add, Atom(12), Atom(13)).Eval(env)
 	require.Nil(t, err)

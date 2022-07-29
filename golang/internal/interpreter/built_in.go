@@ -1,5 +1,5 @@
 package interpreter
 
-type BuiltIn[T any] interface {
-	Primitive[T]
+type BuiltIn interface {
+	Primitive
 }

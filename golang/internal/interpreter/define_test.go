@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func _fact_body(name string) Primitive[any] {
+func _fact_body(name string) Primitive {
 	return If(List(Symbol("zero?"), Symbol("x")),
 		Atom(1),
 		List(Symbol("*"),
@@ -19,8 +19,8 @@ func _fact_body(name string) Primitive[any] {
 					Atom(1)))))
 }
 
-func _makeExtendedEnv() (*environment.Env[any], error) {
-	env := environment.MakeEnv[any]()
+func _makeExtendedEnv() (*environment.Env, error) {
+	env := environment.MakeEnv()
 	env.SetGlobal("*debug*", false)
 
 	_, err := Define(Symbol("*"), MakeGoFuncHandler(operator.Mult, 1, true)).Eval(env)
@@ -49,7 +49,7 @@ func _makeExtendedEnv() (*environment.Env[any], error) {
 }
 
 func Test_Define(t *testing.T) {
-	env := environment.MakeEnv[any]()
+	env := environment.MakeEnv()
 
 	t.Run("Too many args", func(t *testing.T) {
 		result, err := Define(Symbol("err"), Atom("atom1"), Atom(3)).Eval(env)

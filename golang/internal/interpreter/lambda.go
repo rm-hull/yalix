@@ -9,14 +9,14 @@ import (
 var VARIADIC_MARKER = Symbol(".")
 
 type lambda struct {
-	Primitive[any]
+	Primitive
 	formals    list
 	body       body
 	isVariadic bool
 }
 
 // A recursive n-argument anonymous function
-func Lambda(formals list, body ...Primitive[any]) lambda {
+func Lambda(formals list, body ...Primitive) lambda {
 	return lambda{
 		formals:    formals,
 		body:       Body(body...),
@@ -28,14 +28,14 @@ func (l lambda) Arity() int {
 	return l.formals.Len()
 }
 
-func (l lambda) HasSufficientArity(args []Primitive[any]) bool {
+func (l lambda) HasSufficientArity(args []Primitive) bool {
 	if l.isVariadic {
 		return len(args) >= l.formals.Index(VARIADIC_MARKER)
 	}
 	return len(args) == l.Arity()
 }
 
-func (l lambda) Eval(env environment.Env[any]) (any, error) {
+func (l lambda) Eval(env environment.Env) (any, error) {
 	if l.isVariadic {
 		if l.formals.Count(VARIADIC_MARKER) > 1 {
 			return nil, errors.Errorf("invalid variadic argument spec: %s", l.formals)

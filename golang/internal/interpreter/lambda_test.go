@@ -9,7 +9,7 @@ import (
 )
 
 func Test_Lambda(t *testing.T) {
-	env := environment.MakeEnv[any]()
+	env := environment.MakeEnv()
 	closure, err := MakeGoFuncHandler(operator.Add, 1, true).Eval(env)
 	if err != nil {
 		t.Error(err)

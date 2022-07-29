@@ -6,13 +6,13 @@ import (
 )
 
 type _if struct {
-	BuiltIn[any]
-	testExpr Primitive[any]
-	thenExpr Primitive[any]
-	elseExpr Primitive[any]
+	BuiltIn
+	testExpr Primitive
+	thenExpr Primitive
+	elseExpr Primitive
 }
 
-func (i _if) Eval(env environment.Env[any]) (any, error) {
+func (i _if) Eval(env environment.Env) (any, error) {
 	test, err := i.testExpr.Eval(env)
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (i _if) Eval(env environment.Env[any]) (any, error) {
 	}
 }
 
-func If(testExpr, thenExpr, elseExpr Primitive[any]) _if {
+func If(testExpr, thenExpr, elseExpr Primitive) _if {
 	return _if{
 		testExpr: testExpr,
 		thenExpr: thenExpr,

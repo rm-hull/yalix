@@ -9,7 +9,7 @@ import (
 )
 
 func Test_Atom(t *testing.T) {
-	env := environment.MakeEnv[any]()
+	env := environment.MakeEnv()
 	atom := Atom(56)
 	result, err := atom.Eval(env)
 	require.Nil(t, err)

@@ -8,20 +8,20 @@ import (
 )
 
 type let struct {
-	BuiltIn[any]
+	BuiltIn
 	binding list
 	body    body
 }
 
 // A local binding
-func Let(binding list, body ...Primitive[any]) let {
+func Let(binding list, body ...Primitive) let {
 	return let{
 		binding: binding,
 		body:    Body(body...),
 	}
 }
 
-func (l let) Eval(env environment.Env[any]) (any, error) {
+func (l let) Eval(env environment.Env) (any, error) {
 	if l.binding.Len() != 2 {
 		return nil, errors.Errorf("let binding applied with wrong arity: 2 args expected, %d supplied", l.binding.Len())
 	}

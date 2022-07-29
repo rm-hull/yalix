@@ -9,7 +9,7 @@ import (
 )
 
 func Test_If(t *testing.T) {
-	env := environment.MakeEnv[any]()
+	env := environment.MakeEnv()
 
 	t.Run("Truthy", func(t *testing.T) {
 		result, err := If(Atom(true), Atom("yes"), Atom("No")).Eval(env)

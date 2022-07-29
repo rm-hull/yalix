@@ -9,15 +9,15 @@ import (
 )
 
 type symbol struct {
-	BuiltIn[any]
+	BuiltIn
 	name string
 }
 
-func (s symbol) Eval(env environment.Env[any]) (any, error) {
+func (s symbol) Eval(env environment.Env) (any, error) {
 	return env.Get(s.name)
 }
 
-func (s symbol) Apply(env environment.Env[any], caller Caller) (any, error) {
+func (s symbol) Apply(env environment.Env, caller Caller) (any, error) {
 	return nil, errors.Errorf("cannot invoke with: '%s'", s)
 }
 
@@ -29,7 +29,7 @@ func (s symbol) Repr() string {
 	return s.name
 }
 
-func (s symbol) QuotedForm(env environment.Env[any]) (any, error) {
+func (s symbol) QuotedForm(env environment.Env) (any, error) {
 	if strings.HasSuffix(s.name, "#") && env.Includes(SYNTAX_QUOTE_ID) {
 		uniqueId, err := env.Get(SYNTAX_QUOTE_ID)
 		if err != nil {

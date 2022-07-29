@@ -22,7 +22,7 @@ func _arity2add(args ...any) (any, error) {
 }
 
 func Test_List(t *testing.T) {
-	env := environment.MakeEnv[any]()
+	env := environment.MakeEnv()
 	closure, err := MakeGoFuncHandler(_arity2add, 2, false).Eval(env)
 	if err != nil {
 		t.Error(err)

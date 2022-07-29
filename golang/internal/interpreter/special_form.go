@@ -7,31 +7,31 @@ import (
 	"github.com/pkg/errors"
 )
 
-var SPECIAL_FORMS = map[string]func(params ...Primitive[any]) (Primitive[any], error){
-	"symbol": func(params ...Primitive[any]) (Primitive[any], error) {
+var SPECIAL_FORMS = map[string]func(params ...Primitive) (Primitive, error){
+	"symbol": func(params ...Primitive) (Primitive, error) {
 		// TODO: Add error handling
 		return Symbol(fmt.Sprint(params[0])), nil
 	},
-	"quote": func(params ...Primitive[any]) (Primitive[any], error) {
+	"quote": func(params ...Primitive) (Primitive, error) {
 		// TODO: Add error handling
 		return Quote(params[0]), nil
 	},
-	"lambda": func(params ...Primitive[any]) (Primitive[any], error) {
+	"lambda": func(params ...Primitive) (Primitive, error) {
 		// TODO: Add error handling
 		return Lambda(params[0].(list), params[1:]...), nil
 	},
-	"begin": func(params ...Primitive[any]) (Primitive[any], error) {
+	"begin": func(params ...Primitive) (Primitive, error) {
 		// TODO: Add error handling
 		return Body(params...), nil
 	},
-	"if": func(params ...Primitive[any]) (Primitive[any], error) {
+	"if": func(params ...Primitive) (Primitive, error) {
 		// TODO: Add error handling
 		if len(params) == 2 {
 			return If(params[0], params[1], NIL), nil
 		}
 		return If(params[0], params[1], params[2]), nil
 	},
-	"let": func(params ...Primitive[any]) (Primitive[any], error) {
+	"let": func(params ...Primitive) (Primitive, error) {
 		// TODO: Add error handling
 		return Let(params[0].(list), params[1:]...), nil
 	},
@@ -54,9 +54,9 @@ var SPECIAL_FORMS = map[string]func(params ...Primitive[any]) (Primitive[any], e
 // }
 
 type specialForm struct {
-	Primitive[any]
+	Primitive
 	name string
-	impl func(params ...Primitive[any]) (Primitive[any], error)
+	impl func(params ...Primitive) (Primitive, error)
 }
 
 // A proxy for other built-in types
@@ -67,11 +67,11 @@ func SpecialForm(name string) specialForm {
 	}
 }
 
-func (sf specialForm) Eval(env environment.Env[any]) (any, error) {
+func (sf specialForm) Eval(env environment.Env) (any, error) {
 	return sf, nil
 }
 
-func (sf specialForm) Apply(env environment.Env[any], caller Caller) (any, error) {
+func (sf specialForm) Apply(env environment.Env, caller Caller) (any, error) {
 	if sf.impl == nil {
 		return nil, errors.Errorf("Unknown special form: '%s'", sf.name)
 	}
@@ -82,6 +82,6 @@ func (sf specialForm) Apply(env environment.Env[any], caller Caller) (any, error
 	return form.Eval(env)
 }
 
-func (sf specialForm) QuotedForm(env environment.Env[any]) (any, error) {
+func (sf specialForm) QuotedForm(env environment.Env) (any, error) {
 	return sf.Eval(env)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func Test_SpecialForm_Quote(t *testing.T) {
-	env := environment.MakeEnv[any]()
+	env := environment.MakeEnv()
 
 	sf := SpecialForm("quote")
 

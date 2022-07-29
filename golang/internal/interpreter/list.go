@@ -66,11 +66,11 @@ import (
 //                     self, 'Cannot invoke with: \'{0}\'', value)
 
 type list struct {
-	Primitive[any]
-	items []Primitive[any]
+	Primitive
+	items []Primitive
 }
 
-func (l list) Eval(env environment.Env[any]) (any, error) {
+func (l list) Eval(env environment.Env) (any, error) {
 	if len(l.items) > 0 {
 		if debug, err := env.Get("*debug*"); err == nil && debug.(bool) {
 			fmt.Printf("%s%s\n", strings.Repeat("  ", env.StackDepth()), l)
@@ -82,7 +82,7 @@ func (l list) Eval(env environment.Env[any]) (any, error) {
 			return nil, err
 		}
 
-		primitive, err := util.CastAs[Primitive[any]](value)
+		primitive, err := util.CastAs[Primitive](value)
 		if err != nil {
 			return nil, err
 		}
@@ -95,11 +95,11 @@ func (l list) Len() int {
 	return len(l.items)
 }
 
-func (l list) Includes(item Primitive[any]) bool {
+func (l list) Includes(item Primitive) bool {
 	return l.Index(item) >= 0
 }
 
-func (l list) Index(item Primitive[any]) int {
+func (l list) Index(item Primitive) int {
 	for index, elem := range l.items {
 		if item == elem {
 			return index
@@ -108,7 +108,7 @@ func (l list) Index(item Primitive[any]) int {
 	return -1
 }
 
-func (l list) Count(item Primitive[any]) int {
+func (l list) Count(item Primitive) int {
 	var count = 0
 	for _, elem := range l.items {
 		if item == elem {
@@ -131,7 +131,7 @@ func (l list) String() string {
 	return sb.String()
 }
 
-func List(args ...Primitive[any]) list {
+func List(args ...Primitive) list {
 	return list{
 		items: args,
 	}

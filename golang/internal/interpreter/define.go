@@ -6,11 +6,11 @@ import (
 )
 
 type define struct {
-	BuiltIn[any]
-	args []Primitive[any]
+	BuiltIn
+	args []Primitive
 }
 
-func Define(args ...Primitive[any]) define {
+func Define(args ...Primitive) define {
 	return define{args: args}
 }
 
@@ -26,7 +26,7 @@ func (d define) body() body {
 	return Body(d.args[1:]...)
 }
 
-func (d define) Eval(env environment.Env[any]) (any, error) {
+func (d define) Eval(env environment.Env) (any, error) {
 
 	if len(d.args) == 0 {
 		return nil, errors.New("too few arguments supplied to define")
