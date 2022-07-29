@@ -33,7 +33,7 @@ func Test_Let(t *testing.T) {
 	t.Run("Invalid binding form type", func(t *testing.T) {
 		result, err := Let(List(Atom("Hello"), Atom(3)),
 			List(Symbol("list"), Symbol("f"), Symbol("f"))).Eval(env)
-		require.EqualError(t, err, "let binding form applied with invalid type: expected symbol")
+		require.EqualError(t, err, "let binding form applied with invalid type: cannot convert 'Hello' (interpreter.atom) to interpreter.symbol")
 		require.Nil(t, result)
 	})
 }

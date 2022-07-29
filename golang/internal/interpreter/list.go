@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"yalix/internal/environment"
+	"yalix/internal/util"
 )
 
 // # http://code.activestate.com/recipes/474088/
@@ -81,7 +82,11 @@ func (l list) Eval(env environment.Env[any]) (any, error) {
 			return nil, err
 		}
 
-		return value.(Primitive[any]).Apply(env, caller)
+		primitive, err := util.CastAs[Primitive[any]](value)
+		if err != nil {
+			return nil, err
+		}
+		return primitive.Apply(env, caller)
 	}
 	return nil, nil
 }

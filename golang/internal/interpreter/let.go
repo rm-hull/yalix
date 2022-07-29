@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"yalix/internal/environment"
+	"yalix/internal/util"
 
 	"github.com/pkg/errors"
 )
@@ -25,9 +26,9 @@ func (l let) Eval(env environment.Env[any]) (any, error) {
 		return nil, errors.Errorf("let binding applied with wrong arity: 2 args expected, %d supplied", l.binding.Len())
 	}
 
-	bindingForm, ok := l.binding.items[0].(symbol)
-	if !ok {
-		return nil, errors.New("let binding form applied with invalid type: expected symbol")
+	bindingForm, err := util.CastAs[symbol](l.binding.items[0])
+	if err != nil {
+		return nil, errors.Wrap(err, "let binding form applied with invalid type")
 	}
 	value, err := l.binding.items[1].Eval(env)
 	if err != nil {
