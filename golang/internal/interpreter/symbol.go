@@ -35,7 +35,7 @@ func (s symbol) QuotedForm(env environment.Env) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		name := fmt.Sprintf("%s__%s__auto__", strings.TrimSuffix(s.name, "#"), uniqueId)
+		name := fmt.Sprintf("%s__%d__auto__", strings.TrimSuffix(s.name, "#"), uniqueId)
 		return Symbol(name), nil
 	}
 	return s, nil
