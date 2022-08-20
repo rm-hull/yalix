@@ -24,7 +24,7 @@ func Test_Symbol(t *testing.T) {
 		require.EqualError(t, err, "cannot invoke with: 'fred'")
 	})
 
-	t.Run("Quoted", func(t *testing.T) {
+	t.Run("SyntaxQuoted", func(t *testing.T) {
 		symbol1 := Symbol("bob#")
 		result1, err := SyntaxQuote(symbol1).Eval(env)
 		require.Nil(t, err)
@@ -33,5 +33,10 @@ func Test_Symbol(t *testing.T) {
 		result2, err := SyntaxQuote(symbol2).Eval(env)
 		require.Nil(t, err)
 		require.NotEqual(t, result1, result2)
+	})
+
+	t.Run("QuotedForm with no next id", func(t *testing.T) {
+		_, err := Symbol("bob#").QuotedForm(env)
+		require.EqualError(t, err, "'G__syntax_quote_id' is unbound in environment")
 	})
 }

@@ -30,7 +30,7 @@ func (s symbol) Repr() string {
 }
 
 func (s symbol) QuotedForm(env environment.Env) (any, error) {
-	if strings.HasSuffix(s.name, "#") && env.Includes(SYNTAX_QUOTE_ID) {
+	if strings.HasSuffix(s.name, "#") {
 		uniqueId, err := env.Get(SYNTAX_QUOTE_ID)
 		if err != nil {
 			return nil, err
