@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParser(t *testing.T) {
+func Test_Parser(t *testing.T) {
 	parser := SchemeParser(true)
 
 	testCases := map[string]struct {
@@ -63,6 +63,11 @@ func TestParser(t *testing.T) {
 				interpreter.Quote(interpreter.Symbol("hello")),
 			),
 		)},
+
+		// Comments
+		// "comment/1": {input: `; this is a comment`, expected: nil},
+		// "comment/2": {input: `; this is a comment\nhello`, expected: interpreter.Symbol("hello")},
+		// "comment/3": {input: `hello ; this is a comment\nworld`, expected: interpreter.Symbol("hello")},
 	}
 
 	for name, tc := range testCases {
@@ -71,8 +76,13 @@ func TestParser(t *testing.T) {
 			scanner := parsec.NewScanner(data).TrackLineno()
 			node, _ := parser(scanner)
 
-			scanner.Lineno()
-			require.Equal(t, tc.expected, node)
+			if tc.expected == nil {
+				require.Nil(t, node)
+			} else {
+				primitives, err := ToPrimitives(node)
+				require.Nil(t, err)
+				require.Equal(t, tc.expected, (*primitives)[0])
+			}
 		})
 	}
 }

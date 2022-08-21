@@ -52,3 +52,7 @@ func (l lambda) Eval(env environment.Env) (any, error) {
 // 				self, 'Formals are not distinct: {0}', self.formals)
 
 // return Closure(env, self)
+
+func (l lambda) Apply(env environment.Env, caller Caller) (any, error) {
+	return nil, errors.New("cannot invoke with: <lambda>")
+}

@@ -1,6 +1,9 @@
 package ast
 
 import (
+	"yalix/internal/interpreter"
+	"yalix/internal/util"
+
 	parsec "github.com/prataprc/goparsec"
 )
 
@@ -34,9 +37,35 @@ func makeParser(ast *parsec.AST) parsec.Parser {
 
 	quote := parsec.And(quoteNodify, parsec.Atom("'", "QUOTE"), &expr)
 
-	expr = parsec.OrdChoice(first, atom, list, quote)
+	expr = parsec.OrdChoice(first, atom, list, quote, Comment())
 
-	// TODO: return parsec.Kleene(nil, expr)
-	// For now, just return a single expression
-	return expr
+	return parsec.And(first, parsec.Kleene(nil, expr), ast.End("EOF"))
+}
+
+func Comment() parsec.Parser {
+	return func(s parsec.Scanner) (parsec.ParsecNode, parsec.Scanner) {
+		_, s = s.SkipAny(`;[^^].*`)
+		return nil, s
+	}
+}
+
+func ToPrimitives(node parsec.ParsecNode) (*[]interpreter.Primitive, error) {
+	if node == nil {
+		return nil, nil
+	}
+
+	nodes, err := util.CastAs[[]parsec.ParsecNode](node)
+	if err != nil {
+		return nil, err
+	}
+
+	var primitives = make([]interpreter.Primitive, len(nodes))
+	for i, node := range nodes {
+		prim, err := util.CastAs[interpreter.Primitive](node)
+		if err != nil {
+			return nil, err
+		}
+		primitives[i] = prim
+	}
+	return &primitives, nil
 }

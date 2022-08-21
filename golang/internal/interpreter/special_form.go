@@ -20,6 +20,10 @@ var SPECIAL_FORMS = map[string]func(params ...Primitive) (Primitive, error){
 		// TODO: Add error handling
 		return Lambda(params[0].(list), params[1:]...), nil
 	},
+	"define": func(params ...Primitive) (Primitive, error) {
+		// TODO: Add error handling
+		return Define(params...), nil
+	},
 	"begin": func(params ...Primitive) (Primitive, error) {
 		// TODO: Add error handling
 		return Body(params...), nil
