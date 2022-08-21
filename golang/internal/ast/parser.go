@@ -23,9 +23,6 @@ func makeParser(ast *parsec.AST) parsec.Parser {
 		parsec.Token("(false|#f)", "FALSE"),
 		parsec.Token(`"[^"]*"`, "DBLQUOTESTRING"),
 		parsec.Atom("nil", "NIL"),
-	)
-
-	symbol := parsec.OrdChoice(symbolNodify,
 		parsec.Token("[a-z0-9-/_:*+=!?<>.]+", "SYMBOL"),
 	)
 
@@ -37,7 +34,7 @@ func makeParser(ast *parsec.AST) parsec.Parser {
 
 	quote := parsec.And(quoteNodify, parsec.Atom("'", "QUOTE"), &expr)
 
-	expr = parsec.OrdChoice(first, atom, symbol, list, quote)
+	expr = parsec.OrdChoice(first, atom, list, quote)
 
 	// TODO: return parsec.Kleene(nil, expr)
 	// For now, just return a single expression

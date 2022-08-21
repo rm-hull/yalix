@@ -41,17 +41,9 @@ func atomNodify(ns []parsec.ParsecNode) parsec.ParsecNode {
 			return interpreter.Atom(false)
 		case "DBLQUOTESTRING":
 			return interpreter.Atom(term.Value[1 : len(term.Value)-1])
+		case "SYMBOL":
+			return interpreter.Symbol(term.Value)
 		}
-	}
-
-	return nil
-}
-
-func symbolNodify(ns []parsec.ParsecNode) parsec.ParsecNode {
-	node := first(ns)
-
-	if term, err := util.CastAs[*parsec.Terminal](node); err == nil && term.Name == "SYMBOL" {
-		return interpreter.Symbol(term.Value)
 	}
 
 	return nil
