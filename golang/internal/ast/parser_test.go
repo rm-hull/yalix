@@ -81,6 +81,7 @@ func Test_Parser(t *testing.T) {
 			} else {
 				primitives, err := ToPrimitives(node)
 				require.Nil(t, err)
+				require.Equal(t, 1, len(*primitives))
 				require.Equal(t, tc.expected, (*primitives)[0])
 			}
 		})

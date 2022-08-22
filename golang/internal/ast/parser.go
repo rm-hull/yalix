@@ -37,12 +37,12 @@ func makeParser(ast *parsec.AST) parsec.Parser {
 
 	quote := parsec.And(quoteNodify, parsec.Atom("'", "QUOTE"), &expr)
 
-	expr = parsec.OrdChoice(first, atom, list, quote, Comment())
+	expr = parsec.OrdChoice(first, atom, list, quote, comment())
 
 	return parsec.And(first, parsec.Kleene(nil, expr), ast.End("EOF"))
 }
 
-func Comment() parsec.Parser {
+func comment() parsec.Parser {
 	return func(s parsec.Scanner) (parsec.ParsecNode, parsec.Scanner) {
 		_, s = s.SkipAny(`;[^^].*`)
 		return nil, s
