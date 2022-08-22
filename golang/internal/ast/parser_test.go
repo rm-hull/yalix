@@ -4,7 +4,6 @@ import (
 	"testing"
 	"yalix/internal/interpreter"
 
-	parsec "github.com/prataprc/goparsec"
 	"github.com/stretchr/testify/require"
 )
 
@@ -63,22 +62,17 @@ func Test_Parser(t *testing.T) {
 				interpreter.Quote(interpreter.Symbol("hello")),
 			),
 		)},
-
-		// Comments
-		// "comment/1": {input: `; this is a comment`, expected: nil},
-		// "comment/2": {input: `; this is a comment\nhello`, expected: interpreter.Symbol("hello")},
-		// "comment/3": {input: `hello ; this is a comment\nworld`, expected: interpreter.Symbol("hello")},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			data := []byte(tc.input)
-			scanner := parsec.NewScanner(data).TrackLineno()
-			node, _ := parser(scanner)
+			text := []byte(tc.input)
+			node, _ := parser(NewScanner(text))
 
 			if tc.expected == nil {
 				require.Nil(t, node)
 			} else {
+				require.NotNil(t, node)
 				primitives, err := ToPrimitives(node)
 				require.Nil(t, err)
 				require.Equal(t, 1, len(*primitives))
@@ -86,4 +80,38 @@ func Test_Parser(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestComments(t *testing.T) {
+	parser := SchemeParser(true)
+	text := []byte(`
+	
+	(hello 
+		1 
+		; comment1
+		2 
+		3) ; comment2
+	; comment3
+	world
+	
+	;;;;;;;;;;;;
+	; comment4 ;
+	; comment5 ;
+	;;;;;;;;;;;;
+	`)
+	node, _ := parser(NewScanner(text))
+
+	require.NotNil(t, node)
+	primitives, err := ToPrimitives(node)
+	require.Nil(t, err)
+	expected := []interpreter.Primitive{
+		interpreter.List(
+			interpreter.Symbol("hello"),
+			interpreter.Atom(1),
+			interpreter.Atom(2),
+			interpreter.Atom(3),
+		),
+		interpreter.Symbol("world"),
+	}
+	require.Equal(t, &expected, primitives)
 }

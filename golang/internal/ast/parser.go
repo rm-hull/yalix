@@ -16,6 +16,11 @@ func SchemeParser(debug bool) parsec.Parser {
 	return makeParser(ast)
 }
 
+func NewScanner(text []byte) parsec.Scanner {
+	// WSPattern also swallows comment lines (; to EOL)
+	return parsec.NewScanner(text).TrackLineno().SetWSPattern(`^[ \t\r\n]+(?m:(;[^^].*$)?[ \t\r\n]*)*`)
+}
+
 func makeParser(ast *parsec.AST) parsec.Parser {
 	var expr parsec.Parser
 
@@ -37,15 +42,18 @@ func makeParser(ast *parsec.AST) parsec.Parser {
 
 	quote := parsec.And(quoteNodify, parsec.Atom("'", "QUOTE"), &expr)
 
-	expr = parsec.OrdChoice(first, atom, list, quote, comment())
+	expr = parsec.OrdChoice(first, atom, list, quote)
 
-	return parsec.And(first, parsec.Kleene(nil, expr), ast.End("EOF"))
+	return parsec.And(first, parsec.Kleene(nil, expr), eof())
 }
 
-func comment() parsec.Parser {
+func eof() parsec.Parser {
 	return func(s parsec.Scanner) (parsec.ParsecNode, parsec.Scanner) {
-		_, s = s.SkipAny(`;[^^].*`)
-		return nil, s
+		_, news := s.SkipWS()
+		if news.Endof() {
+			return parsec.NewTerminal("EOF", "", news.GetCursor()), news
+		}
+		return nil, news
 	}
 }
 

@@ -18,17 +18,19 @@ func Test_Global(t *testing.T) {
 	// require.Nil(t, err)
 
 	result, err := Eval(&env, `
-	(define (zero? n)
-  	(= n 0))
+		; Factorial test
+		; --------------
 
-	(define factorial
-		(lambda (x)
-			(if (zero? x)
-				1
-				(* x (factorial (- x 1))))))
+		(define (zero? n)
+			(= n 0))
 
-	(factorial 10)
-`)
+		(define factorial
+			(lambda (x)
+				(if (zero? x)
+					1
+					(* x (factorial (- x 1))))))
+
+		(factorial 10)`)
 	require.Nil(t, err)
 	require.Equal(t, 3628800, result)
 }

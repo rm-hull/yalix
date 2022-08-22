@@ -2,14 +2,12 @@ package global
 
 import (
 	"os"
-	"strings"
 	"yalix/internal/ast"
 	"yalix/internal/environment"
 	"yalix/internal/interpreter"
 	"yalix/internal/operator"
 
 	"github.com/pkg/errors"
-	parsec "github.com/prataprc/goparsec"
 )
 
 func BootstrapSpecialForms(env *environment.Env) {
@@ -56,7 +54,7 @@ func BootstrapLispFunctions(env *environment.Env, fromFile string) error {
 
 func Eval(env *environment.Env, data string) (any, error) {
 	parser := ast.SchemeParser(true)
-	scanner := parsec.NewScanner([]byte(strings.TrimRight(data, " \n\r\t"))).TrackLineno()
+	scanner := ast.NewScanner([]byte(data))
 	node, news := parser(scanner)
 
 	primitives, err := ast.ToPrimitives(node)
