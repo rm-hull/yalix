@@ -1,4 +1,4 @@
-package global
+package internal
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ func Test_Global(t *testing.T) {
 	// err = BootstrapLispFunctions(&env, "/Users/richardhull/dev/yalix/core/num.ylx")
 	// require.Nil(t, err)
 
-	result, err := Eval(&env, `
+	result, err := eval(&env, `
 		; Factorial test
 		; --------------
 

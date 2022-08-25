@@ -1,4 +1,4 @@
-package global
+package internal
 
 import (
 	"os"
@@ -48,11 +48,22 @@ func BootstrapLispFunctions(env *environment.Env, fromFile string) error {
 		return err
 	}
 
-	_, err = Eval(env, string(data))
+	_, err = eval(env, string(data))
 	return err
 }
 
-func Eval(env *environment.Env, data string) (any, error) {
+func CreateInitialEnv() (*environment.Env, error) {
+	env := environment.MakeEnv()
+
+	BootstrapSpecialForms(&env)
+	err := BootstrapNativeFunctions(&env)
+	if err != nil {
+		return nil, err
+	}
+	return &env, nil
+}
+
+func eval(env *environment.Env, data string) (any, error) {
 	parser := ast.SchemeParser(true)
 	scanner := ast.NewScanner([]byte(data))
 	node, news := parser(scanner)

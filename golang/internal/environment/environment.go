@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"strings"
 	"sync/atomic"
 
 	"github.com/pkg/errors"
@@ -47,6 +48,16 @@ func (env Env) Extend(name string, value any) Env {
 // Adds a new global definition, and evaluates it according to self
 func (env *Env) SetGlobal(name string, value any) {
 	env.globalFrame[name] = value
+}
+
+func (env *Env) GlobalMatches(prefix string) *[]string {
+	var matches = make([]string, 0)
+	for name := range env.globalFrame {
+		if strings.HasPrefix(name, prefix) {
+			matches = append(matches, name)
+		}
+	}
+	return &matches
 }
 
 // Look in the local stack first for the named item, then try the global frame
