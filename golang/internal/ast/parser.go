@@ -18,7 +18,7 @@ func SchemeParser(debug bool) parsec.Parser {
 
 func NewScanner(text []byte) parsec.Scanner {
 	// WSPattern also swallows comment lines (; to EOL)
-	return parsec.NewScanner(text).TrackLineno().SetWSPattern(`^[ \t\r\n]+(?m:(;[^^].*$)?[ \t\r\n]*)*`)
+	return parsec.NewScanner(text).TrackLineno().SetWSPattern(`^[ \t\r\n]*(?m:(;.*$)?[ \t\r\n]*)*`)
 }
 
 func makeParser(ast *parsec.AST) parsec.Parser {
