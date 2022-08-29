@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	"yalix/internal/environment"
+	"yalix/internal/util"
 
 	"runtime/debug"
 
@@ -179,7 +180,7 @@ func read(l *readline.Instance, count int) (string, error) {
 		}
 		entry += fmt.Sprintln(line)
 		l.SetPrompt(secondaryPrompt)
-		parensCount := balance(entry, 0)
+		parensCount := util.Balance(entry)
 		if parensCount > 0 {
 			// prefill = strings.Repeat("  ", parensCount)
 		} else {
@@ -194,16 +195,4 @@ func print(result any, err error) {
 		panic(err)
 	}
 	fmt.Println(result)
-}
-
-func balance(text string, count int) int {
-	if text == "" {
-		return count
-	} else if text[0] == '(' && count >= 0 {
-		return balance(text[1:], count+1)
-	} else if text[0] == ')' {
-		return balance(text[1:], count-1)
-	} else {
-		return balance(text[1:], count)
-	}
 }
