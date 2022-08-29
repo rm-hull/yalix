@@ -7,36 +7,33 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TODO: Add error handling
 var SPECIAL_FORMS = map[string]func(params ...Primitive) (Primitive, error){
 	"symbol": func(params ...Primitive) (Primitive, error) {
-		// TODO: Add error handling
 		return Symbol(fmt.Sprint(params[0])), nil
 	},
 	"quote": func(params ...Primitive) (Primitive, error) {
-		// TODO: Add error handling
 		return Quote(params[0]), nil
 	},
+	"λ": func(params ...Primitive) (Primitive, error) {
+		return Lambda(params[0].(list), params[1:]...), nil
+	},
 	"lambda": func(params ...Primitive) (Primitive, error) {
-		// TODO: Add error handling
 		return Lambda(params[0].(list), params[1:]...), nil
 	},
 	"define": func(params ...Primitive) (Primitive, error) {
-		// TODO: Add error handling
 		return Define(params...), nil
 	},
 	"begin": func(params ...Primitive) (Primitive, error) {
-		// TODO: Add error handling
 		return Body(params...), nil
 	},
 	"if": func(params ...Primitive) (Primitive, error) {
-		// TODO: Add error handling
 		if len(params) == 2 {
 			return If(params[0], params[1], NIL), nil
 		}
 		return If(params[0], params[1], params[2]), nil
 	},
 	"let": func(params ...Primitive) (Primitive, error) {
-		// TODO: Add error handling
 		return Let(params[0].(list), params[1:]...), nil
 	},
 }

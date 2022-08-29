@@ -31,7 +31,7 @@ func makeParser(ast *parsec.AST) parsec.Parser {
 		parsec.Token("(false|#f)", "FALSE"),
 		parsec.Token(`"[^"]*"`, "DBLQUOTESTRING"),
 		parsec.Atom("nil", "NIL"),
-		parsec.Token("[a-z0-9-/_:*+=!?<>.]+", "SYMBOL"),
+		parsec.Token("([a-z0-9-/_:*+=!?<>.]+|λ)", "SYMBOL"),
 	)
 
 	list := parsec.And(listNodify,

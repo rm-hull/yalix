@@ -34,6 +34,7 @@ func Test_Parser(t *testing.T) {
 		"symbol/with punctuation/3": {input: `+`, expected: interpreter.Symbol("+")},
 		"symbol/with keyword":       {input: `:red`, expected: interpreter.Symbol(":red")},
 		"symbol/with hyphen":        {input: `hair-color`, expected: interpreter.Symbol("hair-color")},
+		"symbol/lambda alias":       {input: `λ`, expected: interpreter.Symbol("λ")},
 
 		// Lists
 		"list/empty":      {input: `()`, expected: interpreter.List()},
