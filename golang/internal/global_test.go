@@ -2,22 +2,16 @@ package internal
 
 import (
 	"testing"
-	"yalix/internal/environment"
 
 	"github.com/stretchr/testify/require"
 )
 
 func Test_Global(t *testing.T) {
 
-	env := environment.MakeEnv()
-
-	BootstrapSpecialForms(&env)
-	err := BootstrapNativeFunctions(&env)
-	require.Nil(t, err)
-	err = BootstrapLispFunctions(&env, "/Users/richardhull/dev/yalix/core/num.ylx")
+	env, err := CreateInitialEnv()
 	require.Nil(t, err)
 
-	result, err := eval(&env, `
+	result, err := eval(env, `
 		; Factorial test
 		; --------------
 

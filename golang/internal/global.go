@@ -1,7 +1,9 @@
 package internal
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"yalix/internal/ast"
 	"yalix/internal/environment"
 	"yalix/internal/interpreter"
@@ -9,6 +11,8 @@ import (
 
 	"github.com/pkg/errors"
 )
+
+var CORE_LIBRARIES = []string{"core", "hof", "num", "macros", "repr", "test"}
 
 func BootstrapSpecialForms(env *environment.Env) {
 	for name := range interpreter.SPECIAL_FORMS {
@@ -43,14 +47,24 @@ func BootstrapNativeFunctions(env *environment.Env) error {
 	return nil
 }
 
-func BootstrapLispFunctions(env *environment.Env, fromFile string) error {
-	data, err := os.ReadFile(fromFile)
-	if err != nil {
-		return err
-	}
+func BootstrapLispFunctions(env *environment.Env, modules ...string) error {
+	for _, module := range modules {
+		absPath, err := filepath.Abs(fmt.Sprintf("../../core/%s.ylx", module))
+		if err != nil {
+			return err
+		}
 
-	_, err = eval(env, string(data))
-	return err
+		data, err := os.ReadFile(absPath)
+		if err != nil {
+			return err
+		}
+
+		_, err = eval(env, string(data))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func CreateInitialEnv() (*environment.Env, error) {
@@ -58,6 +72,11 @@ func CreateInitialEnv() (*environment.Env, error) {
 
 	BootstrapSpecialForms(&env)
 	err := BootstrapNativeFunctions(&env)
+	if err != nil {
+		return nil, err
+	}
+
+	err = BootstrapLispFunctions(&env, CORE_LIBRARIES...)
 	if err != nil {
 		return nil, err
 	}
