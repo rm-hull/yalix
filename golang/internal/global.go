@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"yalix/internal/ast"
 	"yalix/internal/environment"
 	"yalix/internal/interpreter"
 	"yalix/internal/operator"
+	"yalix/internal/util"
 
 	"github.com/pkg/errors"
 )
@@ -21,7 +23,7 @@ func BootstrapSpecialForms(env *environment.Env) {
 }
 
 func BootstrapNativeFunctions(env *environment.Env) error {
-	env.SetGlobal("*debug*", true)
+	env.SetGlobal("*debug*", false)
 	functions := map[string]interpreter.Primitive{
 		"atom?": interpreter.MakeGoFuncHandler(operator.IsNil, 1, false),
 
@@ -47,39 +49,51 @@ func BootstrapNativeFunctions(env *environment.Env) error {
 	return nil
 }
 
-func BootstrapLispFunctions(env *environment.Env, modules ...string) error {
-	for _, module := range modules {
-		absPath, err := filepath.Abs(fmt.Sprintf("../../core/%s.ylx", module))
-		if err != nil {
-			return err
-		}
-
-		data, err := os.ReadFile(absPath)
-		if err != nil {
-			return err
-		}
-
-		_, err = eval(env, string(data))
-		if err != nil {
-			return err
-		}
+func BootstrapLispFunctions(env *environment.Env, module string) error {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return errors.New("unable to get the current filename")
 	}
+	dirname := filepath.Dir(filename)
+
+	absPath, err := filepath.Abs(fmt.Sprintf("%s/../../core/%s.ylx", dirname, module))
+	if err != nil {
+		return err
+	}
+
+	data, err := os.ReadFile(absPath)
+	if err != nil {
+		return err
+	}
+
+	_, err = eval(env, string(data))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func CreateInitialEnv() (*environment.Env, error) {
 	env := environment.MakeEnv()
 
-	BootstrapSpecialForms(&env)
-	err := BootstrapNativeFunctions(&env)
+	err := util.LogProgress("Creating initial environment", func() error {
+		BootstrapSpecialForms(&env)
+		return BootstrapNativeFunctions(&env)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	err = BootstrapLispFunctions(&env, CORE_LIBRARIES...)
-	if err != nil {
-		return nil, err
+	for _, module := range CORE_LIBRARIES {
+		err := util.LogProgress("Loading library: "+module, func() error {
+			return BootstrapLispFunctions(&env, module)
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return &env, nil
 }
 
