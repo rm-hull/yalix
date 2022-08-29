@@ -25,6 +25,7 @@ func BootstrapNativeFunctions(env *environment.Env) error {
 		"+": interpreter.MakeGoFuncHandler(operator.Add, 1, true),
 		"-": interpreter.MakeGoFuncHandler(operator.Sub, 1, true),
 		"*": interpreter.MakeGoFuncHandler(operator.Mult, 1, true),
+		"/": interpreter.MakeGoFuncHandler(operator.Div, 1, true),
 
 		// Comparison & Ordering
 		"=": interpreter.MakeGoFuncHandler(operator.Eq, 1, true),

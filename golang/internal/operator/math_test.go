@@ -116,3 +116,36 @@ func Test_Mult(t *testing.T) {
 		require.Nil(t, result)
 	})
 }
+
+func Test_Div(t *testing.T) {
+
+	t.Run("No args", func(t *testing.T) {
+		result, err := Div([]any{})
+		require.Nil(t, result)
+		require.EqualError(t, err, "division by zero")
+	})
+
+	t.Run("Single args", func(t *testing.T) {
+		result, err := Div([]any{4})
+		require.Nil(t, err)
+		require.Equal(t, 0, result)
+	})
+
+	t.Run("Mulitple args", func(t *testing.T) {
+		result, err := Div([]any{100, 4, 5})
+		require.Nil(t, err)
+		require.Equal(t, 5, result)
+	})
+
+	t.Run("Not a list", func(t *testing.T) {
+		result, err := Div(5, 6)
+		require.EqualError(t, err, "cannot convert '5' (int) to []interface {}")
+		require.Nil(t, result)
+	})
+
+	t.Run("Invalid element type", func(t *testing.T) {
+		result, err := Div([]any{1, 2, "potato", 4})
+		require.EqualError(t, err, "cannot convert 'potato' (string) to int")
+		require.Nil(t, result)
+	})
+}

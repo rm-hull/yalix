@@ -14,8 +14,8 @@ func Test_Global(t *testing.T) {
 	BootstrapSpecialForms(&env)
 	err := BootstrapNativeFunctions(&env)
 	require.Nil(t, err)
-	// err = BootstrapLispFunctions(&env, "/Users/richardhull/dev/yalix/core/num.ylx")
-	// require.Nil(t, err)
+	err = BootstrapLispFunctions(&env, "/Users/richardhull/dev/yalix/core/num.ylx")
+	require.Nil(t, err)
 
 	result, err := eval(&env, `
 		; Factorial test
