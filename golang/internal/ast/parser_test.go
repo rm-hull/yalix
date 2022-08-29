@@ -15,7 +15,6 @@ func Test_Parser(t *testing.T) {
 		expected interpreter.Primitive
 	}{
 		// Atoms
-		"atom/nil":                 {input: `nil`, expected: interpreter.Atom(nil)},
 		"atom/integer":             {input: "17", expected: interpreter.Atom(17)},
 		"atom/hex":                 {input: "0x17", expected: interpreter.Atom(23)},
 		"atom/bool/#t":             {input: `#t`, expected: interpreter.Atom(true)},
@@ -28,6 +27,7 @@ func Test_Parser(t *testing.T) {
 		"atom/string/unicode":      {input: `"hello 🌎"`, expected: interpreter.Atom("hello 🌎")},
 
 		// Symbols
+		"symbol/nil":                {input: `nil`, expected: interpreter.Symbol("nil")},
 		"symbol/ascii":              {input: `cadr`, expected: interpreter.Symbol("cadr")},
 		"symbol/with punctuation/1": {input: `digit?`, expected: interpreter.Symbol("digit?")},
 		"symbol/with punctuation/2": {input: `transform*`, expected: interpreter.Symbol("transform*")},

@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var CORE_LIBRARIES = []string{"core", "hof", "num", "macros", "repr", "test"}
+var CORE_LIBRARIES = []string{"core", "hof", "num", "macros", "repr"} //, "test"}
 
 func BootstrapSpecialForms(env *environment.Env) {
 	for name := range interpreter.SPECIAL_FORMS {
@@ -25,7 +25,11 @@ func BootstrapSpecialForms(env *environment.Env) {
 func BootstrapNativeFunctions(env *environment.Env) error {
 	env.SetGlobal("*debug*", false)
 	functions := map[string]interpreter.Primitive{
-		"atom?": interpreter.MakeGoFuncHandler(operator.IsNil, 1, false),
+		"nil":  interpreter.Atom(nil),
+		"nil?": interpreter.MakeGoFuncHandler(operator.IsNil, 1, false),
+		"cons": interpreter.MakeGoFuncHandler(operator.Cons, 2, false),
+		"car":  interpreter.MakeGoFuncHandler(operator.Car, 1, false),
+		"cdr":  interpreter.MakeGoFuncHandler(operator.Cdr, 1, false),
 
 		// Basic Arithmetic Functions
 		"+": interpreter.MakeGoFuncHandler(operator.Add, 1, true),

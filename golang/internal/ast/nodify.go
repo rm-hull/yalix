@@ -33,8 +33,6 @@ func atomNodify(ns []parsec.ParsecNode) parsec.ParsecNode {
 				panic(err)
 			}
 			return interpreter.Atom(int(i64))
-		case "NIL":
-			return interpreter.Atom(nil)
 		case "TRUE":
 			return interpreter.Atom(true)
 		case "FALSE":

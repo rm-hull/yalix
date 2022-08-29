@@ -30,7 +30,6 @@ func makeParser(ast *parsec.AST) parsec.Parser {
 		parsec.Token("(true|#t)", "TRUE"),
 		parsec.Token("(false|#f)", "FALSE"),
 		parsec.Token(`"[^"]*"`, "DBLQUOTESTRING"),
-		parsec.Atom("nil", "NIL"),
 		parsec.Token("([a-z0-9-/_:*+=!?<>.]+|λ)", "SYMBOL"),
 	)
 

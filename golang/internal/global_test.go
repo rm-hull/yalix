@@ -14,10 +14,6 @@ func Test_Global(t *testing.T) {
 	result, err := eval(env, `
 		; Factorial test
 		; --------------
-
-		(define (zero? n)
-			(= n 0))
-
 		(define factorial
 			(lambda (x)
 				(if (zero? x)
