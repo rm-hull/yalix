@@ -24,8 +24,9 @@ func BootstrapSpecialForms(env *environment.Env) {
 
 func BootstrapNativeFunctions(env *environment.Env) error {
 	env.SetGlobal("*debug*", false)
+	env.SetGlobal("nil", nil)
+
 	functions := map[string]interpreter.Primitive{
-		"nil":  interpreter.Atom(nil),
 		"nil?": interpreter.MakeGoFuncHandler(operator.IsNil, 1, false),
 		"cons": interpreter.MakeGoFuncHandler(operator.Cons, 2, false),
 		"car":  interpreter.MakeGoFuncHandler(operator.Car, 1, false),
