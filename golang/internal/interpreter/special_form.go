@@ -36,6 +36,9 @@ var SPECIAL_FORMS = map[string]func(params ...Primitive) (Primitive, error){
 	"let": func(params ...Primitive) (Primitive, error) {
 		return Let(params[0].(list), params[1:]...), nil
 	},
+	"delay": func(params ...Primitive) (Primitive, error) {
+		return Delay(params...), nil
+	},
 }
 
 // __special_forms__ = {

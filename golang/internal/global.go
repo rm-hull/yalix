@@ -7,8 +7,9 @@ import (
 	"runtime"
 	"yalix/internal/ast"
 	"yalix/internal/environment"
+	"yalix/internal/interop"
+	"yalix/internal/interop/operator"
 	"yalix/internal/interpreter"
-	"yalix/internal/operator"
 	"yalix/internal/util"
 
 	"github.com/pkg/errors"
@@ -27,10 +28,16 @@ func BootstrapNativeFunctions(env *environment.Env) error {
 	env.SetGlobal("nil", nil)
 
 	functions := map[string]interpreter.Primitive{
-		"nil?": interpreter.MakeGoFuncHandler(operator.IsNil, 1, false),
-		"cons": interpreter.MakeGoFuncHandler(operator.Cons, 2, false),
-		"car":  interpreter.MakeGoFuncHandler(operator.Car, 1, false),
-		"cdr":  interpreter.MakeGoFuncHandler(operator.Cdr, 1, false),
+		"nil?":       interpreter.MakeGoFuncHandler(interop.IsNil, 1, false),
+		"promise?":   interpreter.MakeGoFuncHandler(interpreter.IsPromise, 1, false),
+		"realized?":  interpreter.MakeGoFuncHandler(interpreter.IsRealized, 1, false),
+		"cons":       interpreter.MakeGoFuncHandler(interop.Cons, 2, false),
+		"car":        interpreter.MakeGoFuncHandler(interop.Car, 1, false),
+		"cdr":        interpreter.MakeGoFuncHandler(interop.Cdr, 1, false),
+		"epoch-time": interpreter.MakeGoFuncHandler(interop.EpochTime, 0, false),
+		"symbol":     interpreter.MakeGoFuncHandler(interop.Symbol, 1, false),
+		"gensym":     interpreter.MakeGoFuncHandler(interop.GenSym, 0, false),
+		"symbol?":    interpreter.MakeGoFuncHandler(interpreter.IsSymbol, 1, false),
 
 		// Basic Arithmetic Functions
 		"+": interpreter.MakeGoFuncHandler(operator.Add, 1, true),

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"yalix/internal/environment"
+	"yalix/internal/util"
 
 	"github.com/pkg/errors"
 )
@@ -49,4 +50,9 @@ func Symbol(name string) symbol {
 
 func GenSym() symbol {
 	return Symbol(fmt.Sprintf("G__%d", environment.NextId()))
+}
+
+func IsSymbol(args ...any) (any, error) {
+	_, err := util.CastAs[symbol](args[0])
+	return err != nil, nil
 }

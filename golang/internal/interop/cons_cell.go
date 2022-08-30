@@ -1,4 +1,4 @@
-package operator
+package interop
 
 import (
 	"yalix/internal/util"
@@ -7,7 +7,7 @@ import (
 )
 
 type tuple struct {
-	first any
+	first  any
 	second any
 }
 
