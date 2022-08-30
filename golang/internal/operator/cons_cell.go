@@ -7,12 +7,12 @@ import (
 )
 
 type tuple struct {
-	car any
-	cdr any
+	first any
+	second any
 }
 
 func Cons(args ...any) (any, error) {
-	return tuple{car: args[0], cdr: args[1]}, nil
+	return tuple{first: args[0], second: args[1]}, nil
 }
 
 func Car(args ...any) (any, error) {
@@ -25,7 +25,7 @@ func Car(args ...any) (any, error) {
 		return nil, errors.Errorf("cannot call car on non-cons cell: '%+v'", args[0])
 	}
 
-	return consCell.car, nil
+	return consCell.first, nil
 }
 
 func Cdr(args ...any) (any, error) {
@@ -38,5 +38,5 @@ func Cdr(args ...any) (any, error) {
 		return nil, errors.Errorf("cannot call cdr on non-cons cell: '%+v'", args[0])
 	}
 
-	return consCell.cdr, nil
+	return consCell.second, nil
 }
