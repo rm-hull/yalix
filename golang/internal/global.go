@@ -46,7 +46,12 @@ func BootstrapNativeFunctions(env *environment.Env) error {
 		"/": interpreter.MakeGoFuncHandler(operator.Div, 1, true),
 
 		// Comparison & Ordering
-		"=": interpreter.MakeGoFuncHandler(operator.Eq, 1, true),
+		"=":    interpreter.MakeGoFuncHandler(operator.Equal, 1, true),
+		"not=": interpreter.MakeGoFuncHandler(operator.NotEqual, 1, true),
+		">":    interpreter.MakeGoFuncHandler(interop.Overload(operator.GreaterThan[int], operator.GreaterThan[string]), 1, true),
+		">=":   interpreter.MakeGoFuncHandler(interop.Overload(operator.GreaterThanOrEqual[int], operator.GreaterThanOrEqual[string]), 1, true),
+		"<":    interpreter.MakeGoFuncHandler(interop.Overload(operator.LessThan[int], operator.LessThan[string]), 1, true),
+		"<=":   interpreter.MakeGoFuncHandler(interop.Overload(operator.LessThanOrEqual[int], operator.LessThanOrEqual[string]), 1, true),
 	}
 
 	for name, lambda := range functions {

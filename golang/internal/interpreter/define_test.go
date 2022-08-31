@@ -35,7 +35,7 @@ func _makeExtendedEnv() (*environment.Env, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = Define(Symbol("="), MakeGoFuncHandler(operator.Eq, 1, true)).Eval(env)
+	_, err = Define(Symbol("="), MakeGoFuncHandler(operator.Equal, 1, true)).Eval(env)
 	if err != nil {
 		return nil, err
 	}

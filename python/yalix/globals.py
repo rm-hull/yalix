@@ -180,10 +180,10 @@ def bootstrap_python_functions(env):
     env['epoch-time'] = interop(time.time, 0)
 
     # Basic Arithmetic Functions
-    env['add'] = interop(operator.add, 2)
-    env['sub'] = interop(operator.sub, 2)
-    env['mul'] = interop(operator.mul, 2)
-    env['div'] = interop(operator.truediv, 2)
+    env['+'] = interop(operator.add, 2)
+    env['-'] = interop(operator.sub, 2)
+    env['*'] = interop(operator.mul, 2)
+    env['/'] = interop(operator.truediv, 2)
     env['quot'] = interop(operator.floordiv, 2)
     env['negate'] = interop(operator.neg, 1)
 

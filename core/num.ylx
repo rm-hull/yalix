@@ -1,10 +1,10 @@
 ; Numeric functions
 
 (define (dec n)
-  (sub n 1))
+  (- n 1))
 
 (define (inc n)
-  (add n 1))
+  (+ n 1))
 
 (define (pos? n)
   (> n 0))

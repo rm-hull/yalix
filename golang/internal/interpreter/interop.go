@@ -2,17 +2,16 @@ package interpreter
 
 import (
 	"yalix/internal/environment"
+	"yalix/internal/types"
 )
-
-type interOpFunc func(args ...any) (any, error)
 
 type interOp struct {
 	Primitive
-	fn   interOpFunc
+	fn   types.InterOpFunc
 	args []Primitive
 }
 
-func InterOp(fn interOpFunc, args ...Primitive) interOp {
+func InterOp(fn types.InterOpFunc, args ...Primitive) interOp {
 	return interOp{
 		fn:   fn,
 		args: args,
@@ -31,7 +30,7 @@ func (i interOp) Eval(env environment.Env) (any, error) {
 	return i.fn(values...)
 }
 
-func MakeGoFuncHandler(fn interOpFunc, arity uint, variadic bool) lambda {
+func MakeGoFuncHandler(fn types.InterOpFunc, arity uint, variadic bool) lambda {
 
 	// if variadic && arity < 1 {
 	// 	return lambda{}, errors.New("must be at least arity-1 when variadic == true")
