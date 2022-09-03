@@ -74,3 +74,12 @@ func NotEqual(args ...any) (any, error) {
 	}
 	return !boolResult, nil
 }
+
+func Not(args ...any) (any, error) {
+	boolResult, err := util.CastAs[bool](args[0])
+	if err != nil {
+		return nil, err
+	}
+
+	return !boolResult, nil
+}

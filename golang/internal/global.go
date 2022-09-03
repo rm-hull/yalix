@@ -48,6 +48,7 @@ func BootstrapNativeFunctions(env *environment.Env) error {
 		// Comparison & Ordering
 		"=":    interpreter.MakeGoFuncHandler(operator.Equal, 1, true),
 		"not=": interpreter.MakeGoFuncHandler(operator.NotEqual, 1, true),
+		"not":  interpreter.MakeGoFuncHandler(operator.Not, 1, false),
 		">":    interpreter.MakeGoFuncHandler(interop.Overload(operator.GreaterThan[int], operator.GreaterThan[string]), 1, true),
 		">=":   interpreter.MakeGoFuncHandler(interop.Overload(operator.GreaterThanOrEqual[int], operator.GreaterThanOrEqual[string]), 1, true),
 		"<":    interpreter.MakeGoFuncHandler(interop.Overload(operator.LessThan[int], operator.LessThan[string]), 1, true),
